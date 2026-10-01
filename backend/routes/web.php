@@ -120,6 +120,9 @@ Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
 Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::get('/', [ArchiveController::class, 'index'])->name('archives.index');
     Route::patch('/{id}/restore', [ArchiveController::class, 'restore'])->name('guardians.restore');
+    
+    // Add child restore route
+    Route::patch('/child/{id}/restore', [ArchiveController::class, 'restoreChild'])->name('children.restore');
 });
 
 /*

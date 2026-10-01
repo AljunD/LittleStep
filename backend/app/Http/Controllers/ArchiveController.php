@@ -4,22 +4,30 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Guardian;
+use App\Models\Child;
 
 class ArchiveController extends Controller
 {
     /**
-     * Display a listing of archived guardians.
+     * Display a listing of archived guardians and archived children.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Fetch guardians that are soft deleted, include linked user (even if user is also soft deleted)
+        // Fetch soft-deleted guardians with linked user accounts
         $archivedGuardians = Guardian::onlyTrashed()
             ->with(['user' => function ($query) {
-                $query->withTrashed(); // include soft-deleted users so their email shows
+                $query->withTrashed();
             }])
-            ->paginate(10);
+            ->paginate(10, ['*'], 'guardians_page');
 
-        return view('archives.index', compact('archivedGuardians'));
+        // Fetch soft-deleted children with linked guardians
+        $archivedChildren = Child::onlyTrashed()
+            ->with(['guardian' => function ($query) {
+                $query->withTrashed();
+            }])
+            ->paginate(10, ['*'], 'children_page');
+
+        return view('archives.index', compact('archivedGuardians', 'archivedChildren'));
     }
 
     /**
@@ -29,23 +37,42 @@ class ArchiveController extends Controller
     {
         try {
             $guardian = Guardian::withTrashed()->findOrFail($id);
-
-            // Restore guardian
             $guardian->restore();
 
-            // Restore linked user if exists
             if ($guardian->user) {
                 $guardian->user->restore();
             }
 
-            // Log restore action
-            recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: ' . $guardian->first_name . ' ' . $guardian->last_name);
+            if (function_exists('recordLog')) {
+                recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: ' . $guardian->first_name . ' ' . $guardian->last_name);
+            }
 
             return redirect()->route('archives.index')
                              ->with('success', 'Guardian and linked user restored successfully.');
         } catch (\Exception $e) {
             return redirect()->route('archives.index')
                              ->with('error', 'Failed to restore guardian. Please try again.');
+        }
+    }
+
+    /**
+     * Restore an archived child.
+     */
+    public function restoreChild($id)
+    {
+        try {
+            $child = Child::withTrashed()->findOrFail($id);
+            $child->restore();
+
+            if (function_exists('recordLog')) {
+                recordLog('restored', 'Child', $child->id, 'Child restored: ' . $child->first_name . ' ' . $child->last_name);
+            }
+
+            return redirect()->route('archives.index')
+                             ->with('success', 'Child record restored successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('archives.index')
+                             ->with('error', 'Failed to restore child record. Please try again.');
         }
     }
 }
