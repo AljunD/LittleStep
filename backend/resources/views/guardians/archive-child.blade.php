@@ -29,7 +29,7 @@
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Complete</h3>
                 <p class="text-gray-600 mb-8">The child record has been successfully archived.</p>
-                <a href="{{ route('guardians.show', $guardian->id) }}" 
+                <a href="{{ route('guardians.archive-child', $guardian->id) }}" 
                    class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
                     Done
                 </a>
