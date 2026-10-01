@@ -272,6 +272,26 @@ class GuardianController extends Controller
     }
 
     /**
+     * Unlink (soft-delete / archive) a child linked to a specific guardian.
+     */
+    public function unlinkChild($guardianId, $childId)
+    {
+        $guardian = Guardian::findOrFail($guardianId);
+        $child = $guardian->children()->findOrFail($childId);
+
+        $child->delete();
+
+        if (function_exists('recordLog')) {
+            recordLog('deleted', 'Child', $child->id, 'Child archived: ' . $child->first_name . ' ' . $child->last_name);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Child profile archived successfully.'
+        ]);
+    }
+
+    /**
      * Show the archive child preview page dynamically.
      */
     public function archiveChild($id)

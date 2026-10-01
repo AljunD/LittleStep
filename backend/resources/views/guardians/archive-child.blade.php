@@ -117,13 +117,12 @@
                     }
                 });
 
-                // Hide the child list container
-                childList.classList.add('hidden');
-
                 if (response.ok) {
+                    childList.classList.add('hidden');
                     successMessage.classList.remove('hidden');
                     failedMessage.classList.add('hidden');
                 } else {
+                    childList.classList.add('hidden');
                     failedMessage.classList.remove('hidden');
                     successMessage.classList.add('hidden');
                 }
