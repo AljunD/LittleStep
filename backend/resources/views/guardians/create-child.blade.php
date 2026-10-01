@@ -46,39 +46,38 @@
         <div id="form-container" class="p-8 md:p-12 max-h-[calc(100vh-240px)] overflow-y-auto custom-scroll">
             <form id="createChildForm" class="space-y-10">
 
-                <!-- Child Basic Information -->
+                <!-- Child Profile Header -->
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-1">Child Profile</h2>
-                    <p class="text-gray-500">Sociodemographic and personal information.</p>
+                    <h2 class="text-2xl font-bold text-gray-900">Child Profile</h2>
+                    <p class="text-gray-500 mt-1">Sociodemographic and family background.</p>
                 </div>
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
-                            <label class="text-sm font-semibold text-gray-700">First Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="childFirst" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border" placeholder="e.g. Juan">
+                            <label class="text-sm font-semibold text-gray-700">First Name</label>
+                            <input type="text" id="childFirst" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Middle Name</label>
-                            <input type="text" id="childMiddle" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border" placeholder="e.g. Cruz">
+                            <input type="text" id="childMiddle" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-sm font-semibold text-gray-700">Last Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="childLast" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border" placeholder="e.g. Dela Cruz">
+                            <label class="text-sm font-semibold text-gray-700">Last Name</label>
+                            <input type="text" id="childLast" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label class="text-sm font-semibold text-gray-700">Sex <span class="text-red-500">*</span></label>
+                            <label class="text-sm font-semibold text-gray-700">Sex</label>
                             <select id="childSex" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none appearance-none bg-white">
-                                <option value="">Select Sex</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-sm font-semibold text-gray-700">Date of Birth <span class="text-red-500">*</span></label>
+                            <label class="text-sm font-semibold text-gray-700">Date of Birth</label>
                             <input type="date" id="childDob" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                         </div>
                     </div>
@@ -110,10 +109,9 @@
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Child’s Handedness</label>
                             <select id="childHandedness" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none appearance-none bg-white">
-                                <option value="">Select Handedness</option>
                                 <option value="right">Right</option>
                                 <option value="left">Left</option>
-                                <option value="both">Both (Ambidextrous)</option>
+                                <option value="both">Both</option>
                                 <option value="not_yet_established">Not yet established</option>
                             </select>
                         </div>
@@ -146,7 +144,16 @@
                             <input type="text" id="fatherName" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Full Name">
                             <input type="number" id="fatherAge" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" id="fatherOccupation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
-                            <input type="text" id="fatherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Educational Attainment">
+
+                            <!-- Drop-down for Educational Attainment -->
+                            <select id="fatherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
+                                <option value="">Select Educational Attainment</option>
+                                <option value="Elementary">Elementary</option>
+                                <option value="High School">High School</option>
+                                <option value="College">College</option>
+                                <option value="Vocational">Vocational</option>
+                                <option value="Postgraduate">Postgraduate</option>
+                            </select>
                         </div>
                     </div>
 
@@ -156,7 +163,16 @@
                             <input type="text" id="motherName" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Full Name">
                             <input type="number" id="motherAge" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" id="motherOccupation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
-                            <input type="text" id="motherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Educational Attainment">
+
+                            <!-- Drop-down for Educational Attainment -->
+                            <select id="motherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
+                                <option value="">Select Educational Attainment</option>
+                                <option value="Elementary">Elementary</option>
+                                <option value="High School">High School</option>
+                                <option value="College">College</option>
+                                <option value="Vocational">Vocational</option>
+                                <option value="Postgraduate">Postgraduate</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -164,11 +180,11 @@
                 <div class="bg-blue-50 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6 border border-blue-100">
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-blue-900">Number of Siblings</label>
-                        <input type="number" id="childSiblings" class="w-full border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
+                        <input type="number" id="siblings" class="w-full border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-blue-900">Birth Order</label>
-                        <input type="number" id="childBirthOrder" class="w-full border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
+                        <input type="number" id="birthOrder" class="w-full border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none">
                     </div>
                 </div>
 
@@ -210,16 +226,13 @@
     const saveBtn = document.getElementById('saveBtn');
 
     // Save Button - Show Success or Failed Message with Confirmation
-    saveBtn.addEventListener('click', () => {
-        // Confirmation dialog
+    saveBtn?.addEventListener('click', () => {
         const confirmed = confirm("Are you sure you want to save this child record?");
-        if (!confirmed) return; // stop if user cancels
+        if (!confirmed) return;
 
-        // Hide form
         formContainer.classList.add('hidden');
 
-        // Simulate outcome (replace with actual AJAX/fetch in production)
-        const isSuccess = true; // <-- set to false to test failed message
+        const isSuccess = true;
 
         if (isSuccess) {
             successMessage.classList.remove('hidden');
@@ -229,12 +242,11 @@
             successMessage.classList.add('hidden');
         }
 
-        // Scroll to top smoothly
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Photo Preview
-    document.getElementById('photoInput').addEventListener('change', function(e) {
+    document.getElementById('photoInput')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -249,16 +261,18 @@
     // Studying Checkbox Logic
     const yesBox = document.getElementById('childStudyingYes');
     const noBox = document.getElementById('childStudyingNo');
-    const schoolField = document.getElementById('childSchool');
+    const schoolField = document.getElementById('schoolNameField');
 
-    yesBox.addEventListener('change', () => {
+    yesBox?.addEventListener('change', () => {
         if (yesBox.checked) {
             noBox.checked = false;
             schoolField.classList.remove('hidden');
+        } else {
+            schoolField.classList.add('hidden');
         }
     });
 
-    noBox.addEventListener('change', () => {
+    noBox?.addEventListener('change', () => {
         if (noBox.checked) {
             yesBox.checked = false;
             schoolField.classList.add('hidden');
