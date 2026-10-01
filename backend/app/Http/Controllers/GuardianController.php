@@ -191,7 +191,6 @@ class GuardianController extends Controller
     {
         $guardian = Guardian::with('children')->findOrFail($id);
 
-        // Soft-delete all active children linked to this guardian
         foreach ($guardian->children as $child) {
             $child->delete();
 
@@ -200,10 +199,8 @@ class GuardianController extends Controller
             }
         }
 
-        // Soft-delete guardian record
         $guardian->delete();
 
-        // Soft-delete associated user account if present
         if ($guardian->user) {
             $guardian->user->delete();
         }
@@ -212,8 +209,16 @@ class GuardianController extends Controller
             recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: ' . $guardian->first_name . ' ' . $guardian->last_name);
         }
 
+        // AJAX → JSON (same pattern as update())
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Guardian and all linked children archived successfully.'
+            ]);
+        }
+
         return redirect()->route('guardians.index')
-                         ->with('success', 'Guardian and all linked children archived successfully.');
+                        ->with('success', 'Guardian and all linked children archived successfully.');
     }
 
     /**
