@@ -80,7 +80,9 @@ class GuardianController extends Controller
 
         $guardian = Guardian::create($data);
 
-        recordLog('created', 'Guardian', $guardian->id, 'Guardian created: ' . $guardian->first_name . ' ' . $guardian->last_name);
+        if (function_exists('recordLog')) {
+            recordLog('created', 'Guardian', $guardian->id, 'Guardian created: ' . $guardian->first_name . ' ' . $guardian->last_name);
+        }
 
         return redirect()->route('guardians.index')
                          ->with('success', 'Guardian created successfully.');
@@ -121,7 +123,6 @@ class GuardianController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Real-World Fix: Eager load the user relationship to prevent it evaluating to null during runtime
         $guardian = Guardian::with('user')->findOrFail($id);
 
         $userId = $guardian->user ? $guardian->user->id : 'NULL';
@@ -154,10 +155,8 @@ class GuardianController extends Controller
             $request->region,
         ]));
 
-        // Strip address array inputs out before passing arrays into the data model updater
         unset($data['barangay'], $data['municipality'], $data['province'], $data['region']);
 
-        // Save structural core database updates
         $guardian->update($data);
 
         // Update linked authentication tables 
@@ -170,9 +169,10 @@ class GuardianController extends Controller
             }
         }
 
-        recordLog('updated', 'Guardian', $guardian->id, 'Guardian updated');
+        if (function_exists('recordLog')) {
+            recordLog('updated', 'Guardian', $guardian->id, 'Guardian updated');
+        }
 
-        // If requested via JavaScript fetch, return JSON so the success container appears!
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -180,7 +180,6 @@ class GuardianController extends Controller
             ]);
         }
 
-        // Fallback for standard synchronous HTML form submittals
         return redirect()->route('guardians.index')
                          ->with('success', 'Guardian updated successfully.');
     }
@@ -197,7 +196,9 @@ class GuardianController extends Controller
             $guardian->user->delete();
         }
 
-        recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: ' . $guardian->first_name . ' ' . $guardian->last_name);
+        if (function_exists('recordLog')) {
+            recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: ' . $guardian->first_name . ' ' . $guardian->last_name);
+        }
 
         return redirect()->route('guardians.index')
                          ->with('success', 'Guardian and linked user archived successfully.');
@@ -213,11 +214,68 @@ class GuardianController extends Controller
     }
 
     /**
+     * Store a newly created child linked to the specified guardian.
+     */
+    public function storeChild(Request $request, $id)
+    {
+        $guardian = Guardian::findOrFail($id);
+
+        $data = $request->validate([
+            'first_name'         => ['required', 'string', 'max:255'],
+            'middle_name'        => ['nullable', 'string', 'max:255'],
+            'last_name'          => ['required', 'string', 'max:255'],
+            'sex'                => ['required', 'in:Male,Female'],
+            'date_of_birth'      => ['required', 'date'],
+            'barangay'           => ['nullable', 'string', 'max:255'],
+            'municipality'       => ['nullable', 'string', 'max:255'],
+            'province'           => ['nullable', 'string', 'max:255'],
+            'region'             => ['nullable', 'string', 'max:255'],
+            'handedness'         => ['required', 'in:right,left,both,not_yet_established'],
+            'is_studying'        => ['nullable', 'boolean'],
+            'school_name'        => ['nullable', 'string', 'max:255'],
+            'fathers_name'       => ['nullable', 'string', 'max:255'],
+            'fathers_age'        => ['nullable', 'integer'],
+            'fathers_occupation' => ['nullable', 'string', 'max:255'],
+            'fathers_education'  => ['nullable', 'string', 'max:255'],
+            'mothers_name'       => ['nullable', 'string', 'max:255'],
+            'mothers_age'        => ['nullable', 'integer'],
+            'mothers_occupation' => ['nullable', 'string', 'max:255'],
+            'mothers_education'  => ['nullable', 'string', 'max:255'],
+            'number_of_siblings' => ['nullable', 'integer'],
+            'birth_order'        => ['nullable', 'integer'],
+            'photo'              => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+        ]);
+
+        $data['address'] = implode(', ', array_filter([
+            $request->barangay,
+            $request->municipality,
+            $request->province,
+            $request->region,
+        ]));
+
+        unset($data['barangay'], $data['municipality'], $data['province'], $data['region']);
+
+        if ($request->hasFile('photo')) {
+            $data['photo_path'] = $request->file('photo')->store('children_photos', 'public');
+        }
+
+        $data['is_studying'] = (bool) ($request->is_studying ?? false);
+
+        $child = $guardian->children()->create($data);
+
+        if (function_exists('recordLog')) {
+            recordLog('created', 'Child', $child->id, 'Child created: ' . $child->first_name . ' ' . $child->last_name);
+        }
+
+        return redirect()->route('guardians.index')
+                         ->with('success', 'Child profile created successfully.');
+    }
+
+    /**
      * Show the archive child preview page dynamically.
      */
     public function archiveChild($id)
     {
-        // Retrieve the guardian along with their currently active linked children
         $guardian = Guardian::with('children')->findOrFail($id);
         
         return view('guardians.archive-child', compact('guardian'));
