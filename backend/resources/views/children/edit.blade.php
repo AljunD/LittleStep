@@ -20,7 +20,7 @@
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Profile Updated Successfully</h3>
                 <p class="text-gray-600 mb-8">The child's information has been updated and saved to the database.</p>
-                <a href="{{ route('childs.index') }}" 
+                <a href="{{ route('children.index') }}" 
                 class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
                     Back to Children
                 </a>
@@ -32,7 +32,7 @@
                 <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Update Failed</h3>
                 <p class="text-gray-600 mb-8">Something went wrong while updating the child profile. Please try again.</p>
-                <a href="{{ route('childs.index') }}" 
+                <a href="{{ route('children.index') }}" 
                 class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
                     Back to Children
                 </a>
@@ -182,7 +182,7 @@
                 </div>
 
                 <div class="pt-8 flex justify-end space-x-4">
-                    <a href="{{ route('childs.index') }}" 
+                    <a href="{{ route('children.index') }}" 
                        class="px-8 py-4 text-gray-600 font-bold hover:text-gray-900 transition">Cancel Changes</a>
                     <button type="button" id="saveBtn"
                             class="px-12 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition transform active:scale-95">

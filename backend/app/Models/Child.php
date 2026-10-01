@@ -10,8 +10,7 @@ class Child extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // 👇 Explicitly set the table name to match your migration
-    protected $table = 'childs';
+    protected $table = 'children';
 
     protected $fillable = [
         'guardian_id',
@@ -37,7 +36,6 @@ class Child extends Model
         'photo_path',
     ];
 
-    // Relationships
     public function guardian()
     {
         return $this->belongsTo(Guardian::class);

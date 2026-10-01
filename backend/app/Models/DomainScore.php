@@ -10,7 +10,6 @@ class DomainScore extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Explicit table name to match migration
     protected $table = 'domain_scores';
 
     protected $fillable = [
@@ -24,17 +23,11 @@ class DomainScore extends Model
         'interpretation_code',
     ];
 
-    /**
-     * Relationships
-     */
-
-    // Each score belongs to one progress record
     public function progressRecord()
     {
         return $this->belongsTo(ProgressRecord::class);
     }
 
-    // Each score belongs to one domain
     public function domain()
     {
         return $this->belongsTo(Domain::class);

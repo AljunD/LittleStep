@@ -18,7 +18,9 @@
         <!-- Header -->
         <div class="px-8 py-6 bg-gray-50 border-b border-gray-200">
             <h1 class="text-3xl font-extrabold text-gray-900">Archive Child</h1>
-            <p class="text-gray-500 mt-1">Select a child linked to this guardian to archive.</p>
+            <p class="text-gray-500 mt-1">
+                Select a child linked to <span class="font-semibold text-gray-700">{{ $guardian->first_name }} {{ $guardian->last_name }}</span> to archive.
+            </p>
         </div>
 
         <!-- Success Message -->
@@ -27,7 +29,7 @@
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Complete</h3>
                 <p class="text-gray-600 mb-8">The child record has been successfully archived.</p>
-                <a href="{{ route('guardians.index') }}" 
+                <a href="{{ route('guardians.show', $guardian->id) }}" 
                    class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
                     Done
                 </a>
@@ -40,9 +42,9 @@
                 <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Failed</h3>
                 <p class="text-gray-600 mb-8">Something went wrong while archiving the child record. Please try again.</p>
-                <a href="{{ route('guardians.index') }}" 
+                <a href="{{ route('guardians.archive-child', $guardian->id) }}" 
                    class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                    Back to Guardians
+                    Try Again
                 </a>
             </div>
         </div>
@@ -59,24 +61,29 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Juan Dela Cruz</td>
-                            <td class="px-6 py-4 text-sm text-gray-600">Male</td>
-                            <td class="px-6 py-4 text-center">
-                                <button type="button" class="archive-btn px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-red-700 transition transform active:scale-95">
-                                    Archive Child
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Maria Santos</td>
-                            <td class="px-6 py-4 text-sm text-gray-600">Female</td>
-                            <td class="px-6 py-4 text-center">
-                                <button type="button" class="archive-btn px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-red-700 transition transform active:scale-95">
-                                    Archive Child
-                                </button>
-                            </td>
-                        </tr>
+                        @forelse($guardian->children as $child)
+                            <tr class="hover:bg-gray-50 transition" id="child-row-{{ $child->id }}">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    {{ $child->first_name }} {{ $child->middle_name ? $child->middle_name . ' ' : '' }}{{ $child->last_name }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    {{ ucfirst($child->sex) }}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <button type="button" 
+                                            data-url="{{ route('guardians.unlink-child', ['guardianId' => $guardian->id, 'childId' => $child->id]) }}"
+                                            class="archive-btn px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-red-700 transition transform active:scale-95">
+                                        Archive Child
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500">
+                                    No active children are currently linked to this guardian.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -88,32 +95,47 @@
     const childList = document.getElementById('child-list');
     const successMessage = document.getElementById('success-message');
     const failedMessage = document.getElementById('failed-message');
+    const csrfToken = '{{ csrf_token() }}';
 
     // Attach event listeners to all Archive buttons
     document.querySelectorAll('.archive-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
+            const endpointUrl = btn.getAttribute('data-url');
+
             // Confirmation dialog
             const confirmed = confirm("Are you sure you want to archive this child record?");
-            if (!confirmed) return; // stop if user cancels
+            if (!confirmed) return;
 
-            // Hide the child list
-            childList.classList.add('hidden');
+            try {
+                // Execute actual DELETE HTTP request to Laravel route
+                const response = await fetch(endpointUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
 
-            // Simulate outcome (replace with actual AJAX/fetch in production)
-            const isSuccess = true; // <-- set to false to test failed message
+                // Hide the child list container
+                childList.classList.add('hidden');
 
-            if (isSuccess) {
-                successMessage.classList.remove('hidden');
-                failedMessage.classList.add('hidden');
-            } else {
+                if (response.ok) {
+                    successMessage.classList.remove('hidden');
+                    failedMessage.classList.add('hidden');
+                } else {
+                    failedMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                }
+            } catch (error) {
+                childList.classList.add('hidden');
                 failedMessage.classList.remove('hidden');
                 successMessage.classList.add('hidden');
             }
 
-            // Scroll to top for visibility
+            // Scroll to top for feedback banner visibility
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 </script>
-
 @endsection

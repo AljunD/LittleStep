@@ -10,10 +10,6 @@
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Archived Guardians</h1>
             <p class="text-sm text-gray-500">View all guardians and user accounts that have been archived.</p>
         </div>
-        <a href="{{ route('guardians.index') }}" 
-           class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow hover:bg-blue-700 transition transform active:scale-95">
-            Back to Guardians
-        </a>
     </div>
 
     @if(session('success'))

@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
-use App\Http\Controllers\ChildController;
+use App\Http\Controllers\ChildrenController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\LogsController;
@@ -26,20 +27,16 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('auth')->group(function () {
-    // Registration
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('auth.register.form');
     Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
 
-    // Login
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('auth.login.form');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('auth.login.submit');
 
-    // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 
-    // Forgot / Reset Password
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('auth.password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('auth.password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('auth.password.reset');
@@ -73,9 +70,10 @@ Route::get('/email/confirmation', function () {
 | Dashboard (Teacher-only)
 |--------------------------------------------------------------------------
 */
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'teacher'])->name('dashboard');
+// Configured to load runtime dashboard variables through DashboardController
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'teacher'])
+    ->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -83,14 +81,35 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    
+    // 1. Core Static Lists & Creation Actions
     Route::get('/', [GuardianController::class, 'index'])->name('guardians.index');
     Route::get('/create', [GuardianController::class, 'create'])->name('guardians.create');
     Route::post('/', [GuardianController::class, 'store'])->name('guardians.store');
+
+    // 2. Child Management Engines
+    Route::get('/{id}/create-child', [GuardianController::class, 'createChild'])->name('guardians.create-child');
+    Route::post('/{id}/store-child', [GuardianController::class, 'storeChild'])->name('guardians.store-child');
+    Route::delete('/{guardianId}/child/{childId}', [GuardianController::class, 'unlinkChild'])->name('guardians.unlink-child');
+
+    // 3. Dynamic Unlink Preview Interface
+    Route::get('/{id}/archive-child', [GuardianController::class, 'archiveChild'])->name('guardians.archive-child');
+
+    // 4. Primary Wildcard ID Record Operations (Keep at the bottom)
     Route::get('/{id}', [GuardianController::class, 'show'])->name('guardians.show');
     Route::get('/{id}/edit', [GuardianController::class, 'edit'])->name('guardians.edit');
     Route::put('/{id}', [GuardianController::class, 'update'])->name('guardians.update');
-    Route::get('/{id}/create-child', [GuardianController::class, 'createChild'])->name('guardians.create-child');
     Route::delete('/{id}', [GuardianController::class, 'destroy'])->name('guardians.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Children Routes (Teacher-only, full CRUD)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
+    // ✅ Use "children" consistently so Blade calls like route('children.index') work
+    Route::resource('children', ChildrenController::class);
 });
 
 /*
@@ -105,58 +124,38 @@ Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(fun
 
 /*
 |--------------------------------------------------------------------------
-| Archive Child Flow (Static Preview)
-|--------------------------------------------------------------------------
-*/
-Route::get('/child/archive', function () {
-    return view('guardians.archive-child');
-})->middleware(['auth', 'verified', 'teacher'])->name('child.archive.view');
-
-/*
-|--------------------------------------------------------------------------
-| Children Routes (Static Preview)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('childs')->middleware(['auth', 'verified', 'teacher'])->group(function () {
-    Route::get('/', function () {
-        return view('childs.index'); 
-    })->name('childs.index');
-
-    Route::get('/show', function () {
-        return view('childs.show'); 
-    })->name('childs.show');
-
-    Route::get('/edit', function () {
-        return view('childs.edit'); 
-    })->name('childs.edit');
-});
-
-/*
-|--------------------------------------------------------------------------
 | Progress Routes (Static Preview)
 |--------------------------------------------------------------------------
+|
+| These routes are currently static previews that return Blade views.
+| Later, you can replace the closures with controller methods.
+|
 */
 Route::prefix('progress')->middleware(['auth','verified','teacher'])->group(function () {
-    Route::get('/', function () {
-        return view('progress.index');
-    })->name('progress.index');
+    // Index (list of progress records)
+    Route::get('/', fn() => view('progress.index'))->name('progress.index');
 
-    Route::get('/select-domain', function () {
-        return view('progress.select-domain');
-    })->name('progress.select-domain');
+    // Select domain for evaluation
+    Route::get('/select-domain/{child_id?}', fn() => view('progress.select-domain'))
+        ->name('progress.select-domain');
 
-    Route::get('/create', function () {
-        return view('progress.create');
-    })->name('progress.create');
+    // Create new evaluation
+    Route::get('/create/{child_id?}', fn() => view('progress.create'))
+        ->name('progress.create');
 
-    Route::get('/show', function () {
-        return view('progress.show');
-    })->name('progress.show');
+    // Create new observation
+    Route::get('/add-observation/{child_id?}', fn() => view('progress.create-observation'))
+        ->name('progress.add-observation');
 
-    Route::get('/edit', function () {
-        return view('progress.edit');
-    })->name('progress.edit');
+    // Show progress record
+    Route::get('/show/{id?}', fn() => view('progress.show'))
+        ->name('progress.show');
+
+    // Edit progress record
+    Route::get('/edit/{id?}', fn() => view('progress.edit'))
+        ->name('progress.edit');
 });
+
 
 /*
 |--------------------------------------------------------------------------

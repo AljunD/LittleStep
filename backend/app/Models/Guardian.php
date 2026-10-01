@@ -10,7 +10,6 @@ class Guardian extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Explicit table name to match migration
     protected $table = 'guardians';
 
     protected $fillable = [
@@ -22,20 +21,18 @@ class Guardian extends Model
         'contact_number',
         'address',
         'relationship_to_child',
+        'barangay',
+        'municipality',
+        'province',
+        'region',
     ];
 
-    /**
-     * Relationships
-     */
-
-    // Guardian belongs to a User
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Guardian has many Child records
-    public function childs()
+    public function children()
     {
         return $this->hasMany(Child::class);
     }

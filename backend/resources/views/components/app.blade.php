@@ -22,7 +22,7 @@
                   transition-transform duration-300 ease-in-out border-r border-white/5">
 
       <div class="px-8 py-10">
-        <h1 class="text-xl font-black tracking-widest text-white uppercase">KidWatch</h1>
+        <h1 class="text-xl font-black tracking-widest text-white uppercase">LITTLESTEP</h1>
       </div>
 
       {{-- Teacher-only navigation --}}
@@ -37,9 +37,9 @@
             <i class="fas fa-users text-blue-500"></i>
             <span>Guardians</span>
           </a>
-          <a href="{{ route('childs.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-user-graduate text-blue-500"></i>
-            <span>Children</span>
+          <a href="{{ route('children.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
+              <i class="fas fa-user-graduate text-blue-500"></i>
+              <span>Children</span>
           </a>
           <a href="{{ route('progress.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
             <i class="fas fa-chart-line text-blue-500"></i>

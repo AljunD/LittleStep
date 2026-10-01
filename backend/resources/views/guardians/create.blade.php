@@ -206,7 +206,7 @@
                             <select id="childHandedness" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none appearance-none bg-white">
                                 <option value="right">Right</option>
                                 <option value="left">Left</option>
-                                <option value="both">Both (Ambidextrous)</option>
+                                <option value="both">Both</option>
                                 <option value="not_yet_established">Not yet established</option>
                             </select>
                         </div>
@@ -239,7 +239,16 @@
                             <input type="text" id="fatherName" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Full Name">
                             <input type="number" id="fatherAge" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" id="fatherOccupation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
-                            <input type="text" id="fatherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Educational Attainment">
+
+                            <!-- Drop-down for Educational Attainment -->
+                            <select id="fatherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
+                                <option value="">Select Educational Attainment</option>
+                                <option value="Elementary">Elementary</option>
+                                <option value="High School">High School</option>
+                                <option value="College">College</option>
+                                <option value="Vocational">Vocational</option>
+                                <option value="Postgraduate">Postgraduate</option>
+                            </select>
                         </div>
                     </div>
 
@@ -249,7 +258,16 @@
                             <input type="text" id="motherName" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Full Name">
                             <input type="number" id="motherAge" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" id="motherOccupation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
-                            <input type="text" id="motherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Educational Attainment">
+
+                            <!-- Drop-down for Educational Attainment -->
+                            <select id="motherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
+                                <option value="">Select Educational Attainment</option>
+                                <option value="Elementary">Elementary</option>
+                                <option value="High School">High School</option>
+                                <option value="College">College</option>
+                                <option value="Vocational">Vocational</option>
+                                <option value="Postgraduate">Postgraduate</option>
+                            </select>
                         </div>
                     </div>
                 </div>

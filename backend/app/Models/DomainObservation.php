@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class DomainAssessment extends Model
+class DomainObservation extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Explicit table name to match migration
-    protected $table = 'domain_assessments';
+    protected $table = 'domain_observations';
 
     protected $fillable = [
         'progress_record_id',
@@ -21,13 +20,9 @@ class DomainAssessment extends Model
         'stimulating_activities_notes',
         'home_environment_notes',
         'other_notes',
+        'status',
     ];
 
-    /**
-     * Relationships
-     */
-
-    // Each domain assessment belongs to one progress record
     public function progressRecord()
     {
         return $this->belongsTo(ProgressRecord::class);

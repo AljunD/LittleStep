@@ -41,14 +41,20 @@
                         </td>
                         <td class="px-6 py-5 whitespace-nowrap text-right">
                             <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a href="{{ route('progress.show') }}" 
+                                <!-- View Progress -->
+                                <a href="{{ route('progress.show', ['id' => 1]) }}" 
                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
                                     View
                                 </a>
-                                <!-- Add Evaluation Button -->
+                                <!-- Add Evaluation -->
                                 <a href="{{ route('progress.select-domain', ['child_id' => 1]) }}" 
                                    class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold hover:bg-purple-200 transition">
                                     + Add Evaluation
+                                </a>
+                                <!-- Add Observation -->
+                                <a href="{{ route('progress.add-observation', ['child_id' => 1]) }}" 
+                                   class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold hover:bg-purple-200 transition">
+                                    + Add Observation
                                 </a>
                             </div>
                         </td>
@@ -68,14 +74,20 @@
                         </td>
                         <td class="px-6 py-5 whitespace-nowrap text-right">
                             <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a href="{{ route('progress.show') }}" 
+                                <!-- View Progress -->
+                                <a href="{{ route('progress.show', ['id' => 2]) }}" 
                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
                                     View
                                 </a>
-                                <!-- Add Evaluation Button -->
+                                <!-- Add Evaluation -->
                                 <a href="{{ route('progress.select-domain', ['child_id' => 2]) }}" 
                                    class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold hover:bg-purple-200 transition">
                                     + Add Evaluation
+                                </a>
+                                <!-- Add Observation -->
+                                <a href="{{ route('progress.add-observation', ['child_id' => 2]) }}" 
+                                   class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold hover:bg-purple-200 transition">
+                                    + Add Observation
                                 </a>
                             </div>
                         </td>

@@ -1,4 +1,4 @@
-@extends('components.auth')
+    @extends('components.auth')
 
 @section('title', 'Secure Login')
 
