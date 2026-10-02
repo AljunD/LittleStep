@@ -4,7 +4,6 @@
 
 @section('content')
 @php
-    // Parse address components if stored as comma-separated string
     $addressParts = array_map('trim', explode(',', $child->address ?? ''));
     $barangay = $addressParts[0] ?? '';
     $municipality = $addressParts[1] ?? '';
@@ -220,22 +219,15 @@
 </div>
 
 <script>
-    const formContainer = document.getElementById('form-container');
-    const successMessage = document.getElementById('success-message');
-    const failedMessage = document.getElementById('failed-message');
     const saveBtn = document.getElementById('saveBtn');
     const editChildForm = document.getElementById('editChildForm');
 
-    // Update Profile Button Logic with confirmation
     saveBtn.addEventListener('click', () => {
         const userConfirmed = confirm("Are you sure you want to update your profile?");
-        
         if (!userConfirmed) {
             alert("Update action was cancelled.");
             return;
         }
-
-        // Submit form to backend controller
         editChildForm.submit();
     });
 
@@ -246,34 +238,34 @@
             const reader = new FileReader();
             reader.onload = function(ev) {
                 document.getElementById('photoPreview').src = ev.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
             };
             reader.readAsDataURL(file);
         }
     });
 
-    // Studying Checkbox Logic
+    // Studying Checkbox Toggle Logic
     const yesBox = document.getElementById('childStudyingYes');
     const noBox = document.getElementById('childStudyingNo');
     const schoolField = document.getElementById('schoolNameField');
+    const schoolInput = document.getElementById('childSchool');
     const isStudyingInput = document.getElementById('is_studying');
 
-    yesBox.addEventListener('change', () => {
-        if (yesBox.checked) {
+    function toggleStudying(isStudying) {
+        if (isStudying) {
+            yesBox.checked = true;
             noBox.checked = false;
             schoolField.classList.remove('hidden');
             isStudyingInput.value = '1';
         } else {
-            isStudyingInput.value = '0';
-        }
-    });
-
-    noBox.addEventListener('change', () => {
-        if (noBox.checked) {
             yesBox.checked = false;
+            noBox.checked = true;
             schoolField.classList.add('hidden');
+            schoolInput.value = ''; // Clears the school input field
             isStudyingInput.value = '0';
         }
-    });
+    }
+
+    yesBox.addEventListener('change', () => toggleStudying(yesBox.checked));
+    noBox.addEventListener('change', () => toggleStudying(!noBox.checked));
 </script>
 @endsection

@@ -103,7 +103,6 @@ class ChildrenController extends Controller
             'photo'              => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Concatenate location components into single address string
         $addressParts = array_filter([
             $request->input('barangay'),
             $request->input('municipality'),
@@ -112,7 +111,6 @@ class ChildrenController extends Controller
         ]);
         $data['address'] = !empty($addressParts) ? implode(', ', $addressParts) : null;
 
-        // Handle photo upload
         if ($request->hasFile('photo')) {
             if ($child->photo_path && Storage::disk('public')->exists($child->photo_path)) {
                 Storage::disk('public')->delete($child->photo_path);
@@ -120,11 +118,17 @@ class ChildrenController extends Controller
             $data['photo_path'] = $request->file('photo')->store('photos/children', 'public');
         }
 
-        $data['is_studying'] = $request->has('is_studying') ? 1 : 0;
+        $data['is_studying'] = $request->input('is_studying') == '1' ? 1 : 0;
+
+        // If child is not studying, set school_name to null
+        if ($data['is_studying'] === 0) {
+            $data['school_name'] = null;
+        }
+
+        unset($data['photo']);
 
         $child->update($data);
 
-        // Log update
         recordLog('updated', 'Child', $child->id, 'Child updated: ' . $child->first_name . ' ' . $child->last_name);
 
         return redirect()->route('children.show', $child->id)
