@@ -195,7 +195,7 @@
                 <!-- Mother -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center">
-                        <span class="w-2 h-2 bg-pink-400 rounded-full mr-2"></span> Mother
+                        <span class="w-2 h-2 bg-pink-400 rounded-full mr-2"></span> Mothers
                     </h4>
                     <div class="space-y-3">
                         <div>
