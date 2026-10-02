@@ -46,7 +46,7 @@ class ChildrenController extends Controller
         // Log creation
         recordLog('created', 'Child', $child->id, 'Child created: ' . $child->first_name . ' ' . $child->last_name);
 
-        return redirect()->route('childs.index')
+        return redirect()->route('children.index')
                          ->with('success', 'Child created successfully.');
     }
 
@@ -55,7 +55,7 @@ class ChildrenController extends Controller
      */
     public function show($id)
     {
-        $child = Child::with('guardian')->findOrFail($id);
+        $child = Child::with('guardian.user')->findOrFail($id);
         return view('children.show', compact('child'));
     }
 
