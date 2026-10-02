@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Child;
 use App\Models\Guardian;
+use Illuminate\Support\Facades\Storage;
 
 class ChildrenController extends Controller
 {
@@ -77,22 +78,57 @@ class ChildrenController extends Controller
         $child = Child::findOrFail($id);
 
         $data = $request->validate([
-            'guardian_id'   => 'required|exists:guardians,id',
-            'first_name'    => 'required|string|max:255',
-            'middle_name'   => 'nullable|string|max:255',
-            'last_name'     => 'required|string|max:255',
-            'sex'           => 'required|string|max:10',
-            'date_of_birth' => 'required|date',
-            'address'       => 'nullable|string|max:500',
+            'first_name'         => 'required|string|max:255',
+            'middle_name'        => 'nullable|string|max:255',
+            'last_name'          => 'required|string|max:255',
+            'sex'                => 'required|in:Male,Female',
+            'date_of_birth'      => 'required|date',
+            'barangay'           => 'nullable|string|max:255',
+            'municipality'       => 'nullable|string|max:255',
+            'province'           => 'nullable|string|max:255',
+            'region'             => 'nullable|string|max:255',
+            'handedness'         => 'nullable|in:right,left,both,not_yet_established',
+            'is_studying'        => 'nullable|boolean',
+            'school_name'        => 'nullable|string|max:255',
+            'fathers_name'       => 'nullable|string|max:255',
+            'fathers_age'        => 'nullable|integer|min:0|max:120',
+            'fathers_occupation' => 'nullable|string|max:255',
+            'fathers_education'  => 'nullable|string|max:255',
+            'mothers_name'       => 'nullable|string|max:255',
+            'mothers_age'        => 'nullable|integer|min:0|max:120',
+            'mothers_occupation' => 'nullable|string|max:255',
+            'mothers_education'  => 'nullable|string|max:255',
+            'number_of_siblings' => 'nullable|integer|min:0',
+            'birth_order'        => 'nullable|integer|min:1',
+            'photo'              => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Concatenate location components into single address string
+        $addressParts = array_filter([
+            $request->input('barangay'),
+            $request->input('municipality'),
+            $request->input('province'),
+            $request->input('region'),
+        ]);
+        $data['address'] = !empty($addressParts) ? implode(', ', $addressParts) : null;
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            if ($child->photo_path && Storage::disk('public')->exists($child->photo_path)) {
+                Storage::disk('public')->delete($child->photo_path);
+            }
+            $data['photo_path'] = $request->file('photo')->store('photos/children', 'public');
+        }
+
+        $data['is_studying'] = $request->has('is_studying') ? 1 : 0;
 
         $child->update($data);
 
         // Log update
         recordLog('updated', 'Child', $child->id, 'Child updated: ' . $child->first_name . ' ' . $child->last_name);
 
-        return redirect()->route('children.index')
-                         ->with('success', 'Child updated successfully.');
+        return redirect()->route('children.show', $child->id)
+                         ->with('success', 'Child profile updated successfully.');
     }
 
     /**
