@@ -11,9 +11,8 @@ class ApiAuthenticate extends Middleware
      */
     protected function redirectTo($request): ?string
     {
-        // For API-only apps, return null so Laravel sends a 401 JSON
         if (! $request->expectsJson()) {
-            return null;
+            return route('login');
         }
 
         return null;

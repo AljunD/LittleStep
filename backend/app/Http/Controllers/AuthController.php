@@ -122,7 +122,6 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Capture user before logout
         $user = Auth::user();
         $userId = $user ? $user->id : null;
 
@@ -130,12 +129,11 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Record log safely
         if ($userId) {
-            recordLog('logout', 'User', $userId, 'Teacher logged out: ' . $user->email);
+            recordLog('logout', 'User', $userId, 'Teacher logged out: ' . $user->email); //[cite: 34]
         }
 
-        return redirect()->route('auth.login.form');
+        return redirect()->route('login'); // Updated from 'auth.login.form'
     }
 
     /**

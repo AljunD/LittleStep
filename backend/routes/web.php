@@ -30,7 +30,7 @@ Route::prefix('auth')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('auth.register.form');
     Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
 
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('auth.login.form');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('auth.login.submit');
