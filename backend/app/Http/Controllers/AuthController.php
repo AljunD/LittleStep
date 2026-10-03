@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
@@ -31,25 +32,27 @@ class AuthController extends Controller
             'first_name'        => 'required|string|max:255',
             'middle_name'       => 'nullable|string|max:255',
             'last_name'         => 'required|string|max:255',
+            'sex'               => 'required|string|in:Male,Female', // Added validation
             'contact_number'    => 'required|string|max:20',
             'address'           => 'required|string|max:500',
             'email'             => 'required|string|email|max:255|unique:users',
             'password'          => 'required|string|min:8|confirmed',
         ]);
 
-        // Create user account (teacher role only for web)
+        $cleanEmail = Str::lower(trim($request->email));
+
         $user = User::create([
-            'email'    => $request->email,
+            'email'    => $cleanEmail,
             'password' => Hash::make($request->password),
             'role'     => 'teacher',
         ]);
 
-        // Create teacher profile linked to user
         $teacher = Teacher::create([
             'user_id'        => $user->id,
             'first_name'     => $request->first_name,
             'middle_name'    => $request->middle_name,
             'last_name'      => $request->last_name,
+            'sex'            => $request->sex, // Added field
             'contact_number' => $request->contact_number,
             'address'        => $request->address,
         ]);
@@ -57,7 +60,6 @@ class AuthController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        // Record log
         recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered: ' . $teacher->first_name . ' ' . $teacher->last_name);
 
         return redirect()->route('verification.notice')
@@ -82,6 +84,9 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Normalize email input (trim whitespace and convert to lowercase)
+        $credentials['email'] = Str::lower(trim($credentials['email']));
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
@@ -93,7 +98,7 @@ class AuthController extends Controller
                 recordLog('login_denied', 'User', $user->id, 'Non-teacher attempted login: ' . $user->email);
                 return back()->withErrors([
                     'email' => 'Only teachers are allowed to access the web portal.',
-                ]);
+                ])->onlyInput('email');
             }
 
             if (!$user->hasVerifiedEmail()) {
@@ -114,7 +119,7 @@ class AuthController extends Controller
 
         return back()->withErrors([
             'email' => 'Invalid credentials provided.',
-        ]);
+        ])->onlyInput('email');
     }
 
     /**
@@ -130,10 +135,10 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         if ($userId) {
-            recordLog('logout', 'User', $userId, 'Teacher logged out: ' . $user->email); //[cite: 34]
+            recordLog('logout', 'User', $userId, 'Teacher logged out: ' . $user->email);
         }
 
-        return redirect()->route('login'); // Updated from 'auth.login.form'
+        return redirect()->route('login');
     }
 
     /**
@@ -151,14 +156,16 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink($request->only('email'));
+        $email = Str::lower(trim($request->email));
+
+        $status = Password::sendResetLink(['email' => $email]);
 
         if ($status === Password::RESET_LINK_SENT) {
-            recordLog('password_reset_link', 'User', 0, 'Password reset link sent to: ' . $request->email);
+            recordLog('password_reset_link', 'User', 0, 'Password reset link sent to: ' . $email);
             return back()->with(['success' => __($status)]);
         }
 
-        return back()->withErrors(['email' => __($status)]);
+        return back()->withErrors(['email' => __($status)])->onlyInput('email');
     }
 
     /**
@@ -181,7 +188,12 @@ class AuthController extends Controller
         ]);
 
         $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            [
+                'token' => $request->token,
+                'email' => Str::lower(trim($request->email)),
+                'password' => $request->password,
+                'password_confirmation' => $request->password_confirmation,
+            ],
             function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password),
@@ -191,9 +203,10 @@ class AuthController extends Controller
             }
         );
 
+        // Fixed route name from 'auth.login.form' to 'login'
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('auth.login.form')->with('status', 'Password reset successfully! You may now log in.')
-            : back()->withErrors(['email' => [__($status)]]);
+            ? redirect()->route('login')->with('status', 'Password reset successfully! You may now log in.')
+            : back()->withErrors(['email' => [__($status)]])->onlyInput('email');
     }
 
     /**

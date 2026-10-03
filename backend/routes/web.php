@@ -39,7 +39,10 @@ Route::prefix('auth')->group(function () {
 
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('auth.password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('auth.password.email');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('auth.password.reset');
+    
+    // Updated name from 'auth.password.reset' to 'password.reset'
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    
     Route::post('/reset-password', [AuthController::class, 'reset'])->name('auth.password.update');
 });
 
