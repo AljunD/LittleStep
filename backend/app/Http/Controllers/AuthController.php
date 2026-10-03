@@ -32,28 +32,27 @@ class AuthController extends Controller
             'first_name'        => 'required|string|max:255',
             'middle_name'       => 'nullable|string|max:255',
             'last_name'         => 'required|string|max:255',
+            'sex'               => 'required|string|in:Male,Female', // Added validation
             'contact_number'    => 'required|string|max:20',
             'address'           => 'required|string|max:500',
             'email'             => 'required|string|email|max:255|unique:users',
             'password'          => 'required|string|min:8|confirmed',
         ]);
 
-        // Normalize email
         $cleanEmail = Str::lower(trim($request->email));
 
-        // Create user account (teacher role only for web)
         $user = User::create([
             'email'    => $cleanEmail,
             'password' => Hash::make($request->password),
             'role'     => 'teacher',
         ]);
 
-        // Create teacher profile linked to user
         $teacher = Teacher::create([
             'user_id'        => $user->id,
             'first_name'     => $request->first_name,
             'middle_name'    => $request->middle_name,
             'last_name'      => $request->last_name,
+            'sex'            => $request->sex, // Added field
             'contact_number' => $request->contact_number,
             'address'        => $request->address,
         ]);
@@ -61,7 +60,6 @@ class AuthController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        // Record log
         recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered: ' . $teacher->first_name . ' ' . $teacher->last_name);
 
         return redirect()->route('verification.notice')
