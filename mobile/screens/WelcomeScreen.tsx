@@ -1,13 +1,65 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ImageBackground,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  Dimensions,
+  StatusBar,
+  Text,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+const { width, height } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to LittleStep</Text>
-      <Text style={styles.subtitle}>
-        Your child's learning journey starts here.
-      </Text>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
+
+      <ImageBackground
+        source={require("../assets/images/back.jpg")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.safeArea}>
+
+          {/* LittleStep Logo */}
+          <Image
+            source={require("../assets/images/logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
+          {/* Get Started Button */}
+          <View style={styles.bottomContent}>
+            <TouchableOpacity
+              style={styles.button}
+              activeOpacity={0.85}
+              onPress={() => {
+                console.log("Get Started");
+              }}
+            >
+              <Text style={styles.buttonText}>
+                Let's Get Started
+              </Text>
+
+              <Ionicons
+                name="arrow-forward"
+                size={20}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          </View>
+
+        </SafeAreaView>
+      </ImageBackground>
     </View>
   );
 }
@@ -15,17 +67,49 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  background: {
+    flex: 1,
+  },
+
+  safeArea: {
+    flex: 1,
     alignItems: "center",
-    padding: 20,
+    justifyContent: "space-between",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
+
+  logo: {
+    width: width * 0.55,
+    height: height * 0.16,
+    marginTop: height * 0.06,
   },
-  subtitle: {
+
+  bottomContent: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 28,
+    paddingBottom: height * 0.045,
+  },
+
+  button: {
+    width: "88%",
+    height: 52,
+    borderRadius: 26,
+
+    backgroundColor: "#08A9C1",
+
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+
+    gap: 10,
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
     fontSize: 16,
-    marginTop: 10,
-    textAlign: "center",
+    fontWeight: "700",
   },
 });
