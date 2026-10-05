@@ -51,6 +51,7 @@
                             <label class="text-sm font-semibold text-gray-700">Confirm New Password</label>
                             <input type="password" id="guardianConfirmPassword" name="password_confirmation"
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
+                            <p id="error-password_confirmation" class="text-xs font-semibold text-red-600 mt-1 hidden"></p>
                         </div>
                     </div>
                 </div>
