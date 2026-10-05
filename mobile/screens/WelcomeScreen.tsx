@@ -11,10 +11,25 @@ import {
   Text,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StackNavigationProp } from "@react-navigation/stack";
 
 const { width, height } = Dimensions.get("window");
 
-export default function WelcomeScreen() {
+type RootStackParamList = {
+  Welcome: undefined;
+  Login: undefined;
+};
+
+type WelcomeScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "Welcome"
+>;
+
+type Props = {
+  navigation: WelcomeScreenNavigationProp;
+};
+
+export default function WelcomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar
@@ -29,26 +44,19 @@ export default function WelcomeScreen() {
         resizeMode="cover"
       >
         <SafeAreaView style={styles.safeArea}>
-
-          {/* LittleStep Logo */}
           <Image
             source={require("../assets/images/logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
 
-          {/* Get Started Button */}
           <View style={styles.bottomContent}>
             <TouchableOpacity
               style={styles.button}
               activeOpacity={0.85}
-              onPress={() => {
-                console.log("Get Started");
-              }}
+              onPress={() => navigation.navigate("Login")}
             >
-              <Text style={styles.buttonText}>
-                Let's Get Started
-              </Text>
+              <Text style={styles.buttonText}>Get Started</Text>
 
               <Ionicons
                 name="arrow-forward"
@@ -57,7 +65,6 @@ export default function WelcomeScreen() {
               />
             </TouchableOpacity>
           </View>
-
         </SafeAreaView>
       </ImageBackground>
     </View>
@@ -97,13 +104,10 @@ const styles = StyleSheet.create({
     width: "88%",
     height: 52,
     borderRadius: 26,
-
     backgroundColor: "#08A9C1",
-
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-
     gap: 10,
   },
 
