@@ -141,8 +141,7 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
     Route::get('/', [ProgressController::class, 'index'])->name('progress.index');   
 
     // Select domain for evaluation
-    Route::get('/select-domain/{child_id?}', fn() => view('progress.select-domain'))
-        ->name('progress.select-domain');
+    Route::get('/select-domain/{child_id?}', [ProgressController::class, 'selectDomain'])->name('progress.select-domain');
 
     // Create new evaluation
     Route::get('/create/{child_id?}', fn() => view('progress.create'))

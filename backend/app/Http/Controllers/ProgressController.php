@@ -13,7 +13,6 @@ class ProgressController extends Controller
      */
     public function index()
     {
-        // Kukunin ang lahat ng bata at ang kanilang pinakabagong progress record
         $children = Child::with(['progressRecords' => function ($query) {
             $query->latest();
         }, 'progressRecords.teacher'])
@@ -28,8 +27,49 @@ class ProgressController extends Controller
      */
     public function selectDomain($child_id = null)
     {
-        $child = $child_id ? Child::find($child_id) : null;
-        return view('progress.select-domain', compact('child', 'child_id'));
+        $childId = $child_id ?? request('child_id');
+        $child = $childId ? Child::find($childId) : null;
+
+        // Fetch latest progress record for child
+        $latestRecord = $child ? ProgressRecord::with(['domains', 'domainScores'])
+            ->where('child_id', $child->id)
+            ->latest()
+            ->first() : null;
+
+        // Standard 7 ECCD Domains
+        $definedDomains = [
+            'gross_motor'        => 'Gross Motor',
+            'fine_motor'         => 'Fine Motor',
+            'self_help'          => 'Self Help',
+            'receptive_language' => 'Receptive Language',
+            'expressive_language'=> 'Expressive Language',
+            'cognitive'          => 'Cognitive',
+            'social_emotional'   => 'Social Emotional',
+        ];
+
+        // Map status for each domain dynamically
+        $domains = [];
+        foreach ($definedDomains as $key => $name) {
+            $status = 'Pending';
+
+            if ($latestRecord) {
+                // Check if score exists for domain
+                $score = $latestRecord->domainScores->where('domain_name', $key)->first()
+                    ?? $latestRecord->domains->where('name', $key)->first();
+
+                if ($score) {
+                    $status = $score->status ?? ($score->is_completed ? 'Completed' : 'In Progress');
+                }
+            }
+
+            $domains[] = [
+                'key'    => $key,
+                'name'   => $name,
+                'status' => $status,
+            ];
+        }
+
+        return view('progress.select-domain', compact('child', 'childId', 'domains'));
     }
 
     /**
@@ -37,8 +77,9 @@ class ProgressController extends Controller
      */
     public function create($child_id = null)
     {
-        $child = $child_id ? Child::find($child_id) : null;
-        return view('progress.create', compact('child', 'child_id'));
+        $childId = $child_id ?? request('child_id');
+        $child = $childId ? Child::find($childId) : null;
+        return view('progress.create', compact('child', 'childId'));
     }
 
     /**
@@ -46,8 +87,9 @@ class ProgressController extends Controller
      */
     public function addObservation($child_id = null)
     {
-        $child = $child_id ? Child::find($child_id) : null;
-        return view('progress.create-observation', compact('child', 'child_id'));
+        $childId = $child_id ?? request('child_id');
+        $child = $childId ? Child::find($childId) : null;
+        return view('progress.create-observation', compact('child', 'childId'));
     }
 
     /**
