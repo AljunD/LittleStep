@@ -4,17 +4,14 @@ import { createStackNavigator } from "@react-navigation/stack";
 
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
+import SelectStudentScreen from "./screens/SelectStudentScreen";
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
@@ -23,6 +20,11 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
+        />
+
+        <Stack.Screen
+          name="SelectStudent"
+          component={SelectStudentScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>
