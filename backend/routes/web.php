@@ -137,13 +137,11 @@ Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(fun
 | Later, you can replace the closures with controller methods.
 |
 */
-Route::prefix('progress')->middleware(['auth','verified','teacher'])->group(function () {
-    // Index (list of progress records)
-    Route::get('/', fn() => view('progress.index'))->name('progress.index');
+Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::get('/', [ProgressController::class, 'index'])->name('progress.index');   
 
     // Select domain for evaluation
-    Route::get('/select-domain/{child_id?}', fn() => view('progress.select-domain'))
-        ->name('progress.select-domain');
+    Route::get('/select-domain/{child_id?}', [ProgressController::class, 'selectDomain'])->name('progress.select-domain');
 
     // Create new evaluation
     Route::get('/create/{child_id?}', fn() => view('progress.create'))
