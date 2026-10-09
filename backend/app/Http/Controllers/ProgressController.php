@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Child;
+use App\Models\Domain;
+use App\Models\DomainResult;
 use App\Models\ProgressRecord;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ProgressController extends Controller
 {
-    /**
-     * Display a listing of all children with their progress records.
-     */
     public function index()
     {
         $children = Child::with(['progressRecords' => function ($query) {
@@ -22,21 +24,16 @@ class ProgressController extends Controller
         return view('progress.index', compact('children'));
     }
 
-    /**
-     * Show the domain selection view for evaluation.
-     */
     public function selectDomain($child_id = null)
     {
         $childId = $child_id ?? request('child_id');
         $child = $childId ? Child::find($childId) : null;
 
-        // Fetch latest progress record for child
         $latestRecord = $child ? ProgressRecord::with(['domains', 'domainScores'])
             ->where('child_id', $child->id)
             ->latest()
             ->first() : null;
 
-        // Standard 7 ECCD Domains
         $definedDomains = [
             'gross_motor'        => 'Gross Motor',
             'fine_motor'         => 'Fine Motor',
@@ -47,13 +44,11 @@ class ProgressController extends Controller
             'social_emotional'   => 'Social Emotional',
         ];
 
-        // Map status for each domain dynamically
         $domains = [];
         foreach ($definedDomains as $key => $name) {
             $status = 'Pending';
 
             if ($latestRecord) {
-                // Check if score exists for domain
                 $score = $latestRecord->domainScores->where('domain_name', $key)->first()
                     ?? $latestRecord->domains->where('name', $key)->first();
 
@@ -72,19 +67,45 @@ class ProgressController extends Controller
         return view('progress.select-domain', compact('child', 'childId', 'domains'));
     }
 
-    /**
-     * Show form for creating a new evaluation.
-     */
-    public function create($child_id = null)
+    public function create(Request $request, $child_id = null)
     {
-        $childId = $child_id ?? request('child_id');
-        $child = $childId ? Child::find($childId) : null;
-        return view('progress.create', compact('child', 'childId'));
-    }
+        $child = $child_id ? Child::findOrFail($child_id) : null;
+        $domainKey = $request->query('domain'); 
 
-    /**
-     * Show form for adding an observation.
-     */
+        $allowed = [
+            'gross_motor', 'fine_motor', 'self_help',
+            'receptive_language', 'expressive_language',
+            'cognitive', 'social_emotional'
+        ];
+
+        if (!in_array($domainKey, $allowed)) {
+            abort(404, 'Invalid domain');
+        }
+
+        $items = \App\Models\Domain::whereNull('progress_record_id')
+            ->where('domain', $domainKey)
+            ->orderBy('id')
+            ->get();
+
+        $domainNames = [
+            'gross_motor'          => 'Gross Motor',
+            'fine_motor'           => 'Fine Motor',
+            'self_help'            => 'Self-Help',
+            'receptive_language'   => 'Receptive Language',
+            'expressive_language'  => 'Expressive Language',
+            'cognitive'            => 'Cognitive',
+            'social_emotional'     => 'Social-Emotional',
+        ];
+
+        return view('progress.create', [
+            'child'       => $child,
+            'domainKey'   => $domainKey,
+            'domainName'  => $domainNames[$domainKey],
+            'items'       => $items,
+        ]);
+    }
+    
+
     public function addObservation($child_id = null)
     {
         $childId = $child_id ?? request('child_id');
@@ -92,9 +113,6 @@ class ProgressController extends Controller
         return view('progress.create-observation', compact('child', 'childId'));
     }
 
-    /**
-     * Display the specified progress record details or child progress summary.
-     */
     public function show($id = null)
     {
         $progressRecord = ProgressRecord::with(['child', 'teacher', 'domains', 'domainScores', 'domainObservation'])->find($id);
@@ -111,9 +129,6 @@ class ProgressController extends Controller
         return view('progress.show', compact('progressRecord', 'child', 'id'));
     }
 
-    /**
-     * Show form for editing a progress record.
-     */
     public function edit($id = null)
     {
         $progressRecord = $id ? ProgressRecord::with(['child', 'teacher'])->find($id) : null;

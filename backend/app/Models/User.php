@@ -14,44 +14,28 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, SoftDeletes, Notifiable;
 
-    // Explicit table name to match migration
     protected $table = 'users';
 
-    /**
-     * Mass assignable attributes
-     */
     protected $fillable = [
         'email',
         'password',
         'role',
     ];
 
-    /**
-     * Hidden attributes for arrays
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Casts for attributes
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * Override default email verification notification
-     */
     public function sendEmailVerificationNotification()
     {
         $this->notify(new CustomVerifyEmail);
     }
 
-    /**
-     * Relationships
-     */
     public function teacher()
     {
         return $this->hasOne(Teacher::class);

@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto my-12 px-4">
-    <!-- Back Link -->
     <div class="mb-6">
         <a href="{{ route('guardians.index') }}" 
            class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition">
@@ -15,7 +14,6 @@
         </a>
     </div>
 
-    <!-- Confirmation Card -->
     <div class="bg-white rounded-3xl border border-red-100 shadow-xl overflow-hidden">
         <div class="bg-red-50/70 p-6 border-b border-red-100 flex items-center space-x-4">
             <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -31,7 +29,6 @@
         </div>
 
         <div class="p-8 space-y-6">
-            <!-- Guardian Details Summary -->
             <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 space-y-3 text-sm">
                 <div class="flex justify-between py-1 border-b border-gray-200/60">
                     <span class="text-gray-500 font-medium">Guardian Name:</span>
@@ -60,7 +57,6 @@
                 </div>
             @endif
 
-            <!-- Form Action -->
             <form action="{{ route('guardians.destroy', $guardian->id) }}" method="POST" class="pt-4 flex items-center justify-end gap-3">
                 @csrf
                 @method('DELETE')

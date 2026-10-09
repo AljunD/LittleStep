@@ -18,7 +18,7 @@ class CustomVerifyEmail extends BaseVerifyEmail
     protected function buildMailMessage($url)
     {
         return (new MailMessage)
-            ->subject('Verify Your KidWatch2 Account')
+            ->subject('Verify Your LittleStep Account')
             ->view('emails.verify-email', [
                 'verificationUrl' => $url,
             ]);
@@ -33,7 +33,7 @@ class CustomVerifyEmail extends BaseVerifyEmail
     protected function verificationUrl($notifiable)
     {
         return URL::temporarySignedRoute(
-            'verification.verify', // ✅ must match your route name in web.php
+            'verification.verify', 
             Carbon::now()->addMinutes(60),
             [
                 'id'   => $notifiable->getKey(),

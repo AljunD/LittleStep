@@ -184,10 +184,8 @@
         const successMessage = document.getElementById('success-message');
         const failedMessage = document.getElementById('failed-message');
 
-        // Prevent rapid double-clicks
         if (submitBtn.disabled) return;
 
-        // Reset display states
         submitBtn.disabled = true;
         submitBtn.innerText = "Processing...";
         errorAlert.classList.add('hidden');
@@ -263,7 +261,6 @@
         });
     });
 
-    // Clean up input fields instantly when the user revises their typing
     document.getElementById('editGuardianForm').querySelectorAll('input, select').forEach(element => {
         element.addEventListener('input', function() {
             this.classList.remove('border-red-500', 'focus:ring-red-500/10', 'focus:border-red-500');

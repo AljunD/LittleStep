@@ -46,13 +46,6 @@ class Child extends Model
         return $this->hasMany(ProgressRecord::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Address Accessors
-    |--------------------------------------------------------------------------
-    | Parses comma-separated address string: "Barangay, City, Province, Region"
-    */
-
     public function getBarangayAttribute(): ?string
     {
         $parts = array_map('trim', explode(',', $this->address ?? ''));

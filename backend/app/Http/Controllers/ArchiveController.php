@@ -8,19 +8,15 @@ use App\Models\Child;
 
 class ArchiveController extends Controller
 {
-    /**
-     * Display a listing of archived guardians and archived children.
-     */
+
     public function index(Request $request)
     {
-        // Fetch soft-deleted guardians with linked user accounts
         $archivedGuardians = Guardian::onlyTrashed()
             ->with(['user' => function ($query) {
                 $query->withTrashed();
             }])
             ->paginate(10, ['*'], 'guardians_page');
 
-        // Fetch soft-deleted children with linked guardians
         $archivedChildren = Child::onlyTrashed()
             ->with(['guardian' => function ($query) {
                 $query->withTrashed();
@@ -30,9 +26,6 @@ class ArchiveController extends Controller
         return view('archives.index', compact('archivedGuardians', 'archivedChildren'));
     }
 
-    /**
-     * Restore an archived guardian and linked user.
-     */
     public function restore($id)
     {
         try {
@@ -55,9 +48,6 @@ class ArchiveController extends Controller
         }
     }
 
-    /**
-     * Restore an archived child.
-     */
     public function restoreChild($id)
     {
         try {

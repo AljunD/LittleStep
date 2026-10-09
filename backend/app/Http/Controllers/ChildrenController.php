@@ -9,27 +9,18 @@ use Illuminate\Support\Facades\Storage;
 
 class ChildrenController extends Controller
 {
-    /**
-     * Display a listing of children.
-     */
     public function index()
     {
         $children = Child::with('guardian')->paginate(10);
         return view('children.index', compact('children'));
     }
 
-    /**
-     * Show the form for creating a new child.
-     */
     public function create()
     {
         $guardians = Guardian::all();
         return view('children.create', compact('guardians'));
     }
 
-    /**
-     * Store a newly created child in storage.
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -51,18 +42,12 @@ class ChildrenController extends Controller
                          ->with('success', 'Child created successfully.');
     }
 
-    /**
-     * Display the specified child.
-     */
     public function show($id)
     {
         $child = Child::with('guardian.user')->findOrFail($id);
         return view('children.show', compact('child'));
     }
 
-    /**
-     * Show the form for editing the specified child.
-     */
     public function edit($id)
     {
         $child = Child::findOrFail($id);
@@ -70,9 +55,6 @@ class ChildrenController extends Controller
         return view('children.edit', compact('child', 'guardians'));
     }
 
-    /**
-     * Update the specified child in storage.
-     */
     public function update(Request $request, $id)
     {
         $child = Child::findOrFail($id);
@@ -120,7 +102,6 @@ class ChildrenController extends Controller
 
         $data['is_studying'] = $request->input('is_studying') == '1' ? 1 : 0;
 
-        // If child is not studying, set school_name to null
         if ($data['is_studying'] === 0) {
             $data['school_name'] = null;
         }
@@ -135,15 +116,11 @@ class ChildrenController extends Controller
                          ->with('success', 'Child profile updated successfully.');
     }
 
-    /**
-     * Soft delete the specified child.
-     */
     public function destroy($id)
     {
         $child = Child::findOrFail($id);
         $child->delete();
 
-        // Log deletion
         recordLog('deleted', 'Child', $child->id, 'Child archived: ' . $child->first_name . ' ' . $child->last_name);
 
         return redirect()->route('children.index')

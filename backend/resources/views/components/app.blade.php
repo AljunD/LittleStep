@@ -15,7 +15,6 @@
 <body class="bg-[#f4f7fe] font-[Inter] h-screen overflow-hidden">
 
   <div class="flex h-screen">
-    <!-- Sidebar -->
     <aside id="sidebar"
            class="fixed inset-y-0 left-0 z-50 w-72 bg-[#081028] shadow-2xl flex flex-col
                   -translate-x-full lg:translate-x-0 lg:static lg:w-64 lg:shadow-none
@@ -83,9 +82,7 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 h-screen">
-      <!-- Mobile Header -->
       <div class="lg:hidden bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm">
         <button onclick="toggleSidebar()" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
           <i class="fas fa-bars text-2xl"></i>
@@ -98,7 +95,6 @@
         @endauth
       </div>
 
-      <!-- Scrollable Content -->
       <main class="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
         @yield('content')
       </main>

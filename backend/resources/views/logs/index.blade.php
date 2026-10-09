@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="space-y-8">
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">System Logs</h1>
@@ -16,7 +15,6 @@
         </a>
     </div>
 
-    <!-- Filters -->
     <form method="GET" class="flex flex-wrap gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
         <select name="user_id" class="border rounded px-3 py-2 text-sm">
             <option value="">All Users</option>
@@ -51,7 +49,6 @@
         </button>
     </form>
 
-    <!-- Logs Table -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -94,7 +91,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm">
             {{ $logs->links() }}
         </div>

@@ -5,8 +5,6 @@
 @section('content')
 <div class="max-w-4xl mx-auto my-10">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        
-        <!-- Fixed Header -->
         <div class="px-8 py-8 bg-gray-50 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
@@ -18,7 +16,6 @@
             </div>
         </div>
 
-        <!-- Validation Errors Alert -->
         @if ($errors->any())
             <div class="p-6 bg-red-50 border-b border-red-100">
                 <p class="text-red-700 font-bold mb-2">Please correct the following errors:</p>
@@ -30,7 +27,6 @@
             </div>
         @endif
 
-        <!-- Scrollable Form Area -->
         <div id="form-container" class="p-8 md:p-12 max-h-[calc(100vh-240px)] overflow-y-auto custom-scroll">
             <form id="createChildForm" 
                   action="{{ route('guardians.store-child', $guardian->id) }}" 
@@ -39,7 +35,6 @@
                   class="space-y-10">
                 @csrf
 
-                <!-- Child Profile Header -->
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900">Child Profile</h2>
                     <p class="text-gray-500 mt-1">Sociodemographic and family background.</p>
@@ -80,7 +75,6 @@
                         </div>
                     </div>
 
-                    <!-- Child Address -->
                     <div class="space-y-4">
                         <label class="text-sm font-semibold text-gray-700">Child Address</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -142,8 +136,6 @@
                 </div>
 
                 <hr class="border-gray-100">
-
-                <!-- Family Information -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div class="space-y-6">
                         <h3 class="text-lg font-bold text-gray-900">Father’s Information</h3>
@@ -152,7 +144,6 @@
                             <input type="number" name="fathers_age" id="fatherAge" value="{{ old('fathers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" name="fathers_occupation" id="fatherOccupation" value="{{ old('fathers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
 
-                            <!-- Drop-down for Educational Attainment -->
                             <select name="fathers_education" id="fatherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
                                 <option value="">Select Educational Attainment</option>
                                 <option value="Elementary" {{ old('fathers_education') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
@@ -171,7 +162,6 @@
                             <input type="number" name="mothers_age" id="motherAge" value="{{ old('mothers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Age">
                             <input type="text" name="mothers_occupation" id="motherOccupation" value="{{ old('mothers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none" placeholder="Occupation">
 
-                            <!-- Drop-down for Educational Attainment -->
                             <select name="mothers_education" id="motherEducation" class="w-full border-gray-200 rounded-xl p-3 border outline-none">
                                 <option value="">Select Educational Attainment</option>
                                 <option value="Elementary" {{ old('mothers_education') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
@@ -195,7 +185,6 @@
                     </div>
                 </div>
 
-                <!-- Photo Upload -->
                 <div class="space-y-4">
                     <label class="text-sm font-semibold text-gray-700">Child Photo Identification</label>
                     <div class="flex items-center space-x-6">
@@ -212,7 +201,6 @@
                     </div>
                 </div>
 
-                <!-- Submit Buttons -->
                 <div class="pt-8 flex justify-end space-x-4">
                     <a href="{{ route('guardians.index') }}" 
                        class="px-8 py-4 text-gray-600 font-bold hover:text-gray-900 transition">Cancel</a>
@@ -227,7 +215,6 @@
 </div>
 
 <script>
-    // Photo Preview
     document.getElementById('photoInput')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -240,7 +227,6 @@
         }
     });
 
-    // Studying Checkbox Logic
     const yesBox = document.getElementById('childStudyingYes');
     const noBox = document.getElementById('childStudyingNo');
     const schoolField = document.getElementById('schoolNameField');

@@ -138,7 +138,7 @@ class ECCDChecklistSeeder extends Seeder
 
         foreach ($checklist as $item) {
                     Domain::create([
-                        'progress_record_id' => null,           // ← Very Important
+                        'progress_record_id' => null,         
                         'domain'                 => $item['domain'],
                         'activity'               => $item['activity'],
                         'materials_and_procedure'=> $item['materials_and_procedure'],

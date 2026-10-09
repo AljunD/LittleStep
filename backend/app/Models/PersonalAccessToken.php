@@ -9,7 +9,6 @@ class PersonalAccessToken extends Model
 {
     use HasFactory;
 
-    // Explicit table name to match migration
     protected $table = 'personal_access_tokens';
 
     protected $fillable = [
@@ -22,11 +21,6 @@ class PersonalAccessToken extends Model
         'expires_at',
     ];
 
-    /**
-     * Relationships
-     */
-
-    // Polymorphic relation: token belongs to any authenticatable model
     public function tokenable()
     {
         return $this->morphTo();

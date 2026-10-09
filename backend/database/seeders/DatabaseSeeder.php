@@ -10,14 +10,9 @@ use App\Models\Child;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+
     public function run(): void
     {
-        // -------------------------------
-        // Teacher user + profile
-        // -------------------------------
         $teacherUser = User::create([
             'email'    => 'aljundalman15@gmail.com',
             'password' => bcrypt('Password123@'),
@@ -34,9 +29,6 @@ class DatabaseSeeder extends Seeder
             'address'        => 'Quezon City',
         ]);
 
-        // -------------------------------
-        // Guardian user + profile
-        // -------------------------------
         $guardianUser = User::create([
             'email'    => 'ischowalter@example.net',
             'password' => bcrypt('Password123@'),
@@ -54,9 +46,6 @@ class DatabaseSeeder extends Seeder
             'relationship_to_child'=> 'Mother',
         ]);
 
-        // -------------------------------
-        // Child linked to guardian
-        // -------------------------------
         Child::create([
             'guardian_id'        => $guardian->id,
             'first_name'         => 'Juan',

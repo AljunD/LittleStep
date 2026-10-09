@@ -66,17 +66,11 @@ class AuthController extends Controller
             ->with('success', 'Registration successful! Please verify your email.');
     }
 
-    /**
-     * Show login form
-     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
-
-    /**
-     * Handle login securely
-     */
+    
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -84,7 +78,6 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Normalize email input (trim whitespace and convert to lowercase)
         $credentials['email'] = Str::lower(trim($credentials['email']));
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -92,7 +85,6 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Only teachers can use the web
             if ($user->role !== 'teacher') {
                 Auth::logout();
                 recordLog('login_denied', 'User', $user->id, 'Non-teacher attempted login: ' . $user->email);
@@ -108,13 +100,11 @@ class AuthController extends Controller
                     ->withErrors(['email' => 'You must verify your email before logging in.']);
             }
 
-            // Record successful login
             recordLog('login', 'User', $user->id, 'Teacher logged in: ' . $user->email);
 
             return redirect()->intended('/dashboard');
         }
 
-        // Record failed login attempt
         recordLog('login_failed', 'User', 0, 'Failed login attempt for email: ' . $request->email);
 
         return back()->withErrors([
@@ -122,9 +112,6 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    /**
-     * Handle logout
-     */
     public function logout(Request $request)
     {
         $user = Auth::user();
@@ -141,17 +128,11 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    /**
-     * Show forgot password form
-     */
     public function showForgotPasswordForm()
     {
         return view('auth.forgot-password');
     }
 
-    /**
-     * Send reset link email securely
-     */
     public function sendResetLink(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -168,17 +149,11 @@ class AuthController extends Controller
         return back()->withErrors(['email' => __($status)])->onlyInput('email');
     }
 
-    /**
-     * Show reset password form
-     */
     public function showResetForm($token)
     {
         return view('auth.reset-password', ['token' => $token]);
     }
 
-    /**
-     * Handle password reset securely
-     */
     public function reset(Request $request)
     {
         $request->validate([
@@ -203,15 +178,11 @@ class AuthController extends Controller
             }
         );
 
-        // Fixed route name from 'auth.login.form' to 'login'
         return $status === Password::PASSWORD_RESET
             ? redirect()->route('login')->with('status', 'Password reset successfully! You may now log in.')
             : back()->withErrors(['email' => [__($status)]])->onlyInput('email');
     }
 
-    /**
-     * Handle email verification securely
-     */
     public function verify(EmailVerificationRequest $request)
     {
         $request->fulfill();

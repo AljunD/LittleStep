@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto my-10 px-4">
-    <!-- Back Navigation -->
     <div class="mb-6">
         <a href="{{ route('children.index') }}" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,10 +14,8 @@
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-        <!-- Header Section -->
         <div class="relative px-8 py-10 bg-gradient-to-r from-slate-50 to-gray-100 border-b border-gray-200">
             <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
-                <!-- Child Photo -->
                 <div class="relative">
                     <div class="w-40 h-40 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-gray-200">
                         <img src="{{ $child->photo_path ? asset('storage/' . $child->photo_path) : asset('images/sample-child.jpg') }}" 
@@ -28,7 +25,6 @@
                     <span class="absolute -bottom-2 -right-2 bg-green-500 border-4 border-white w-6 h-6 rounded-full" title="Active Record"></span>
                 </div>
 
-                <!-- Basic Info -->
                 <div class="flex-1 text-center md:text-left">
                     <div class="flex flex-col md:flex-row md:items-center gap-3 mb-2">
                         <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
@@ -45,7 +41,6 @@
                         </span>
                     </p>
 
-                    <!-- Actions -->
                     <div class="flex flex-wrap justify-center md:justify-start gap-3">
                         <a href="{{ route('children.edit', $child->id) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
                             <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,10 +60,8 @@
             </div>
         </div>
 
-        <!-- Details Grid -->
         <div class="p-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div class="lg:col-span-2 space-y-10">
-                <!-- Personal & Location -->
                 <section>
                     <h3 class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-5 flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +105,6 @@
 
                 <hr class="border-gray-100">
 
-                <!-- Education -->
                 <section>
                     <h3 class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-5 flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,9 +124,7 @@
                 </section>
             </div>
 
-            <!-- Parents & Guardian Sidebar -->
             <div class="space-y-6">
-                <!-- Linked Guardian -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span> Linked Guardian
@@ -165,7 +155,6 @@
                     @endif
                 </div>
 
-                <!-- Father -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center">
                         <span class="w-2 h-2 bg-blue-400 rounded-full mr-2"></span> Father
@@ -192,7 +181,6 @@
                     </div>
                 </div>
 
-                <!-- Mother -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center">
                         <span class="w-2 h-2 bg-pink-400 rounded-full mr-2"></span> Mother
