@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   View,
@@ -12,6 +13,19 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 export default function SelectStudentScreen({ navigation }: any) {
+  const students = [
+    {
+      name: "Dela Cruz, Juan",
+      firstName: "Juan",
+      image: require("../assets/images/juan.jpg"),
+    },
+    {
+      name: "Dela Cruz, Maria",
+      firstName: "Maria",
+      image: require("../assets/images/maria.jpg"),
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -25,82 +39,50 @@ export default function SelectStudentScreen({ navigation }: any) {
         style={styles.background}
         resizeMode="cover"
       >
-
         <SafeAreaView style={styles.safeArea}>
-
-          {/* SPACE ABOVE HEADER */}
           <View style={styles.skySpace} />
 
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.portalLabel}>
-              PARENT PORTAL
-            </Text>
-
-            <Text style={styles.title}>
-              Who’s learning today?
-            </Text>
+            <Text style={styles.portalLabel}>PARENT PORTAL</Text>
+            <Text style={styles.title}>Who’s learning today?</Text>
           </View>
 
-          {/* STUDENTS */}
+          {/* STUDENT CARDS */}
           <View style={styles.studentContainer}>
+            {students.map((student) => (
+              <TouchableOpacity
+                key={student.firstName}
+                style={styles.studentCard}
+                activeOpacity={0.85}
+                onPress={() =>
+                  navigation.navigate("Dashboard", { student })
+                }
+              >
+                <Image
+                  source={student.image}
+                  style={styles.profile}
+                  resizeMode="cover"
+                />
 
-            {/* JUAN */}
-            <TouchableOpacity
-              style={styles.studentCard}
-              activeOpacity={0.85}
-            >
-              <Image
-                source={require("../assets/images/juan.jpg")}
-                style={styles.profile}
-              />
+                <View style={styles.studentInfo}>
+                  <Text style={styles.studentName}>
+                    {student.name}
+                  </Text>
 
-              <View style={styles.studentInfo}>
-                <Text style={styles.studentName}>
-                  Dela Cruz, Juan
-                </Text>
+                  <Text style={styles.progress}>
+                    View Progress Records
+                  </Text>
+                </View>
 
-                <Text style={styles.progress}>
-                  View Progress Records
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={22}
-                color="#C7C7C7"
-              />
-            </TouchableOpacity>
-
-            {/* MARIA */}
-            <TouchableOpacity
-              style={styles.studentCard}
-              activeOpacity={0.85}
-            >
-              <Image
-                source={require("../assets/images/maria.jpg")}
-                style={styles.profile}
-              />
-
-              <View style={styles.studentInfo}>
-                <Text style={styles.studentName}>
-                  Dela Cruz, Maria
-                </Text>
-
-                <Text style={styles.progress}>
-                  View Progress Records
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={22}
-                color="#C7C7C7"
-              />
-            </TouchableOpacity>
-
+                <Ionicons
+                  name="chevron-forward"
+                  size={22}
+                  color="#C7C7C7"
+                />
+              </TouchableOpacity>
+            ))}
           </View>
-
         </SafeAreaView>
       </ImageBackground>
     </View>
@@ -112,32 +94,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-
   background: {
     flex: 1,
     width: "100%",
     height: "100%",
   },
-
   safeArea: {
     flex: 1,
   },
-
-  /* SPACE ABOVE BLUE HEADER */
-
   skySpace: {
     height: 65,
   },
-
-  /* BLUE HEADER */
-
   header: {
     backgroundColor: "#0BA8BD",
     paddingHorizontal: 28,
     paddingTop: 20,
     paddingBottom: 27,
   },
-
   portalLabel: {
     color: "#FFFFFF",
     fontSize: 12,
@@ -145,68 +118,46 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 9,
   },
-
   title: {
     color: "#FFFFFF",
     fontSize: 27,
     fontWeight: "800",
   },
-
-  /* STUDENTS */
-
   studentContainer: {
     flex: 1,
     alignItems: "center",
     paddingTop: 80,
   },
-
-  /* CARD */
-
   studentCard: {
     width: "76%",
     minHeight: 90,
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
-
     flexDirection: "row",
     alignItems: "center",
-
     paddingHorizontal: 18,
     marginBottom: 24,
-
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.16,
     shadowRadius: 8,
-
     elevation: 6,
   },
-
-  /* PROFILE IMAGE */
-
   profile: {
     width: 55,
     height: 55,
     borderRadius: 28,
     marginRight: 15,
   },
-
-  /* STUDENT TEXT */
-
   studentInfo: {
     flex: 1,
   },
-
   studentName: {
     color: "#222222",
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 5,
   },
-
   progress: {
     color: "#B8B8B8",
     fontSize: 11,
