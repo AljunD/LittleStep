@@ -102,6 +102,9 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
 
     Route::get('/edit/{id?}', fn() => view('progress.edit'))
         ->name('progress.edit');
+
+    Route::post('/store', [ProgressController::class, 'store'])
+        ->name('progress.store');
 });
 
 Route::get('/logs', [LogsController::class, 'index'])

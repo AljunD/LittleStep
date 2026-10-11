@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Domain;
+use App\Models\EccdChecklistItem;
 
 class ECCDChecklistSeeder extends Seeder
 {
@@ -38,7 +38,7 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'fine_motor', 'activity' => 'Draws circle purposefully', 'materials_and_procedure' => 'MATERIALS: paper, pencil/crayon. PROCEDURE: Demonstrate circle... Credit if closed or nearly closed curve.'],
             ['domain' => 'fine_motor', 'activity' => 'Draws a human figure (head, eyes, trunk, arms, hands/fingers)', 'materials_and_procedure' => 'MATERIALS: paper, pencil. PROCEDURE: Ask to draw a person. Credit if 3 or more body parts.'],
             ['domain' => 'fine_motor', 'activity' => 'Draws a house using geometric forms', 'materials_and_procedure' => 'MATERIALS: paper, pencil. PROCEDURE: Ask to draw a house. Credit if roof, main frame, and door/window.'],
-            
+
             // ========================== SELF-HELP DOMAIN (27) ==========================
             ['domain' => 'self_help', 'activity' => 'Feeds self with finger food (e.g. biscuits, bread) using fingers', 'materials_and_procedure' => 'MATERIALS: bread, biscuits. This must be elicited by the interviewer.'],
             ['domain' => 'self_help', 'activity' => 'Feeds self using fingers to eat rice/viands with spillage', 'materials_and_procedure' => 'Parental report will suffice.'],
@@ -107,7 +107,7 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'cognitive', 'activity' => 'Points to left and right sides of body', 'materials_and_procedure' => 'PROCEDURE: Ask to show left/right body parts. Credit if at least 5 correct.'],
             ['domain' => 'cognitive', 'activity' => 'Can state what is silly or wrong with pictures', 'materials_and_procedure' => 'MATERIALS: Two silly picture cards.'],
             ['domain' => 'cognitive', 'activity' => 'Matches upper case letters and matches lower case letters', 'materials_and_procedure' => 'MATERIALS: Alphabet cards. Credit if can match 4 pairs.'],
-            
+
             // ========================== SOCIAL-EMOTIONAL DOMAIN (24) ==========================
             ['domain' => 'social_emotional', 'activity' => 'Enjoys watching activities of nearby people or animals', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'social_emotional', 'activity' => 'Friendly with strangers but initially may show slight anxiety', 'materials_and_procedure' => 'Parental report will suffice.'],
@@ -133,18 +133,17 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'social_emotional', 'activity' => 'Honors a simple bargain with caregiver', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'social_emotional', 'activity' => 'Watches responsibly over younger siblings', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'social_emotional', 'activity' => 'Cooperates with adults and peers in group situations', 'materials_and_procedure' => 'Parental report will suffice.'],
-
         ];
 
-        foreach ($checklist as $item) {
-                    Domain::create([
-                        'progress_record_id' => null,         
-                        'domain'                 => $item['domain'],
-                        'activity'               => $item['activity'],
-                        'materials_and_procedure'=> $item['materials_and_procedure'],
-                    ]);
-                }
-
-                $this->command->info('✅ ECCD Checklist seeded successfully! Total items: ' . count($checklist));
+        foreach ($checklist as $index => $item) {
+            EccdChecklistItem::create([
+                'domain'                  => $item['domain'],
+                'activity'                => $item['activity'],
+                'materials_and_procedure' => $item['materials_and_procedure'],
+                'item_number'             => $index + 1,
+            ]);
         }
+
+        $this->command->info('✅ ECCD Checklist seeded successfully! Total items: ' . count($checklist));
+    }
 }

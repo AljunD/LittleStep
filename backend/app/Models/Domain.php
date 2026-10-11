@@ -14,16 +14,19 @@ class Domain extends Model
 
     protected $fillable = [
         'progress_record_id',
-        'domain',
-        'activity',
-        'materials_and_procedure',
-        'item_number',
+        'checklist_item_id',
         'status',
     ];
 
+    // Relationships
     public function progressRecord()
     {
         return $this->belongsTo(ProgressRecord::class);
+    }
+
+    public function checklistItem()
+    {
+        return $this->belongsTo(EccdChecklistItem::class, 'checklist_item_id');
     }
 
     public function results()

@@ -99,10 +99,9 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== DOMAINS ======================
-        Schema::create('domains', function (Blueprint $table) {
+        // ====================== ECCD CHECKLIST ITEMS (NEW) ======================
+        Schema::create('eccd_checklist_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('progress_record_id')->nullable()->constrained('progress_records')->onDelete('cascade');
             $table->enum('domain', [
                 'gross_motor', 'fine_motor', 'self_help',
                 'receptive_language', 'expressive_language',
@@ -110,7 +109,16 @@ return new class extends Migration {
             ]);
             $table->string('activity');
             $table->text('materials_and_procedure')->nullable();
-            $table->string('item_number')->nullable();
+            $table->unsignedSmallInteger('item_number')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // ====================== DOMAINS (UPDATED) ======================
+        Schema::create('domains', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('progress_record_id')->constrained('progress_records')->onDelete('cascade');
+            $table->foreignId('checklist_item_id')->constrained('eccd_checklist_items')->onDelete('cascade');
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
@@ -216,6 +224,7 @@ return new class extends Migration {
         Schema::dropIfExists('domain_observations');
         Schema::dropIfExists('domain_results');
         Schema::dropIfExists('domains');
+        Schema::dropIfExists('eccd_checklist_items');
         Schema::dropIfExists('progress_records');
         Schema::dropIfExists('children');
         Schema::dropIfExists('guardians');
