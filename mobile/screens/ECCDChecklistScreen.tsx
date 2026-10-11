@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   View,
@@ -6,7 +5,6 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   useWindowDimensions,
@@ -19,36 +17,36 @@ const categories = [
     title: "Physical Movement",
     subtitle: "Gross Motor",
     icon: "body-outline" as const,
-    color: "#FFA5A5",
+    color: "#F9C96B",
   },
   {
     title: "Hand & Finger Skills",
     subtitle: "Fine Motor",
     icon: "hand-left-outline" as const,
-    color: "#FFD477",
+    color: "#A8D8B9",
   },
   {
     title: "Understanding & Listening",
     subtitle: "Receptive Language",
     icon: "ear-outline" as const,
-    color: "#A5E5D0",
+    color: "#B9C9F8",
   },
   {
     title: "Speaking & Communication",
     subtitle: "Expressive Language",
     icon: "chatbubble-ellipses-outline" as const,
-    color: "#9BD8F5",
+    color: "#F3B9C7",
   },
   {
     title: "Social & Emotional Skills",
     subtitle: "Social Emotional",
     icon: "people-outline" as const,
-    color: "#D0C8FF",
+    color: "#DCEBFF",
   },
   {
     title: "Thinking & Learning",
     subtitle: "Cognitive",
-    icon: "finger-print-outline" as const,
+    icon: "bulb-outline" as const,
     color: "#FFC09F",
   },
 ];
@@ -59,36 +57,48 @@ export default function ECCDChecklistScreen({
 }: any) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = height < 720;
-  const student = route.params?.student;
+
+  const compact = height < 760;
+  const small = width < 360;
+  const student = route?.params?.student;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.screen}>
       <StatusBar
         backgroundColor="#FFFFFF"
         barStyle="dark-content"
       />
 
-      {/* TOP BAR */}
+      {/* FIXED HEADER */}
       <View
         style={[
-          styles.topBar,
-          { paddingTop: Math.max(insets.top, 0) },
+          styles.header,
+          {
+            paddingTop: Math.max(insets.top, 8),
+            paddingHorizontal: small ? 16 : 22,
+          },
         ]}
       >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
+          activeOpacity={0.75}
         >
           <Ionicons
             name="chevron-back"
             size={25}
-            color="#222222"
+            color="#284F47"
           />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>ECCD Checklist</Text>
+        <Text
+          style={[
+            styles.headerTitle,
+            compact && styles.compactHeaderTitle,
+          ]}
+        >
+          ECCD Checklist
+        </Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -97,19 +107,34 @@ export default function ECCDChecklistScreen({
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
+        imageStyle={styles.backgroundImage}
         resizeMode="cover"
       >
         <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={[
             styles.listContent,
             {
-              paddingHorizontal: Math.max(24, width * 0.105),
-              paddingTop: compact ? 12 : 18,
-              paddingBottom: 18,
+              paddingHorizontal: small ? 16 : 22,
+              paddingTop: compact ? 10 : 16,
+              paddingBottom: 16,
             },
           ]}
           showsVerticalScrollIndicator={false}
         >
+          <Text
+            style={[
+              styles.sectionTitle,
+              compact && styles.compactSectionTitle,
+            ]}
+          >
+            Development Areas
+          </Text>
+
+          <Text style={styles.sectionSubtitle}>
+            Choose an area to view developmental skills.
+          </Text>
+
           {categories.map((category) => (
             <TouchableOpacity
               key={category.title}
@@ -117,20 +142,25 @@ export default function ECCDChecklistScreen({
                 styles.categoryCard,
                 {
                   backgroundColor: category.color,
-                  minHeight: compact ? 63 : 75,
                 },
+                compact && styles.compactCategoryCard,
               ]}
               activeOpacity={0.8}
               onPress={() => {
-                // Connect each category to its detail screen later.
+                // Connect category detail screens here later.
                 console.log("Selected category:", category.title);
               }}
             >
-              <View style={styles.iconCircle}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  compact && styles.compactIconCircle,
+                ]}
+              >
                 <Ionicons
                   name={category.icon}
-                  size={19}
-                  color="#444444"
+                  size={compact ? 21 : 24}
+                  color="#365C55"
                 />
               </View>
 
@@ -138,9 +168,10 @@ export default function ECCDChecklistScreen({
                 <Text
                   style={[
                     styles.categoryTitle,
-                    { fontSize: Math.min(width * 0.034, 14) },
+                    compact && styles.compactCategoryTitle,
                   ]}
                   numberOfLines={2}
+                  adjustsFontSizeToFit
                 >
                   {category.title}
                 </Text>
@@ -152,59 +183,65 @@ export default function ECCDChecklistScreen({
 
               <Ionicons
                 name="chevron-forward"
-                size={17}
-                color="#222222"
+                size={20}
+                color="#496E65"
               />
             </TouchableOpacity>
           ))}
         </ScrollView>
       </ImageBackground>
 
-      {/* BOTTOM NAVIGATION */}
+      {/* FIXED BOTTOM NAVIGATION */}
       <View
         style={[
           styles.bottomNav,
-          { paddingBottom: Math.max(insets.bottom, 5) },
+          {
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
         ]}
       >
         <TouchableOpacity
           style={styles.navItem}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate("Dashboard", { student })}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Dashboard", { student })
+          }
         >
           <Ionicons
             name="home-outline"
-            size={22}
-            color="#AAAAAA"
+            size={23}
+            color="#8A9692"
           />
-          <Text style={styles.navLabel}>Home</Text>
+          <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navItem}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
           <Ionicons
-            name="stats-chart-outline"
-            size={22}
-            color="#08AEC2"
+            name="clipboard"
+            size={23}
+            color="#337D73"
           />
-          <Text style={[styles.navLabel, styles.activeLabel]}>
+          <Text style={[styles.navText, styles.activeNavText]}>
             ECCD Checklist
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navItem}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate("Profile", { student })}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Profile", { student })
+          }
         >
           <Ionicons
             name="person-outline"
-            size={22}
-            color="#AAAAAA"
+            size={23}
+            color="#8A9692"
           />
-          <Text style={styles.navLabel}>Profile</Text>
+          <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -212,25 +249,25 @@ export default function ECCDChecklistScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
 
-  topBar: {
-    minHeight: 69,
+  header: {
+    minHeight: 86,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#DDDDDD",
+    borderBottomColor: "#F0F2F0",
   },
 
   backButton: {
     width: 40,
-    height: 44,
+    height: 43,
     justifyContent: "center",
     alignItems: "flex-start",
   },
@@ -238,9 +275,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#111111",
+    color: "#284F47",
+  },
+
+  compactHeaderTitle: {
+    fontSize: 21,
   },
 
   headerSpacer: {
@@ -251,79 +292,123 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  backgroundImage: {
+    opacity: 0.35,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
   listContent: {
     flexGrow: 1,
   },
 
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#284F47",
+    marginBottom: 4,
+  },
+
+  compactSectionTitle: {
+    fontSize: 18,
+  },
+
+  sectionSubtitle: {
+    fontSize: 12,
+    color: "#788781",
+    marginBottom: 15,
+  },
+
   categoryCard: {
     width: "100%",
-    borderRadius: 16,
+    minHeight: 82,
+    borderRadius: 18,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 11,
-    paddingVertical: 9,
-    marginBottom: 12,
-    elevation: 3,
-    shadowColor: "#000000",
-    shadowOpacity: 0.13,
-    shadowRadius: 4,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    marginBottom: 11,
+    shadowColor: "#31574F",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+
+  compactCategoryCard: {
+    minHeight: 70,
+    paddingVertical: 8,
+    marginBottom: 8,
   },
 
   iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.78)",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.65)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: 13,
+  },
+
+  compactIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    marginRight: 11,
   },
 
   categoryInfo: {
     flex: 1,
-    paddingRight: 5,
+    marginRight: 8,
   },
 
   categoryTitle: {
+    fontSize: 14,
     fontWeight: "800",
-    color: "#111111",
+    color: "#294E46",
+  },
+
+  compactCategoryTitle: {
+    fontSize: 12,
   },
 
   categorySubtitle: {
-    fontSize: 10,
-    color: "#222222",
-    marginTop: 3,
+    fontSize: 11,
+    color: "#58736B",
+    marginTop: 4,
   },
 
   bottomNav: {
-    minHeight: 58,
+    minHeight: 72,
     backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
-    paddingTop: 5,
+    borderTopColor: "#E9EEEB",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingTop: 9,
   },
 
   navItem: {
     flex: 1,
-    minWidth: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingHorizontal: 3,
   },
 
-  navLabel: {
-    fontSize: 9,
-    color: "#AAAAAA",
-    marginTop: 3,
+  navText: {
+    fontSize: 10,
+    color: "#8A9692",
+    marginTop: 4,
+    fontWeight: "600",
     textAlign: "center",
   },
 
-  activeLabel: {
-    color: "#08AEC2",
+  activeNavText: {
+    color: "#337D73",
+    fontWeight: "800",
   },
 });

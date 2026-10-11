@@ -1,336 +1,354 @@
-
 import React from "react";
 import {
   View,
   Text,
   Image,
   ImageBackground,
-  StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
+  StyleSheet,
   StatusBar,
-  ScrollView,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function DashboardScreen({ navigation, route }: any) {
-  const { width, height } = useWindowDimensions();
+export default function DashboardScreen({
+  navigation,
+  route,
+}: any) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
 
-  const compact = height < 720;
-  const sidePadding = Math.max(18, Math.min(width * 0.09, 34));
+  // Automatically reduce spacing on shorter phones
+  const compact = height < 760;
+  const small = width < 360;
 
-  const student = route.params?.student ?? {
-    name: "Dela Cruz, Juan",
+  const student = route?.params?.student ?? {
     firstName: "Juan",
+    lastName: "Dela Cruz",
+    name: "Juan Dela Cruz",
+    age: "4 years old",
     image: require("../assets/images/juan.jpg"),
   };
+
+  const studentName =
+    student.name ??
+    [student.firstName, student.lastName]
+      .filter(Boolean)
+      .join(" ") ??
+    "Juan Dela Cruz";
+
+  const studentImage =
+    typeof student.image === "number"
+      ? student.image
+      : student.image
+      ? student.image
+      : require("../assets/images/juan.jpg");
 
   const activities = [
     {
       title: "Physical Movement",
       subtitle: "Gross Motor",
-      icon: "body-outline" as const,
-      color: "#FFA5A5",
+      icon: "body-outline",
+      color: "#F9C96B",
     },
     {
       title: "Hand & Finger Skills",
       subtitle: "Fine Motor",
-      icon: "hand-left-outline" as const,
-      color: "#FFD477",
+      icon: "hand-left-outline",
+      color: "#A8D8B9",
     },
     {
       title: "Thinking & Learning",
       subtitle: "Cognitive",
-      icon: "finger-print-outline" as const,
-      color: "#FFC09F",
+      icon: "bulb-outline",
+      color: "#B9C9F8",
     },
     {
       title: "View Full",
       subtitle: "ECCD Checklist",
-      icon: "document-text-outline" as const,
-      color: "#B9DEC5",
+      icon: "clipboard-outline",
+      color: "#F3B9C7",
     },
   ];
+
+  const quickActions = [
+    {
+      title: "Display",
+      icon: "desktop-outline",
+      color: "#DCEBFF",
+      onPress: () =>
+        navigation.navigate("Display", { student }),
+    },
+    {
+      title: "Switch Student",
+      icon: "people-outline",
+      color: "#E5DDFB",
+      onPress: () => navigation.navigate("SelectStudent"),
+    },
+    {
+      title: "Logout",
+      icon: "log-out-outline",
+      color: "#FFE5D2",
+      onPress: () => navigation.navigate("Login"),
+    },
+  ];
+
+  const openActivity = (title: string) => {
+    if (title === "View Full") {
+      navigation.navigate("ECCDChecklist", { student });
+    }
+  };
 
   return (
     <View style={styles.screen}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#202020"
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
       />
 
+      {/* FIXED HEADER */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: Math.max(insets.top, 8),
+            paddingHorizontal: small ? 16 : 22,
+          },
+        ]}
+      >
+        <View style={styles.headerTextContainer}>
+          <Text style={[styles.headerTitle, compact && styles.compactHeaderTitle]}>
+            Dashboard
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => navigation.navigate("Profile", { student })}
+          activeOpacity={0.75}
+        >
+          <Ionicons
+            name="person-outline"
+            size={23}
+            color="#337D73"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* FIXED CONTENT: NO SCROLLVIEW */}
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
         imageStyle={styles.backgroundImage}
         resizeMode="cover"
       >
-        <SafeAreaView style={styles.safeArea}>
-          {/* HEADER */}
+        <View
+          style={[
+            styles.content,
+            {
+              paddingHorizontal: small ? 12 : 18,
+              paddingTop: compact ? 6 : 10,
+              paddingBottom: 6,
+            },
+          ]}
+        >
+          {/* STUDENT CARD */}
           <View
             style={[
-              styles.header,
-              { paddingHorizontal: sidePadding },
+              styles.studentCard,
+              compact && styles.compactStudentCard,
             ]}
           >
-            <Text
+            <Image
+              source={studentImage}
               style={[
-                styles.greeting,
-                { fontSize: Math.min(width * 0.061, 25) },
+                styles.studentImage,
+                compact && styles.compactStudentImage,
               ]}
-            >
-              Hello, {student.firstName}!
-            </Text>
-          </View>
+              resizeMode="cover"
+            />
 
-          {/* SCROLLABLE DASHBOARD */}
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={[
-              styles.content,
-              {
-                paddingHorizontal: sidePadding,
-                paddingTop: compact ? 14 : 24,
-                paddingBottom: 18,
-              },
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* STUDENT PROFILE */}
-            <View
-              style={[
-                styles.studentCard,
-                { minHeight: compact ? 78 : 90 },
-              ]}
-            >
-              <Image
-                source={student.image}
+            <View style={styles.studentInfo}>
+              <Text style={styles.studentLabel}>CURRENT STUDENT</Text>
+              <Text
                 style={[
-                  styles.studentImage,
-                  {
-                    width: compact ? 45 : 52,
-                    height: compact ? 45 : 52,
-                  },
+                  styles.studentName,
+                  compact && styles.compactStudentName,
                 ]}
-                resizeMode="cover"
-              />
-
-              <View style={styles.studentDetails}>
-                <Text
-                  style={[
-                    styles.studentName,
-                    { fontSize: Math.min(width * 0.034, 14) },
-                  ]}
-                >
-                  {student.name}
-                </Text>
-
-                <Text style={styles.studentStatus}>
-                  Current Student
-                </Text>
-              </View>
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {studentName}
+              </Text>
             </View>
 
-            {/* RECENT ACTIVITY */}
-            <View style={styles.mainCard}>
+            <Ionicons
+              name="chevron-forward"
+              size={21}
+              color="#6C9B91"
+            />
+          </View>
+
+          {/* RECENT ACTIVITIES */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeading}>
               <Text
                 style={[
                   styles.sectionTitle,
-                  { fontSize: Math.min(width * 0.034, 14) },
+                  compact && styles.compactSectionTitle,
                 ]}
               >
-                Recent Activity
+                Recent Activities
               </Text>
+            </View>
 
-              <View style={styles.activityGrid}>
-                {activities.map((item) => (
-                  <TouchableOpacity
-                    key={item.title}
-                    activeOpacity={0.85}
-                    style={[
-                      styles.activityCard,
-                      {
-                        backgroundColor: item.color,
-                        minHeight: compact ? 64 : 76,
-                      },
-                    ]}
-                    onPress={() => {
-                      if (item.title === "View Full") {
-                        navigation.navigate("ECCDChecklist", {
-                          student,
-                        });
-                      }
-                    }}
-                  >
+            <View style={styles.activityGrid}>
+              {activities.map((activity) => (
+                <TouchableOpacity
+                  key={activity.title}
+                  style={[
+                    styles.activityCard,
+                    {
+                      backgroundColor: activity.color,
+                    },
+                    compact && styles.compactActivityCard,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => openActivity(activity.title)}
+                >
+                  <View style={styles.activityCardTop}>
                     <View style={styles.activityIcon}>
                       <Ionicons
-                        name={item.icon}
-                        size={15}
-                        color="#222222"
+                        name={activity.icon as any}
+                        size={compact ? 21 : 24}
+                        color="#365C55"
                       />
                     </View>
-
                     <Ionicons
-                      name="chevron-forward"
-                      size={13}
-                      color="#222222"
-                      style={styles.arrow}
+                      name="arrow-forward-circle-outline"
+                      size={20}
+                      color="#496E65"
                     />
+                  </View>
 
-                    <Text style={styles.activityTitle}>
-                      {item.title}
+                  <View style={styles.activityTextContainer}>
+                    <Text
+                      style={[
+                        styles.activityTitle,
+                        compact && styles.compactActivityTitle,
+                      ]}
+                      numberOfLines={2}
+                      adjustsFontSizeToFit
+                    >
+                      {activity.title}
                     </Text>
-
                     <Text style={styles.activitySubtitle}>
-                      {item.subtitle}
+                      {activity.subtitle}
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-              {/* QUICK ACTIONS */}
+          {/* QUICK ACTIONS */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeading}>
               <Text
                 style={[
-                  styles.quickTitle,
-                  { fontSize: Math.min(width * 0.034, 14) },
+                  styles.sectionTitle,
+                  compact && styles.compactSectionTitle,
                 ]}
               >
                 Quick Actions
               </Text>
-
-              <View style={styles.quickGrid}>
-                <TouchableOpacity
-                  style={[
-                    styles.quickCard,
-                    { backgroundColor: "#A5E5D0" },
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("Display", { student })
-                  }
-                  activeOpacity={0.85}
-                >
-                  <Ionicons
-                    name="moon-outline"
-                    size={18}
-                    color="#222222"
-                  />
-                  <Text style={styles.quickText}>Display</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={10}
-                    color="#222222"
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.quickCard,
-                    { backgroundColor: "#9BD8F5" },
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("SelectStudent")
-                  }
-                  activeOpacity={0.85}
-                >
-                  <Ionicons
-                    name="sync-outline"
-                    size={18}
-                    color="#222222"
-                  />
-                  <Text style={styles.quickText}>
-                    Switch Student
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={10}
-                    color="#222222"
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.quickCard,
-                    { backgroundColor: "#D0C8FF" },
-                  ]}
-                  onPress={() => navigation.navigate("Login")}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons
-                    name="log-out-outline"
-                    size={18}
-                    color="#222222"
-                  />
-                  <Text style={styles.quickText}>Logout</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={10}
-                    color="#222222"
-                  />
-                </TouchableOpacity>
-              </View>
             </View>
-          </ScrollView>
 
-          {/* BOTTOM NAVIGATION */}
-          <View
-            style={[
-              styles.bottomNav,
-              {
-                paddingBottom: Math.max(insets.bottom, 6),
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.navItem}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="home-outline"
-                size={24}
-                color="#08AEC2"
-              />
-              <Text style={[styles.navLabel, styles.activeLabel]}>
-                Home
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              activeOpacity={0.8}
-              onPress={() =>
-                navigation.navigate("ECCDChecklist", { student })
-              }
-            >
-              <Ionicons
-                name="stats-chart-outline"
-                size={24}
-                color="#AAAAAA"
-              />
-              <Text style={styles.navLabel}>
-                ECCD Checklist
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              activeOpacity={0.8}
-              onPress={() =>
-                navigation.navigate("Profile", { student })
-              }
-            >
-              <Ionicons
-                name="person-outline"
-                size={24}
-                color="#AAAAAA"
-              />
-              <Text style={styles.navLabel}>Profile</Text>
-            </TouchableOpacity>
+            <View style={styles.quickActionsRow}>
+              {quickActions.map((action) => (
+                <TouchableOpacity
+                  key={action.title}
+                  style={[
+                    styles.quickActionCard,
+                    {
+                      backgroundColor: action.color,
+                    },
+                    compact && styles.compactQuickActionCard,
+                  ]}
+                  onPress={action.onPress}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={action.icon as any}
+                    size={compact ? 22 : 25}
+                    color="#365C55"
+                  />
+                  <Text
+                    style={[
+                      styles.quickActionText,
+                      compact && styles.compactQuickActionText,
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {action.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </SafeAreaView>
+        </View>
       </ImageBackground>
+
+      {/* FIXED BOTTOM NAVIGATION */}
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate("Dashboard", { student })}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="home" size={23} color="#337D73" />
+          <Text style={[styles.navText, styles.activeNavText]}>
+            Home
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() =>
+            navigation.navigate("ECCDChecklist", { student })
+          }
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="clipboard-outline"
+            size={23}
+            color="#8A9692"
+          />
+          <Text style={styles.navText}>ECCD Checklist</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate("Profile", { student })}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="person-outline"
+            size={23}
+            color="#8A9692"
+          />
+          <Text style={styles.navText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -338,100 +356,144 @@ export default function DashboardScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#202020",
+    backgroundColor: "#FFFFFF",
+  },
+
+  header: {
+    backgroundColor: "#FFFFFF",
+    minHeight: 86,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F2F0",
+  },
+
+  headerTextContainer: {
+    flex: 1,
+  },
+
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#284F47",
+  },
+
+  compactHeaderTitle: {
+    fontSize: 21,
+  },
+
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#788781",
+    marginTop: 3,
+  },
+
+  profileButton: {
+    width: 43,
+    height: 43,
+    borderRadius: 22,
+    backgroundColor: "#E9F4F0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 12,
   },
 
   background: {
     flex: 1,
-    overflow: "hidden",
   },
 
   backgroundImage: {
-    borderRadius: 14,
-  },
-
-  safeArea: {
-    flex: 1,
-  },
-
-  header: {
-    minHeight: 84,
-    backgroundColor: "#0BA8BD",
-    justifyContent: "center",
-    paddingVertical: 18,
-    borderBottomWidth: 2,
-    borderBottomColor: "rgba(255,255,255,0.15)",
-  },
-
-  greeting: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-  },
-
-  scroll: {
-    flex: 1,
+    opacity: 0.35,
   },
 
   content: {
-    flexGrow: 1,
+    flex: 1,
+    justifyContent: "space-evenly",
   },
 
   studentCard: {
+    minHeight: 94,
     backgroundColor: "#FFFFFF",
-    borderRadius: 17,
-    paddingHorizontal: 16,
+    borderRadius: 18,
+    padding: 13,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    elevation: 4,
-    shadowColor: "#000000",
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
+    marginBottom: 6,
+    shadowColor: "#31574F",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+
+  compactStudentCard: {
+    minHeight: 78,
+    padding: 10,
   },
 
   studentImage: {
+    width: 64,
+    height: 64,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#DDDDDD",
-    marginRight: 12,
+    backgroundColor: "#E7EFEB",
   },
 
-  studentDetails: {
+  compactStudentImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+  },
+
+  studentInfo: {
     flex: 1,
+    marginLeft: 13,
+    marginRight: 8,
+  },
+
+  studentLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: "#6F9A8F",
+    marginBottom: 4,
   },
 
   studentName: {
+    fontSize: 18,
     fontWeight: "800",
-    color: "#222222",
+    color: "#284F47",
   },
 
-  studentStatus: {
-    fontSize: 10,
-    color: "#999999",
-    marginTop: 5,
+  compactStudentName: {
+    fontSize: 16,
+  },
+  section: {
+    marginTop: 4,
+    marginBottom: 4,
   },
 
-  mainCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 17,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 22,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    elevation: 4,
-    shadowColor: "#000000",
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
+  sectionHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 9,
   },
 
   sectionTitle: {
-    color: "#222222",
-    marginBottom: 13,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#284F47",
+  },
+
+  compactSectionTitle: {
+    fontSize: 16,
+  },
+
+  sectionCaption: {
+    fontSize: 11,
+    color: "#7C9189",
   },
 
   activityGrid: {
@@ -442,98 +504,115 @@ const styles = StyleSheet.create({
 
   activityCard: {
     width: "48.5%",
-    borderRadius: 15,
-    padding: 8,
+    minHeight: 112,
+    borderRadius: 16,
+    padding: 12,
     marginBottom: 9,
-    justifyContent: "flex-start",
-    elevation: 2,
+    justifyContent: "space-between",
+  },
+
+  compactActivityCard: {
+    minHeight: 88,
+    padding: 9,
+    marginBottom: 7,
+  },
+
+  activityCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   activityIcon: {
-    width: 24,
-    height: 24,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.65)",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  arrow: {
-    position: "absolute",
-    right: 7,
-    top: 8,
+  activityTextContainer: {
+    marginTop: 7,
   },
 
   activityTitle: {
-    fontSize: 8,
+    fontSize: 13,
     fontWeight: "800",
-    color: "#222222",
-    marginTop: 5,
+    color: "#294E46",
+  },
+
+  compactActivityTitle: {
+    fontSize: 12,
   },
 
   activitySubtitle: {
-    fontSize: 7,
-    color: "#333333",
+    fontSize: 10,
+    color: "#58736B",
     marginTop: 3,
   },
 
-  quickTitle: {
-    color: "#222222",
-    marginTop: 12,
-    marginBottom: 13,
-  },
-
-  quickGrid: {
+  quickActionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
 
-  quickCard: {
+  quickActionCard: {
     width: "31.5%",
-    minHeight: 59,
+    minHeight: 82,
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 3,
-    paddingVertical: 5,
-    elevation: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 9,
   },
 
-  quickText: {
-    fontSize: 8,
-    color: "#222222",
-    marginTop: 4,
-    marginBottom: 3,
+  compactQuickActionCard: {
+    minHeight: 65,
+    paddingVertical: 6,
+  },
+
+  quickActionText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#365C55",
+    marginTop: 7,
     textAlign: "center",
   },
 
+  compactQuickActionText: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+
   bottomNav: {
-    minHeight: 62,
+    minHeight: 72,
     backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
-    paddingTop: 7,
+    borderTopColor: "#E9EEEB",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingTop: 9,
   },
 
   navItem: {
     flex: 1,
-    minWidth: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 2,
+    paddingHorizontal: 3,
   },
 
-  navLabel: {
-    fontSize: 9,
-    color: "#AAAAAA",
+  navText: {
+    fontSize: 10,
+    color: "#8A9692",
     marginTop: 4,
+    fontWeight: "600",
     textAlign: "center",
   },
 
-  activeLabel: {
-    color: "#08AEC2",
+  activeNavText: {
+    color: "#337D73",
+    fontWeight: "800",
   },
 });

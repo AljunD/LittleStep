@@ -44,7 +44,7 @@ export default function SelectStudentScreen({ navigation }: any) {
 
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.portalLabel}>PARENT PORTAL</Text>
+            <Text style={styles.portalLabel}>WELCOME!</Text>
             <Text style={styles.title}>Who’s learning today?</Text>
           </View>
 

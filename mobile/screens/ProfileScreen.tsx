@@ -1,10 +1,8 @@
-
 import React from "react";
 import {
   View,
   Text,
   Image,
-  ImageBackground,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
@@ -15,167 +13,333 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const menuItems = [
-  { title: "Personal Information", icon: "person-outline" as const },
-  { title: "Notification", icon: "notifications-outline" as const },
-  { title: "Display", icon: "moon-outline" as const },
-  { title: "Language", icon: "globe-outline" as const },
-  { title: "Contact Us", icon: "call-outline" as const },
+  {
+    title: "Personal Information",
+    icon: "person-outline" as const,
+    color: "#F9C96B",
+  },
+  {
+    title: "Notification",
+    icon: "notifications-outline" as const,
+    color: "#A8D8B9",
+  },
+  {
+    title: "Display",
+    icon: "moon-outline" as const,
+    color: "#263447",
+  },
+  {
+    title: "Language",
+    icon: "globe-outline" as const,
+    color: "#B9C9F8",
+  },
+  {
+    title: "Contact Us",
+    icon: "call-outline" as const,
+    color: "#F3B9C7",
+  },
 ];
 
-export default function ProfileScreen({ navigation, route }: any) {
-  const { width } = useWindowDimensions();
+export default function ProfileScreen({
+  navigation,
+  route,
+}: any) {
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const student = route.params?.student ?? {
-    name: "Dela Cruz, Juan",
+  const compact = height < 760;
+  const small = width < 360;
+
+  const student = route?.params?.student ?? {
+    name: "Juan Dela Cruz",
     firstName: "Juan",
     email: "juan.delacruz@gmail.com",
     image: require("../assets/images/juan.jpg"),
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+  const studentName =
+    student.name ??
+    [student.firstName, student.lastName]
+      .filter(Boolean)
+      .join(" ") ??
+    "Juan Dela Cruz";
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+  const studentImage =
+    student.image ?? require("../assets/images/juan.jpg");
+
+  return (
+    <View style={styles.screen}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+      />
+
+      {/* FIXED HEADER */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: Math.max(insets.top, 8),
+            paddingHorizontal: small ? 16 : 22,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
+          activeOpacity={0.75}
         >
-          <Ionicons name="chevron-back" size={25} color="#222222" />
+          <Ionicons
+            name="chevron-back"
+            size={25}
+            color="#284F47"
+          />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text
+          style={[
+            styles.headerTitle,
+            compact && styles.compactHeaderTitle,
+          ]}
+        >
+          Profile
+        </Text>
+
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* SCROLLABLE PROFILE CONTENT */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* PROFILE BANNER */}
-        <ImageBackground
-          source={require("../assets/images/loginback.png")}
-          style={styles.profileBanner}
-          resizeMode="cover"
+      {/* PLAIN WHITE PROFILE CONTENT */}
+      <View style={styles.background}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingHorizontal: small ? 12 : 18,
+              paddingTop: compact ? 10 : 16,
+              paddingBottom: 18,
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <Image
-            source={student.image}
+          {/* PROFILE CARD */}
+          <View
             style={[
-              styles.profileImage,
-              {
-                width: Math.min(width * 0.29, 105),
-                height: Math.min(width * 0.29, 105),
-              },
+              styles.profileCard,
+              compact && styles.compactProfileCard,
             ]}
-            resizeMode="cover"
-          />
+          >
+            <Image
+              source={studentImage}
+              style={[
+                styles.profileImage,
+                {
+                  width: Math.min(width * 0.22, compact ? 72 : 86),
+                  height: Math.min(width * 0.22, compact ? 72 : 86),
+                },
+              ]}
+              resizeMode="cover"
+            />
 
-          <View style={styles.profileDetails}>
-            <Text style={styles.studentName} numberOfLines={2}>
-              {student.name}
-            </Text>
-            <Text style={styles.email} numberOfLines={1}>
-              {student.email ?? "juan.delacruz@gmail.com"}
+            <View style={styles.profileDetails}>
+              <Text
+                style={[
+                  styles.studentName,
+                  compact && styles.compactStudentName,
+                ]}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+              >
+                {studentName}
+              </Text>
+
+              <Text
+                style={styles.email}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+              >
+                {student.email ?? "juan.delacruz@gmail.com"}
+              </Text>
+            </View>
+          </View>
+
+          {/* ACCOUNT SETTINGS */}
+          <View style={styles.sectionHeading}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                compact && styles.compactSectionTitle,
+              ]}
+            >
+              Account Settings
             </Text>
           </View>
-        </ImageBackground>
 
-        {/* MENU ITEMS */}
-        <View style={styles.menu}>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.title}
-              style={styles.menuItem}
-              activeOpacity={0.7}
-              onPress={() => {
-                console.log("Selected:", item.title);
-              }}
+          <View style={styles.menu}>
+            {menuItems.map((item) => {
+              const isDisplay = item.title === "Display";
+
+              return (
+                <TouchableOpacity
+                  key={item.title}
+                  style={[
+                    styles.menuItem,
+                    compact && styles.compactMenuItem,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                      if (item.title === "Personal Information") {
+                      navigation.navigate("PersonalInformation", {
+                      student: student,
+                  });
+                  } else {
+                    console.log("Selected:", item.title);
+                  }
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.menuIcon,
+                      { backgroundColor: item.color },
+                    ]}
+                  >
+                    <Ionicons
+                      name={item.icon}
+                      size={21}
+                      color={isDisplay ? "#FFFFFF" : "#365C55"}
+                    />
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.menuTitle,
+                      compact && styles.compactMenuTitle,
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color="#8A9692"
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* STUDENT ACTIONS */}
+          <View style={styles.sectionHeading}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                compact && styles.compactSectionTitle,
+              ]}
             >
-              <View style={styles.menuIcon}>
-                <Ionicons
-                  name={item.icon}
-                  size={20}
-                  color="#FFFFFF"
-                />
-              </View>
+              Student Account
+            </Text>
+          </View>
 
-              <Text style={styles.menuTitle}>{item.title}</Text>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.switchButton}
+              activeOpacity={0.8}
+              onPress={() =>
+                navigation.navigate("SelectStudent")
+              }
+            >
+              <Ionicons
+                name="people-outline"
+                size={21}
+                color="#365C55"
+              />
+
+              <Text style={styles.switchText}>
+                Switch Student
+              </Text>
 
               <Ionicons
                 name="chevron-forward"
-                size={20}
-                color="#C8C8C8"
+                size={19}
+                color="#8A9692"
               />
             </TouchableOpacity>
-          ))}
-        </View>
 
-        {/* SWITCH STUDENT AND LOGOUT */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.switchButton}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate("SelectStudent")}
-          >
-            <Ionicons
-              name="sync-outline"
-              size={21}
-              color="#333333"
-            />
-            <Text style={styles.switchText}>Switch Student</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate("Login")}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={21}
+                color="#D94B4B"
+              />
 
-          <TouchableOpacity
-            style={styles.logoutButton}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate("Login")}
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={21}
-              color="#FF4545"
-            />
-            <Text style={styles.logoutText}>Log Out</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+              <Text style={styles.logoutText}>
+                Log Out
+              </Text>
 
-      {/* BOTTOM NAVIGATION */}
+              <Ionicons
+                name="chevron-forward"
+                size={19}
+                color="#D94B4B"
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* FIXED BOTTOM NAVIGATION */}
       <View
         style={[
           styles.bottomNav,
-          { paddingBottom: Math.max(insets.bottom, 5) },
+          {
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
         ]}
       >
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigation.navigate("Dashboard", { student })}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Dashboard", { student })
+          }
         >
-          <Ionicons name="home-outline" size={22} color="#BBBBBB" />
-          <Text style={styles.navLabel}>Home</Text>
+          <Ionicons
+            name="home-outline"
+            size={23}
+            color="#8A9692"
+          />
+          <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navItem}
+          activeOpacity={0.7}
           onPress={() =>
             navigation.navigate("ECCDChecklist", { student })
           }
         >
           <Ionicons
-            name="stats-chart-outline"
-            size={22}
-            color="#BBBBBB"
+            name="clipboard-outline"
+            size={23}
+            color="#8A9692"
           />
-          <Text style={styles.navLabel}>ECCD Checklist</Text>
+          <Text style={styles.navText}>ECCD Checklist</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.8}>
-          <Ionicons name="person-outline" size={22} color="#08AEC2" />
-          <Text style={[styles.navLabel, styles.activeLabel]}>
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="person"
+            size={23}
+            color="#337D73"
+          />
+          <Text style={[styles.navText, styles.activeNavText]}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -185,156 +349,249 @@ export default function ProfileScreen({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+
   header: {
-    minHeight: 69,
+    minHeight: 86,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    borderBottomColor: "#F0F2F0",
   },
+
   backButton: {
     width: 40,
-    height: 44,
+    height: 43,
     justifyContent: "center",
     alignItems: "flex-start",
   },
+
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    color: "#111111",
-    fontSize: 15,
+    fontSize: 24,
     fontWeight: "800",
+    color: "#284F47",
   },
+
+  compactHeaderTitle: {
+    fontSize: 20,
+  },
+
   headerSpacer: {
     width: 40,
   },
+
+  background: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
   scroll: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
+
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
   },
-  profileBanner: {
-    minHeight: 150,
+
+  profileCard: {
+    minHeight: 118,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 14,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    overflow: "hidden",
+    marginBottom: 20,
+    shadowColor: "#31574F",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
+
+  compactProfileCard: {
+    minHeight: 94,
+    padding: 10,
+    marginBottom: 14,
+  },
+
   profileImage: {
-    borderRadius: 100,
+    borderRadius: 16,
+    backgroundColor: "#E7EFEB",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
-    marginRight: 13,
+    borderColor: "#E9F4F0",
   },
+
   profileDetails: {
     flex: 1,
+    marginLeft: 14,
   },
-  studentName: {
-    fontSize: 15,
+
+  profileLabel: {
+    fontSize: 9,
     fontWeight: "800",
-    color: "#111111",
+    letterSpacing: 1,
+    color: "#6F9A8F",
+    marginBottom: 5,
   },
+
+  studentName: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#284F47",
+  },
+
+  compactStudentName: {
+    fontSize: 16,
+  },
+
   email: {
-    fontSize: 10,
-    color: "#777777",
-    marginTop: 4,
+    fontSize: 11,
+    color: "#788781",
+    marginTop: 5,
   },
+
+  sectionHeading: {
+    marginBottom: 10,
+    marginTop: 2,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#284F47",
+  },
+
+  compactSectionTitle: {
+    fontSize: 16,
+  },
+
   menu: {
-    paddingHorizontal: 18,
-    paddingTop: 8,
+    marginBottom: 18,
   },
+
   menuItem: {
-    minHeight: 39,
+    minHeight: 62,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 15,
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginBottom: 9,
+    shadowColor: "#31574F",
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
+
+  compactMenuItem: {
+    minHeight: 52,
+    paddingVertical: 7,
+    marginBottom: 7,
+  },
+
   menuIcon: {
-    width: 31,
-    height: 31,
-    borderRadius: 17,
-    backgroundColor: "#0BA8BD",
+    width: 38,
+    height: 38,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 11,
+    marginRight: 12,
   },
+
   menuTitle: {
     flex: 1,
-    color: "#111111",
-    fontSize: 12,
-    fontWeight: "500",
+    color: "#294E46",
+    fontSize: 13,
+    fontWeight: "700",
   },
+
+  compactMenuTitle: {
+    fontSize: 12,
+  },
+
   actions: {
-    marginTop: "auto",
-    paddingHorizontal: 14,
-    paddingTop: 30,
-    paddingBottom: 24,
-    gap: 8,
+    gap: 10,
+    marginBottom: 8,
   },
+
   switchButton: {
-    minHeight: 40,
-    borderRadius: 17,
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#333333",
+    borderColor: "#DDE9E3",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: "#FFFFFF",
-    elevation: 2,
+    paddingHorizontal: 15,
+    gap: 11,
   },
+
   switchText: {
-    color: "#111111",
-    fontSize: 12,
+    flex: 1,
+    color: "#365C55",
+    fontSize: 13,
+    fontWeight: "700",
   },
+
   logoutButton: {
-    minHeight: 40,
-    borderRadius: 17,
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#FF4545",
+    borderColor: "#F0D5D5",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: "#FFFFFF",
-    elevation: 2,
+    paddingHorizontal: 15,
+    gap: 11,
   },
+
   logoutText: {
-    color: "#111111",
-    fontSize: 12,
+    flex: 1,
+    color: "#D94B4B",
+    fontSize: 13,
+    fontWeight: "700",
   },
+
   bottomNav: {
-    minHeight: 58,
+    minHeight: 72,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#DDDDDD",
+    borderTopColor: "#E9EEEB",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingTop: 5,
+    paddingTop: 9,
   },
+
   navItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 3,
+    paddingHorizontal: 3,
   },
-  navLabel: {
-    fontSize: 8,
-    color: "#AAAAAA",
-    marginTop: 3,
+
+  navText: {
+    fontSize: 10,
+    color: "#8A9692",
+    marginTop: 4,
+    fontWeight: "600",
     textAlign: "center",
   },
-  activeLabel: {
-    color: "#08AEC2",
+
+  activeNavText: {
+    color: "#337D73",
+    fontWeight: "800",
   },
 });

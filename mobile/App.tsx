@@ -9,6 +9,7 @@ import SelectStudentScreen from "./screens/SelectStudentScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import ECCDChecklistScreen from "./screens/ECCDChecklistScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+import PersonalInformationScreen from "./screens/PersonalInformationScreen";
 
 const Stack = createStackNavigator();
 
@@ -47,6 +48,11 @@ export default function App() {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
+        />
+        <Stack.Screen
+          name="PersonalInformation"
+          component={PersonalInformationScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
