@@ -15,10 +15,10 @@ class Domain extends Model
     protected $fillable = [
         'progress_record_id',
         'checklist_item_id',
+        'evaluation_round',  
         'status',
     ];
 
-    // Relationships
     public function progressRecord()
     {
         return $this->belongsTo(ProgressRecord::class);

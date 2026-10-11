@@ -14,7 +14,44 @@ use Illuminate\Support\Facades\DB;
 
 class ProgressController extends Controller
 {
-    private function getGlobalRoundCompleted($childId)
+    /**
+     * Status of each round for one domain of one child
+     * Returns [1 => 'Pending'|'In Progress'|'Completed', 2 => ..., 3 => ...]
+     */
+    private function getDomainRoundStatus(int $childId, string $domainKey): array
+    {
+        $status = [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
+
+        $progressRecord = ProgressRecord::where('child_id', $childId)->first();
+        if (!$progressRecord) {
+            return $status;
+        }
+
+        for ($round = 1; $round <= 3; $round++) {
+            $domainItems = Domain::where('progress_record_id', $progressRecord->id)
+                ->where('evaluation_round', $round)
+                ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                ->with('results')
+                ->get();
+
+            $totalItems  = $domainItems->count();
+            $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
+
+            if ($totalItems === 0) {
+                $status[$round] = 'Pending';
+            } elseif ($filledCount === $totalItems) {
+                $status[$round] = 'Completed';
+            } elseif ($filledCount > 0) {
+                $status[$round] = 'In Progress';
+            } else {
+                $status[$round] = 'Pending';
+            }
+        }
+
+        return $status;
+    }
+
+    private function getGlobalRoundCompleted(int $childId): array
     {
         $definedDomains = [
             'gross_motor', 'fine_motor', 'self_help',
@@ -22,69 +59,103 @@ class ProgressController extends Controller
             'cognitive', 'social_emotional'
         ];
 
-        $globalRoundCompleted = [1 => 0, 2 => 0, 3 => 0];
+        $global = [1 => 0, 2 => 0, 3 => 0];
 
         foreach ($definedDomains as $key) {
-            $progressRecords = ProgressRecord::where('child_id', $childId)
-                ->whereHas('domains.checklistItem', fn($q) => $q->where('domain', $key))
-                ->with(['domains' => fn($q) => $q->whereHas('checklistItem', fn($q2) => $q2->where('domain', $key))->with('results')])
-                ->orderBy('evaluation_number')
-                ->get();
-
-            foreach ($progressRecords->values() as $index => $record) {
-                $round = $index + 1;
-                if ($round > 3) break;
-
-                $domainItems = $record->domains;
-                $totalItems  = $domainItems->count();
-                $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
-
-                if ($totalItems > 0 && $filledCount === $totalItems) {
-                    $globalRoundCompleted[$round]++;
+            $statuses = $this->getDomainRoundStatus($childId, $key);
+            foreach ([1, 2, 3] as $round) {
+                if ($statuses[$round] === 'Completed') {
+                    $global[$round]++;
                 }
             }
         }
 
-        return $globalRoundCompleted;
+        return $global;
     }
 
-    private function getMaxAllowedRound($childId)
+    private function getMaxAllowedRound(int $childId): int
     {
         $global = $this->getGlobalRoundCompleted($childId);
 
-        $maxAllowedRound = 1;
-        if ($global[1] >= 7) $maxAllowedRound = 2;
-        if ($global[2] >= 7) $maxAllowedRound = 3;
+        $max = 1;
+        if ($global[1] >= 7) $max = 2;
+        if ($global[2] >= 7) $max = 3;
 
-        return $maxAllowedRound;
+        return $max;
     }
 
+    /**
+     * ONE ProgressRecord per child
+     */
+    private function getOrCreateProgressRecord(int $childId, int $teacherId): ProgressRecord
+    {
+        return ProgressRecord::firstOrCreate(
+            ['child_id' => $childId],
+            [
+                'teacher_id'        => $teacherId,
+                'evaluation_date'   => now()->toDateString(),
+                'evaluation_number' => 1,
+                'status'            => 'in_progress',
+            ]
+        );
+    }
+
+    // =========================================================================
+    // INDEX
+    // =========================================================================
     public function index()
     {
-        $children = Child::with(['progressRecords.domains.checklistItem'])
+        $children = Child::with(['progressRecords.domains.checklistItem', 'progressRecords.teacher'])
             ->orderBy('first_name')
             ->paginate(10);
 
-        $children->getCollection()->transform(function ($child) {
-            $completedDomains = $child->progressRecords
-                ->flatMap(fn($record) => $record->domains->pluck('checklistItem.domain'))
-                ->unique()
-                ->values();
+        $definedDomains = [
+            'gross_motor', 'fine_motor', 'self_help',
+            'receptive_language', 'expressive_language',
+            'cognitive', 'social_emotional'
+        ];
 
-            $totalCompleted = $completedDomains->count();
+        $children->getCollection()->transform(function ($child) use ($definedDomains) {
 
-            if ($totalCompleted === 0) {
-                $child->overall_status = 'pending';
-            } elseif ($totalCompleted >= 7) {
-                $child->overall_status = 'completed';
-            } else {
-                $child->overall_status = 'in_progress';
+            $roundStats = [
+                1 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
+                2 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
+                3 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
+            ];
+
+            $highestRoundWithRecord = 0;
+
+            foreach ($definedDomains as $key) {
+                $statuses = $this->getDomainRoundStatus($child->id, $key);
+
+                foreach ([1, 2, 3] as $round) {
+                    if ($statuses[$round] === 'Completed') {
+                        $roundStats[$round]['completed']++;
+                        if ($round > $highestRoundWithRecord) $highestRoundWithRecord = $round;
+                    } elseif ($statuses[$round] === 'In Progress') {
+                        $roundStats[$round]['in_progress']++;
+                        if ($round > $highestRoundWithRecord) $highestRoundWithRecord = $round;
+                    } else {
+                        $roundStats[$round]['pending']++;
+                    }
+                }
             }
 
-            $child->completed_domains_count = $totalCompleted;
-            $child->latest_record = $child->progressRecords
-                ->sortByDesc('evaluation_number')
-                ->first();
+            $currentRound = $highestRoundWithRecord > 0 ? $highestRoundWithRecord : 1;
+            $child->current_evaluation_round = $currentRound;
+
+            $stats = $roundStats[$currentRound];
+
+            if ($stats['completed'] >= 7) {
+                $child->current_round_status = 'completed';
+            } elseif ($stats['pending'] >= 7) {
+                $child->current_round_status = 'pending';
+            } else {
+                $child->current_round_status = 'in_progress';
+            }
+
+            $child->completed_domains_count = $stats['completed'];
+            $child->latest_record = $child->progressRecords->first();
 
             return $child;
         });
@@ -92,6 +163,9 @@ class ProgressController extends Controller
         return view('progress.index', compact('children'));
     }
 
+    // =========================================================================
+    // SELECT DOMAIN
+    // =========================================================================
     public function selectDomain($child_id = null)
     {
         $childId = $child_id ?? request('child_id');
@@ -112,34 +186,9 @@ class ProgressController extends Controller
         $domains = [];
 
         foreach ($definedDomains as $key => $name) {
-            $roundStatus = [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
-
-            if ($child) {
-                $progressRecords = ProgressRecord::where('child_id', $child->id)
-                    ->whereHas('domains.checklistItem', fn($q) => $q->where('domain', $key))
-                    ->with(['domains' => fn($q) => $q->whereHas('checklistItem', fn($q2) => $q2->where('domain', $key))->with('results')])
-                    ->orderBy('evaluation_number')
-                    ->get();
-
-                foreach ($progressRecords->values() as $index => $record) {
-                    $round = $index + 1;
-                    if ($round > 3) break;
-
-                    $domainItems = $record->domains;
-                    $totalItems  = $domainItems->count();
-                    $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
-
-                    if ($totalItems === 0) {
-                        $roundStatus[$round] = 'Pending';
-                    } elseif ($filledCount === $totalItems) {
-                        $roundStatus[$round] = 'Completed';
-                    } elseif ($filledCount > 0) {
-                        $roundStatus[$round] = 'In Progress';
-                    } else {
-                        $roundStatus[$round] = 'Pending';
-                    }
-                }
-            }
+            $roundStatus = $child
+                ? $this->getDomainRoundStatus($child->id, $key)
+                : [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
 
             $domains[] = [
                 'key'               => $key,
@@ -152,6 +201,9 @@ class ProgressController extends Controller
         return view('progress.select-domain', compact('child', 'childId', 'domains', 'maxAllowedRound'));
     }
 
+    // =========================================================================
+    // CREATE
+    // =========================================================================
     public function create(Request $request, $child_id = null)
     {
         $child     = $child_id ? Child::findOrFail($child_id) : null;
@@ -167,7 +219,6 @@ class ProgressController extends Controller
             abort(404, 'Invalid domain');
         }
 
-        // Load master checklist items
         $items = EccdChecklistItem::ofType($domainKey)
             ->orderBy('item_number')
             ->orderBy('id')
@@ -175,48 +226,44 @@ class ProgressController extends Controller
 
         $currentRound    = 1;
         $completedRounds = [];
-        $savedResults    = []; // [round => [checklist_item_id => ['present' => ..., 'comments' => ...]]]
+        $savedResults    = [];
         $maxAllowedRound = 1;
 
         if ($child) {
             $maxAllowedRound = $this->getMaxAllowedRound($child->id);
+            $statuses = $this->getDomainRoundStatus($child->id, $domainKey);
 
-            $progressRecords = ProgressRecord::where('child_id', $child->id)
-                ->whereHas('domains.checklistItem', fn($q) => $q->where('domain', $domainKey))
-                ->with(['domains' => fn($q) => $q->whereHas('checklistItem', fn($q2) => $q2->where('domain', $domainKey))
-                    ->with(['results', 'checklistItem'])])
-                ->orderBy('evaluation_number')
-                ->get();
+            $progressRecord = ProgressRecord::where('child_id', $child->id)->first();
 
-            foreach ($progressRecords->values() as $index => $record) {
-                $round = $index + 1;
-                if ($round > 3) break;
-
-                $domainItems = $record->domains;
-                $totalItems  = $domainItems->count();
-                $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
-
-                // Load answers for THIS round (whether completed or incomplete)
-                $savedResults[$round] = [];
-                foreach ($domainItems as $domainItem) {
-                    $result = $domainItem->results->first();
-                    if ($result) {
-                        $savedResults[$round][$domainItem->checklist_item_id] = [
-                            'present'  => $result->present,
-                            'comments' => $result->comments,
-                        ];
-                    }
+            foreach ([1, 2, 3] as $round) {
+                if ($statuses[$round] === 'Completed') {
+                    $completedRounds[] = $round;
                 }
 
-                if ($totalItems > 0 && $filledCount === $totalItems) {
-                    $completedRounds[] = $round;
+                $savedResults[$round] = [];
+
+                if ($progressRecord) {
+                    $domainItems = Domain::where('progress_record_id', $progressRecord->id)
+                        ->where('evaluation_round', $round)
+                        ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                        ->with('results')
+                        ->get();
+
+                    foreach ($domainItems as $domainItem) {
+                        $result = $domainItem->results->first();
+                        if ($result) {
+                            $savedResults[$round][$domainItem->checklist_item_id] = [
+                                'present'  => $result->present,
+                                'comments' => $result->comments,
+                            ];
+                        }
+                    }
                 }
             }
 
             $currentRound = count($completedRounds) + 1;
             if ($currentRound > 3) $currentRound = 3;
 
-            // Enforce global lock
             if ($currentRound > $maxAllowedRound) {
                 $currentRound = $maxAllowedRound;
             }
@@ -244,6 +291,9 @@ class ProgressController extends Controller
         ]);
     }
 
+    // =========================================================================
+    // STORE  (FIXED)
+    // =========================================================================
     public function store(Request $request)
     {
         $request->validate([
@@ -263,105 +313,94 @@ class ProgressController extends Controller
         DB::beginTransaction();
 
         try {
-            $existingRecords = ProgressRecord::where('child_id', $childId)
-                ->whereHas('domains.checklistItem', fn($q) => $q->where('domain', $domainKey))
-                ->with(['domains' => fn($q) => $q->whereHas('checklistItem', fn($q2) => $q2->where('domain', $domainKey))->with('results')])
-                ->orderBy('evaluation_number')
-                ->get();
-
-            $incompleteRecord = null;
-
-            foreach ($existingRecords as $record) {
-                $domainItems = $record->domains;
-                $totalItems  = $domainItems->count();
-                $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
-
-                if ($totalItems > 0 && $filledCount < $totalItems) {
-                    $incompleteRecord = $record;
-                    break;
-                }
+            // Determine current round for this domain
+            $statuses = $this->getDomainRoundStatus($childId, $domainKey);
+            $completedRounds = [];
+            foreach ([1, 2, 3] as $r) {
+                if ($statuses[$r] === 'Completed') $completedRounds[] = $r;
             }
 
-            if ($incompleteRecord) {
-                // ========== UPDATE existing incomplete evaluation ==========
-                $progressRecord = $incompleteRecord;
+            $currentRound = count($completedRounds) + 1;
+            if ($currentRound > 3) $currentRound = 3;
 
-                foreach ($progressRecord->domains as $domain) {
+            // Global lock
+            $maxAllowedRound = $this->getMaxAllowedRound($childId);
+            if ($currentRound > $maxAllowedRound) {
+                return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
+            }
+
+            // ===== ONE ProgressRecord per child =====
+            $progressRecord = $this->getOrCreateProgressRecord($childId, $teacher->id);
+
+            // Existing domain rows for this domain + this round
+            $existingDomains = Domain::where('progress_record_id', $progressRecord->id)
+                ->where('evaluation_round', $currentRound)
+                ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                ->with('results')
+                ->get()
+                ->keyBy('checklist_item_id');
+
+            $masterItems = EccdChecklistItem::ofType($domainKey)
+                ->orderBy('item_number')
+                ->orderBy('id')
+                ->get();
+
+            $filledCount = 0;
+            $totalItems  = $masterItems->count();
+
+            foreach ($masterItems as $master) {
+                $presentValue = $results[$master->id][$currentRound] ?? null;
+
+                if (isset($existingDomains[$master->id])) {
+                    $domain = $existingDomains[$master->id];
                     $domain->results()->delete();
-                }
-
-                foreach ($progressRecord->domains as $domain) {
-                    $checklistItemId = $domain->checklist_item_id;
-
-                    $presentValue = null;
-                    foreach ([1, 2, 3] as $round) {
-                        if (isset($results[$checklistItemId][$round])) {
-                            $presentValue = $results[$checklistItemId][$round];
-                            break;
-                        }
-                    }
-
-                    if ($presentValue) {
-                        DomainResult::create([
-                            'domain_id' => $domain->id,
-                            'present'   => $presentValue,
-                            'comments'  => $comments[$checklistItemId] ?? null,
-                        ]);
-                    }
-                }
-
-                $message = 'Evaluation updated successfully!';
-
-            } else {
-                // ========== CREATE new evaluation round ==========
-                $maxAllowedRound = $this->getMaxAllowedRound($childId);
-                $nextRound = $existingRecords->count() + 1;
-
-                if ($nextRound > $maxAllowedRound) {
-                    return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
-                }
-
-                $nextEvalNumber = ProgressRecord::where('child_id', $childId)->max('evaluation_number') + 1;
-                if ($nextEvalNumber < 1) $nextEvalNumber = 1;
-
-                $progressRecord = ProgressRecord::create([
-                    'child_id'          => $childId,
-                    'teacher_id'        => $teacher->id,
-                    'evaluation_date'   => now()->toDateString(),
-                    'evaluation_number' => $nextEvalNumber,
-                    'status'            => 'completed',
-                ]);
-
-                $masterItems = EccdChecklistItem::ofType($domainKey)->orderBy('item_number')->orderBy('id')->get();
-
-                foreach ($masterItems as $master) {
+                } else {
                     $domain = Domain::create([
                         'progress_record_id' => $progressRecord->id,
                         'checklist_item_id'  => $master->id,
-                        'status'             => 'completed',
+                        'evaluation_round'   => $currentRound,
+                        'status'             => 'pending',
                     ]);
-
-                    $presentValue = null;
-                    foreach ([1, 2, 3] as $round) {
-                        if (isset($results[$master->id][$round])) {
-                            $presentValue = $results[$master->id][$round];
-                            break;
-                        }
-                    }
-
-                    if ($presentValue) {
-                        DomainResult::create([
-                            'domain_id' => $domain->id,
-                            'present'   => $presentValue,
-                            'comments'  => $comments[$master->id] ?? null,
-                        ]);
-                    }
                 }
 
-                $message = 'Evaluation saved successfully!';
+                if ($presentValue) {
+                    DomainResult::create([
+                        'domain_id' => $domain->id,
+                        'present'   => $presentValue,
+                        'comments'  => $comments[$master->id] ?? null,
+                    ]);
+
+                    // Mark this item as completed
+                    $domain->update(['status' => 'completed']);
+                    $filledCount++;
+                } else {
+                    // No answer → pending
+                    $domain->update(['status' => 'pending']);
+                }
+            }
+
+            // Update ProgressRecord overall status
+            $global = $this->getGlobalRoundCompleted($childId);
+
+            if ($global[1] >= 7 && $global[2] >= 7 && $global[3] >= 7) {
+                $progressRecord->update([
+                    'status'            => 'completed',
+                    'evaluation_number' => 3,
+                    'evaluation_date'   => now()->toDateString(),
+                ]);
+            } else {
+                $progressRecord->update([
+                    'status'            => 'in_progress',
+                    'evaluation_number' => $currentRound,
+                    'evaluation_date'   => now()->toDateString(),
+                ]);
             }
 
             DB::commit();
+
+            $message = $filledCount === $totalItems
+                ? "Evaluation (Round {$currentRound}) completed and saved successfully!"
+                : "Evaluation (Round {$currentRound}) saved successfully! ({$filledCount}/{$totalItems} items filled)";
 
             return redirect()
                 ->route('progress.select-domain', ['child_id' => $childId])
@@ -393,7 +432,6 @@ class ProgressController extends Controller
                 'child', 'teacher', 'domains.checklistItem', 'domains.results', 'domainScores', 'domainObservation'
             ])
             ->where('child_id', $id)
-            ->orderByDesc('evaluation_number')
             ->first();
         }
 
