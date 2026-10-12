@@ -94,8 +94,11 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
     Route::get('/create/{child_id?}', [ProgressController::class, 'create'])
         ->name('progress.create'); 
 
-    Route::get('/add-observation/{child_id?}', fn() => view('progress.create-observation'))
+    Route::get('/add-observation/{child_id?}', [ProgressController::class, 'addObservation'])
         ->name('progress.add-observation');
+
+    Route::post('/store-observation', [ProgressController::class, 'storeObservation'])
+        ->name('progress.observation.store');
 
     Route::get('/show/{id?}', fn() => view('progress.show'))
         ->name('progress.show');

@@ -417,8 +417,69 @@ class ProgressController extends Controller
     public function addObservation($child_id = null)
     {
         $childId = $child_id ?? request('child_id');
-        $child   = $childId ? Child::find($childId) : null;
-        return view('progress.create-observation', compact('child', 'childId'));
+        if (!$childId) {
+            return redirect()
+                ->route('progress.index')
+                ->with('error', 'Select a child before adding observation notes.');
+        }
+
+        $child = Child::findOrFail($childId);
+        $progressRecord = ProgressRecord::with(['domainObservation', 'teacher'])
+            ->where('child_id', $child->id)
+            ->first();
+        $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
+
+        return view('progress.create-observation', compact('child', 'progressRecord', 'teacher'));
+    }
+
+    public function storeObservation(Request $request)
+    {
+        $validated = $request->validate([
+            'child_id' => ['required', 'integer', 'exists:children,id'],
+            'date_administered' => ['required', 'date'],
+            'place_administered' => ['nullable', 'string'],
+            'background_observations' => ['nullable', 'string'],
+            'family_environment_notes' => ['nullable', 'string'],
+            'stimulating_activities_notes' => ['nullable', 'string'],
+            'home_environment_notes' => ['nullable', 'string'],
+            'other_notes' => ['nullable', 'string'],
+        ]);
+
+        $child = Child::findOrFail($validated['child_id']);
+        $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
+
+        DB::transaction(function () use ($validated, $child, $teacher) {
+            $progressRecord = ProgressRecord::firstOrCreate(
+                ['child_id' => $child->id],
+                [
+                    'teacher_id' => $teacher->id,
+                    'evaluation_date' => $validated['date_administered'],
+                    'evaluation_number' => 1,
+                    'status' => 'in_progress',
+                ]
+            );
+
+            $progressRecord->update([
+                'evaluation_date' => $validated['date_administered'],
+            ]);
+
+            $progressRecord->domainObservation()->updateOrCreate(
+                [],
+                [
+                    'place_administered' => $validated['place_administered'] ?? null,
+                    'background_observations' => $validated['background_observations'] ?? null,
+                    'family_environment_notes' => $validated['family_environment_notes'] ?? null,
+                    'stimulating_activities_notes' => $validated['stimulating_activities_notes'] ?? null,
+                    'home_environment_notes' => $validated['home_environment_notes'] ?? null,
+                    'other_notes' => $validated['other_notes'] ?? null,
+                    'status' => 'completed',
+                ]
+            );
+        });
+
+        return redirect()
+            ->route('progress.add-observation', ['child_id' => $child->id])
+            ->with('success', 'Observation notes saved successfully.');
     }
 
     public function show($id = null)
