@@ -10,6 +10,10 @@ import DashboardScreen from "./screens/DashboardScreen";
 import ECCDChecklistScreen from "./screens/ECCDChecklistScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import PersonalInformationScreen from "./screens/PersonalInformationScreen";
+import ChildDetailsScreen from "./screens/ChildDetailsScreen";
+import GuardianDetailsScreen from "./screens/GuardianDetailsScreen";
+import DisplayScreen from "./screens/DisplayScreen";
+import LanguageScreen from "./screens/LanguageScreen";
 
 const Stack = createStackNavigator();
 
@@ -52,6 +56,28 @@ export default function App() {
         <Stack.Screen
           name="PersonalInformation"
           component={PersonalInformationScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="ChildDetails"
+          component={ChildDetailsScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="GuardianDetails"
+          component={GuardianDetailsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Display"
+          component={DisplayScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Language"
+          component={LanguageScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

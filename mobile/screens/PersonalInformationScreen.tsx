@@ -1,13 +1,12 @@
+
 import React from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
-  ScrollView,
-  StatusBar,
-  useWindowDimensions,
   TouchableOpacity,
+  StatusBar,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,107 +15,36 @@ export default function PersonalInformationScreen({
   navigation,
   route,
 }: any) {
-  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const student = route?.params?.student;
 
-  const compact = height < 760;
-  const small = width < 360;
-
-  const student = route?.params?.student ?? {};
-
-const studentName =
-  student.name ||
-  [student.firstName, student.lastName].filter(Boolean).join(" ") ||
-  "Sofia Mae Reyes";
-
-const studentImage =
-  student.image ?? require("../assets/images/juan.jpg");
-
-const information = [
-  {
-    title: "Student Information",
-    icon: "person-outline" as const,
-    fields: [
-      {
-        label: "Full Name",
-        value: student.fullName || student.name || "Sofia Mae Reyes",
-      },
-      {
-        label: "Sex",
-        value: student.sex || "Female",
-      },
-      {
-        label: "Handedness",
-        value: student.handedness || "Right-handed",
-      },
-      {
-        label: "Address",
-        value: student.address || "Quezon City, Metro Manila",
-      },
-      {
-        label: "Birthday",
-        value: student.birthday || "March 15, 2022",
-      },
-    ],
-  },
-  {
-    title: "School Information",
-    icon: "school-outline" as const,
-    fields: [
-      {
-        label: "School Name",
-        value: student.schoolName || "Little Steps Learning Center",
-      },
-    ],
-  },
-  {
-    title: "Family Information",
-    icon: "people-outline" as const,
-    fields: [
-      {
-        label: "Father's Name",
-        value: student.fathersName || "Mark Anthony Reyes",
-      },
-      {
-        label: "Mother's Name",
-        value: student.mothersName || "Angela Marie Reyes",
-      },
-      {
-        label: "Number of Siblings",
-        value: student.siblings ?? 2,
-      },
-      {
-        label: "Birth Order",
-        value: student.birthOrder || "1",
-      },
-    ],
-  },
-];
+  const openDetails = (type: "GuardianDetails" | "ChildDetails") => {
+    navigation.navigate(type, { student });
+  };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top },
-      ]}
-    >
+    <View style={styles.container}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor="#FFFFFF"
       />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top + 10 },
+        ]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
-          accessibilityLabel="Go back"
         >
           <Ionicons
             name="chevron-back"
-            size={25}
-            color="#294E46"
+            size={26}
+            color="#263447"
           />
         </TouchableOpacity>
 
@@ -127,78 +55,142 @@ const information = [
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Information Content */}
       <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: small ? 16 : 22,
-            paddingBottom: Math.max(insets.bottom, 20) + 20,
-          },
-        ]}
       >
-        {/* Student Profile */}
-        <View
-          style={[
-            styles.profileCard,
-            { padding: compact ? 16 : 20 },
-          ]}
-        >
-          <Image
-            source={studentImage}
-            style={styles.avatar}
-          />
+        {/* Page Heading */}
+        <Text style={styles.pageTitle}>
+          Personal Information
+        </Text>
 
-          <View style={styles.profileText}>
-            <Text style={styles.profileName}>
-              {studentName}
-            </Text>
+        <Text style={styles.pageDescription}>
+          View your child's and guardian's information.
+        </Text>
 
-            <Text style={styles.profileSubtitle}>
-              Student Profile
-            </Text>
-          </View>
-        </View>
-        {/* Information Sections */}
-        {information.map((section) => (
-          <View
-            style={styles.section}
-            key={section.title}
+        {/* Information Options */}
+        <View style={styles.optionsCard}>
+          <TouchableOpacity
+            style={styles.optionRow}
+            activeOpacity={0.7}
+            onPress={() => openDetails("GuardianDetails")}
           >
-            <View style={styles.sectionHeading}>
-              <View style={styles.sectionIcon}>
-                <Ionicons
-                  name={section.icon}
-                  size={19}
-                  color="#34796A"
-                />
-              </View>
+            <View style={styles.optionIcon}>
+              <Ionicons
+                name="people-outline"
+                size={22}
+                color="#365C55"
+              />
+            </View>
 
-              <Text style={styles.sectionTitle}>
-                {section.title}
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>
+                Guardian Details
+              </Text>
+
+              <Text style={styles.optionDescription}>
+                View guardian information and contact details
               </Text>
             </View>
 
-            {section.fields.map((field) => (
-              <View
-                style={styles.field}
-                key={field.label}
-              >
-                <Text style={styles.fieldLabel}>
-                  {field.label}
-                </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={21}
+              color="#89918F"
+            />
+          </TouchableOpacity>
 
-                <View style={styles.readOnlyInput}>
-                  <Text style={styles.readOnlyText}>
-                    {String(field.value || "Not provided")}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        ))}
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.optionRow}
+            activeOpacity={0.7}
+            onPress={() => openDetails("ChildDetails")}
+          >
+            <View style={styles.optionIcon}>
+              <Ionicons
+                name="person-outline"
+                size={22}
+                color="#365C55"
+              />
+            </View>
+
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>
+                Child Details
+              </Text>
+
+              <Text style={styles.optionDescription}>
+                View your child's personal and school information
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={21}
+              color="#89918F"
+            />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View
+        style={[
+          styles.bottomNav,
+          { paddingBottom: Math.max(insets.bottom, 10) },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Dashboard", { student })
+          }
+        >
+          <Ionicons
+            name="home-outline"
+            size={23}
+            color="#89918F"
+          />
+          <Text style={styles.navText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("ECCDChecklist", { student })
+          }
+        >
+          <Ionicons
+            name="clipboard-outline"
+            size={23}
+            color="#89918F"
+          />
+          <Text style={styles.navText}>
+            ECCD Checklist
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Profile", { student })
+          }
+        >
+          <Ionicons
+            name="person"
+            size={23}
+            color="#365C55"
+          />
+          <Text style={[styles.navText, styles.activeNavText]}>
+            Profile
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -210,19 +202,19 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    minHeight: 62,
+    minHeight: 95,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEF2EF",
   },
 
   backButton: {
     width: 40,
-    height: 42,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -230,105 +222,115 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
-    color: "#294E46",
+    color: "#263447",
   },
 
   headerSpacer: {
     width: 40,
   },
 
-  scrollContent: {
-    paddingTop: 20,
-    gap: 18,
-  },
-
-  profileCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F2F8F5",
-    borderRadius: 18,
-    gap: 15,
-  },
-
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: "#E1EBE5",
-  },
-
-  profileText: {
+  scrollView: {
     flex: 1,
-    gap: 5,
   },
 
-  profileName: {
-    fontSize: 17,
+  content: {
+    paddingHorizontal: 22,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+
+  pageTitle: {
+    fontSize: 25,
     fontWeight: "700",
-    color: "#294E46",
+    color: "#263447",
+    marginBottom: 8,
   },
 
-  profileSubtitle: {
-    fontSize: 12,
-    color: "#75867E",
+  pageDescription: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#858D91",
+    marginBottom: 25,
   },
-  section: {
-    padding: 16,
-    borderRadius: 16,
+
+  optionsCard: {
     backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E9EFEB",
-    gap: 14,
+    borderColor: "#E9EEEC",
+    paddingHorizontal: 16,
+    marginBottom: 22,
   },
 
-  sectionHeading: {
+  optionRow: {
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 2,
+    paddingVertical: 14,
   },
 
-  sectionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+  optionIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: "#EEF5F1",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF4EF",
+    marginRight: 13,
   },
 
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#294E46",
+  optionTextContainer: {
+    flex: 1,
+    paddingRight: 8,
   },
 
-  field: {
-    gap: 7,
-  },
-
-  fieldLabel: {
-    fontSize: 12,
+  optionTitle: {
+    fontSize: 16,
     fontWeight: "600",
-    color: "#75867E",
+    color: "#263447",
+    marginBottom: 5,
   },
 
-  readOnlyInput: {
-    minHeight: 43,
-    borderWidth: 1,
-    borderColor: "#E0E7E3",
-    borderRadius: 11,
-    paddingHorizontal: 11,
-    paddingVertical: 10,
+  optionDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#858D91",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#EDF0EF",
+  },
+
+  bottomNav: {
+    minHeight: 68,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#EDF0EF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingTop: 10,
+    paddingHorizontal: 8,
+  },
+
+  navItem: {
+    flex: 1,
+    alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F8FAF9",
+    gap: 4,
   },
 
-  readOnlyText: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: "#294E46",
+  navText: {
+    fontSize: 11,
+    color: "#89918F",
+    fontWeight: "500",
+  },
+
+  activeNavText: {
+    color: "#365C55",
+    fontWeight: "600",
   },
 });
