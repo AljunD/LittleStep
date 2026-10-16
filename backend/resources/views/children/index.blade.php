@@ -10,7 +10,6 @@
         <p class="text-sm text-gray-500">Manage and view all registered child profiles.</p>
     </div>
 
-    <!-- Table -->
     <div id="table-container" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -58,8 +57,7 @@
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination -->
+
         <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm">
             <p class="text-gray-500">
                 Showing {{ $children->firstItem() }} to {{ $children->lastItem() }} of {{ $children->total() }} results

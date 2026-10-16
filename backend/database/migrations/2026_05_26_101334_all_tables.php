@@ -88,21 +88,21 @@ return new class extends Migration {
         });
 
         // ====================== PROGRESS RECORDS ======================
+        // Option 2: ONE progress record per child
         Schema::create('progress_records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('child_id')->constrained('children')->onDelete('cascade');
+            $table->foreignId('child_id')->unique()->constrained('children')->onDelete('cascade'); // unique = 1:1
             $table->foreignId('teacher_id')->constrained('teachers')->onDelete('cascade');
             $table->date('evaluation_date');
-            $table->tinyInteger('evaluation_number');
+            $table->tinyInteger('evaluation_number')->default(1); // tracks current highest round
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
         });
 
-        // ====================== DOMAINS ======================
-        Schema::create('domains', function (Blueprint $table) {
+        // ====================== ECCD CHECKLIST ITEMS ======================
+        Schema::create('eccd_checklist_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('progress_record_id')->nullable()->constrained('progress_records')->onDelete('cascade');
             $table->enum('domain', [
                 'gross_motor', 'fine_motor', 'self_help',
                 'receptive_language', 'expressive_language',
@@ -110,12 +110,26 @@ return new class extends Migration {
             ]);
             $table->string('activity');
             $table->text('materials_and_procedure')->nullable();
-            $table->string('item_number')->nullable();
-            $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
+            $table->unsignedSmallInteger('item_number')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
+        // ====================== DOMAINS ======================
+        Schema::create('domains', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('progress_record_id')->constrained('progress_records')->onDelete('cascade');
+            $table->foreignId('checklist_item_id')->constrained('eccd_checklist_items')->onDelete('cascade');
+            $table->tinyInteger('evaluation_round')->default(1); // ← MUST BE HERE
+            $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(
+                ['progress_record_id', 'checklist_item_id', 'evaluation_round'],
+                'domains_unique_item_per_round'
+            );
+        });
         // ====================== DOMAIN RESULTS ======================
         Schema::create('domain_results', function (Blueprint $table) {
             $table->id();
@@ -216,6 +230,7 @@ return new class extends Migration {
         Schema::dropIfExists('domain_observations');
         Schema::dropIfExists('domain_results');
         Schema::dropIfExists('domains');
+        Schema::dropIfExists('eccd_checklist_items');
         Schema::dropIfExists('progress_records');
         Schema::dropIfExists('children');
         Schema::dropIfExists('guardians');

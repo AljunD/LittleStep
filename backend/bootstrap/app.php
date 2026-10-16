@@ -14,10 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Replace default Authenticate with our API-safe version
         $middleware->replace(Authenticate::class, ApiAuthenticate::class);
 
-        // Aliases
         $middleware->alias([
             'auth'    => ApiAuthenticate::class,
             'teacher' => TeacherMiddleware::class, // ✅ Teacher-only middleware

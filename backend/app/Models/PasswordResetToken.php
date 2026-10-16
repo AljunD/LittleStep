@@ -10,10 +10,7 @@ class PasswordResetToken extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Explicit table name to match migration
     protected $table = 'password_reset_tokens';
-
-    // Primary key is email, not auto-increment
     protected $primaryKey = 'email';
     public $incrementing = false;
     protected $keyType = 'string';

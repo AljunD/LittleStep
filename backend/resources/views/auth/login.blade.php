@@ -1,4 +1,4 @@
-    @extends('components.auth')
+@extends('components.auth')
 
 @section('title', 'Secure Login')
 
@@ -8,15 +8,23 @@
     <p class="text-gray-400 text-lg font-light">Please sign in with your credentials</p>
 </div>
 
-<form method="POST" action="{{ route('auth.login.submit') }}" class="space-y-6">
+{{-- Status Message (e.g. after password reset) --}}
+@if (session('status'))
+    <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-xl">
+        {{ session('status') }}
+    </div>
+@endif
+
+<form method="POST" action="{{ route('auth.login.submit') }}" class="space-y-6" onsubmit="const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.innerText = 'Signing in...'; btn.classList.add('opacity-75', 'cursor-not-allowed');">
     @csrf
 
     {{-- Email --}}
     <div>
         <label for="email" class="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
         <input type="email" id="email" name="email"
+               value="{{ old('email') }}"
                placeholder="username@gmail.com"
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
+               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition" required autofocus>
         @error('email')
             <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
         @enderror
@@ -27,7 +35,7 @@
         <label for="password" class="block text-sm font-semibold text-gray-600 mb-2">Password</label>
         <input type="password" id="password" name="password"
                placeholder="••••••••"
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
+               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition" required>
         @error('password')
             <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
         @enderror
@@ -48,7 +56,7 @@
     {{-- Submit --}}
     <div class="pt-4">
         <button type="submit"
-            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95">
+            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
             Sign in
         </button>
     </div>

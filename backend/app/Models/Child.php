@@ -45,4 +45,28 @@ class Child extends Model
     {
         return $this->hasMany(ProgressRecord::class);
     }
+
+    public function getBarangayAttribute(): ?string
+    {
+        $parts = array_map('trim', explode(',', $this->address ?? ''));
+        return $parts[0] ?? null;
+    }
+
+    public function getCityAttribute(): ?string
+    {
+        $parts = array_map('trim', explode(',', $this->address ?? ''));
+        return $parts[1] ?? null;
+    }
+
+    public function getProvinceAttribute(): ?string
+    {
+        $parts = array_map('trim', explode(',', $this->address ?? ''));
+        return $parts[2] ?? null;
+    }
+
+    public function getRegionAttribute(): ?string
+    {
+        $parts = array_map('trim', explode(',', $this->address ?? ''));
+        return $parts[3] ?? null;
+    }
 }

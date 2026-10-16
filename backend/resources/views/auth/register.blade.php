@@ -118,7 +118,7 @@
 <div class="text-center mt-6">
     <p class="text-sm text-gray-500">
         Already registered?
-        <a href="{{ route('auth.login.form') }}" class="font-medium text-gray-900 hover:text-black underline underline-offset-4">
+        <a href="{{ route('login') }}" class="font-medium text-gray-900 hover:text-black underline underline-offset-4">
             Sign in here
         </a>
     </p>

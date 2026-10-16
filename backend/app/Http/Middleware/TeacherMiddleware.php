@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class TeacherMiddleware
 {
-    /**
-     * Handle an incoming request.
-     */
+
     public function handle($request, Closure $next)
     {
         if (!Auth::check() || Auth::user()->role !== 'teacher') {
