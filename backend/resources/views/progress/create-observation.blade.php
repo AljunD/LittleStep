@@ -5,22 +5,42 @@
 @section('content')
 <div class="max-w-4xl mx-auto my-10 bg-white shadow-sm border border-gray-200 text-gray-900 font-serif overflow-hidden">
     
+    @if (session('success'))
+        <div class="mx-10 mt-8 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mx-10 mt-8 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            <p class="font-semibold">Please correct the following errors:</p>
+            <ul class="mt-1 list-inside list-disc">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div id="observation-form-container" class="p-10 space-y-10">
-        <form id="static-observation-form" class="space-y-10" onsubmit="handleStaticSubmit(event)">
+        <form id="observation-form" class="space-y-10" method="POST" action="{{ route('progress.observation.store') }}">
+            @csrf
+            <input type="hidden" name="child_id" value="{{ $child->id }}">
             
             <div class="space-y-3 font-mono text-sm">
                 <div class="flex items-baseline">
                     <span class="whitespace-nowrap mr-2">Name of examiner :</span>
-                    <input type="text" name="examiner_name" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
+                    <input type="text" value="{{ trim(implode(' ', array_filter([$teacher->first_name, $teacher->middle_name, $teacher->last_name]))) }}" readonly class="flex-1 bg-transparent border-b border-dashed border-gray-400 px-2 font-sans py-0.5">
                 </div>
                 <div class="flex items-baseline">
                     <span class="whitespace-nowrap mr-2">Date administered :</span>
-                    <input type="date" name="date_administered" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
+                    <input type="date" name="date_administered" value="{{ old('date_administered', $progressRecord?->evaluation_date ?? now()->toDateString()) }}" required class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
                 </div>
                 <div class="flex items-baseline">
                     <span class="whitespace-nowrap mr-2">Place where test is administered :</span>
-                    <input type="text" name="place_administered" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
+                    <input type="text" name="place_administered" value="{{ old('place_administered', $progressRecord?->domainObservation?->place_administered) }}" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
                 </div>
+                <p class="text-xs text-gray-500">Child: {{ $child->first_name }} {{ $child->last_name }}</p>
             </div>
 
             <div class="text-[13px] font-sans text-gray-700 space-y-1">
@@ -34,7 +54,7 @@
                     Child’s background (ex. behavior/health/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="child_background" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide"></textarea>
+                    <textarea name="background_observations" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('background_observations', $progressRecord?->domainObservation?->background_observations) }}</textarea>
                 </div>
             </div>
 
@@ -43,7 +63,7 @@
                     Family environment (ex. Health of family members/family problems/ economic conditions/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="family_environment" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide"></textarea>
+                    <textarea name="family_environment_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('family_environment_notes', $progressRecord?->domainObservation?->family_environment_notes) }}</textarea>
                 </div>
             </div>
 
@@ -52,7 +72,7 @@
                     Parents’ stimulating activities for the child (What are the activities/things that the parents do to help stimulate the child’s development?)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="parents_activities" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide"></textarea>
+                    <textarea name="stimulating_activities_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('stimulating_activities_notes', $progressRecord?->domainObservation?->stimulating_activities_notes) }}</textarea>
                 </div>
             </div>
 
@@ -61,7 +81,7 @@
                     Home environment (ex. Facilities/type of house/ household items/interaction/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="home_environment" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide"></textarea>
+                    <textarea name="home_environment_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('home_environment_notes', $progressRecord?->domainObservation?->home_environment_notes) }}</textarea>
                 </div>
             </div>
 
@@ -70,7 +90,7 @@
                     Others
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="others_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide"></textarea>
+                    <textarea name="other_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('other_notes', $progressRecord?->domainObservation?->other_notes) }}</textarea>
                 </div>
             </div>
 
@@ -87,57 +107,5 @@
         </form>
     </div>
 
-    <div id="success-message" class="hidden p-12 text-center font-sans">
-        <div class="max-w-md mx-auto">
-            <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Observation Saved Successfully</h3>
-            <p class="text-gray-600 mb-8">The observation has been recorded for the child.</p>
-            <a href="{{ route('progress.index') }}" 
-               class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                Return to Progress Records
-            </a>
-        </div>
-    </div>
-
-    <div id="failed-message" class="hidden p-12 text-center font-sans">
-        <div class="max-w-md mx-auto">
-            <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Observation Save Failed</h3>
-            <p class="text-gray-600 mb-8">Something went wrong while saving the observation. Please try again.</p>
-            <a href="{{ route('progress.index') }}" 
-               class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                Back to Progress Records
-            </a>
-        </div>
-    </div>
 </div>
-
-<script>
-    function handleStaticSubmit(event) {
-        event.preventDefault(); // Stop standard form refresh
-        
-        const saveButton = document.getElementById('save-button');
-        const formContainer = document.getElementById('observation-form-container');
-        const successView = document.getElementById('success-message');
-        const failedView = document.getElementById('failed-message');
-
-        // Optional UX: Update button state to simulate processing
-        saveButton.disabled = true;
-        saveButton.innerText = "Saving...";
-
-        setTimeout(() => {
-            // Hide the active form layout container
-            formContainer.classList.add('hidden');
-
-            // Static simulation rule: 80% chance success, 20% failure
-            const isSuccessful = Math.random() > 0.2;
-
-            if (isSuccessful) {
-                successView.classList.remove('hidden');
-            } else {
-                failedView.classList.remove('hidden');
-            }
-        }, 600); // 600ms artificial database latency delay
-    }
-</script>
 @endsection

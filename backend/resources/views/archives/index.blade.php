@@ -4,14 +4,12 @@
 
 @section('content')
 <div class="space-y-8" x-data="{ activeTab: 'guardians' }">
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">System Archives</h1>
             <p class="text-sm text-gray-500">View and restore archived guardians, user accounts, and child records.</p>
         </div>
-        
-        <!-- Tab Navigation Switches -->
+
         <div class="flex space-x-2 bg-gray-100 p-1.5 rounded-xl self-start">
             <button @click="activeTab = 'guardians'" 
                     :class="{ 'bg-white text-gray-900 shadow-sm': activeTab === 'guardians', 'text-gray-500 hover:text-gray-700': activeTab !== 'guardians' }"
@@ -27,7 +25,6 @@
     </div>
 
     @if(session('success'))
-        <!-- Restore Success Message -->
         <div class="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div class="max-w-md mx-auto">
                 <div class="mb-4 bg-green-100 text-green-700 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
@@ -44,7 +41,6 @@
             </div>
         </div>
     @elseif(session('error'))
-        <!-- Restore Failed Message -->
         <div class="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div class="max-w-md mx-auto">
                 <div class="mb-4 bg-red-100 text-red-700 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
@@ -62,7 +58,6 @@
         </div>
     @else
 
-        <!-- TAB 1: ARCHIVED GUARDIANS -->
         <div x-show="activeTab === 'guardians'" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-100">
@@ -121,7 +116,6 @@
             </div>
         </div>
 
-        <!-- TAB 2: ARCHIVED CHILDREN -->
         <div x-show="activeTab === 'children'" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" x-cloak>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-100">

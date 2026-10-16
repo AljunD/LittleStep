@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto my-10 px-4 sm:px-6">
-    <!-- Back Link -->
     <div class="mb-6">
         <a href="{{ route('guardians.index') }}" 
            class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
@@ -16,8 +15,7 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        
-        <!-- Header & Step Tracker -->
+
         <div class="px-6 py-6 md:px-8 md:py-8 bg-gray-50 border-b border-gray-100">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
@@ -39,7 +37,6 @@
             </div>
         </div>
 
-        <!-- Global Error Messages Display -->
         @if ($errors->any())
             <div class="p-6 mx-6 md:mx-8 mt-6 bg-red-50 border border-red-200 rounded-xl">
                 <div class="flex items-center space-x-2 text-red-800 font-bold mb-2">
@@ -56,7 +53,6 @@
             </div>
         @endif
 
-        <!-- Success Message Screen -->
         <div id="success-message" class="{{ session('registration_success') ? '' : 'hidden' }} p-8 md:p-12 text-center">
             <div class="max-w-md mx-auto">
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
@@ -67,14 +63,10 @@
                 </a>
             </div>
         </div>
-
-        <!-- Form Content Container -->
         <form id="guardianRegistrationForm" action="{{ route('guardians.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div id="form-container" class="{{ session('registration_success') ? 'hidden' : '' }} p-6 md:p-12 max-h-[calc(100vh-220px)] overflow-y-auto custom-scroll">
-                
-                <!-- Step 1: Guardian -->
                 <div id="step1" class="space-y-8">
                     <div>
                         <h2 class="text-xl md:text-2xl font-bold text-gray-900">Guardian Account & Information</h2>
@@ -122,7 +114,6 @@
                         </div>
                     </div>
 
-                    <!-- Guardian Address -->
                     <div class="space-y-4">
                         <label class="text-sm font-semibold text-gray-700 block">Guardian Address</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,7 +166,6 @@
                     </div>
                 </div>
 
-                <!-- Step 2: Child Profile -->
                 <div id="step2" class="space-y-8 hidden">
                     <div>
                         <h2 class="text-xl md:text-2xl font-bold text-gray-900">Child Profile</h2>
@@ -217,7 +207,6 @@
                             </div>
                         </div>
 
-                        <!-- Child Address -->
                         <div class="space-y-4">
                             <label class="text-sm font-semibold text-gray-700 block">Child Address</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -273,8 +262,6 @@
                     </div>
 
                     <hr class="border-gray-100">
-
-                    <!-- Family Information -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-4">
                             <h3 class="text-base font-bold text-gray-900 border-b pb-2 border-gray-100">Father’s Information</h3>
@@ -373,7 +360,6 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Review -->
                 <div id="step3" class="space-y-8 hidden">
                     <div>
                         <h2 class="text-xl md:text-2xl font-bold text-gray-900">Review Submission</h2>
@@ -381,7 +367,6 @@
                     </div>
 
                     <div class="space-y-6">
-                        <!-- User Account -->
                         <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
                             <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">User Account (Login)</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -396,7 +381,6 @@
                             </div>
                         </div>
 
-                        <!-- Guardian Details -->
                         <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
                             <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Guardian Details</h3>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4">
@@ -415,7 +399,6 @@
                             </div>
                         </div>
 
-                        <!-- Child Details -->
                         <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-6">
                             <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400">Child Profile</h3>
 
@@ -441,7 +424,6 @@
                             </div>
 
                             <div class="pt-6 border-t border-gray-200/60 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Father Review -->
                                 <div>
                                     <p class="text-xs font-bold text-blue-600 uppercase mb-3">Father's Info</p>
                                     <div class="space-y-2">
@@ -452,7 +434,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Mother Review -->
                                 <div>
                                     <p class="text-xs font-bold text-pink-600 uppercase mb-3">Mother's Info</p>
                                     <div class="space-y-2">
@@ -464,7 +445,6 @@
                                 </div>
                             </div>
 
-                            <!-- Siblings & Birth Order Review -->
                             <div class="pt-4 border-t border-gray-200/60 flex space-x-8">
                                 <div><p class="text-xs text-gray-500 uppercase">Siblings</p><p id="reviewSiblings" class="font-semibold text-gray-800 text-sm">-</p></div>
                                 <div><p class="text-xs text-gray-500 uppercase">Birth Order</p><p id="reviewBirthOrder" class="font-semibold text-gray-800 text-sm">-</p></div>
@@ -517,7 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formContainer) formContainer.scrollTop = 0;
     }
 
-    // Auto navigate to step with error if server validation failed
     @if ($errors->has('child_first_name') || $errors->has('child_last_name') || $errors->has('child_sex') || $errors->has('child_date_of_birth') || $errors->has('child_handedness') || $errors->has('photo'))
         goToStep(2);
     @else
@@ -564,7 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Photo Preview
     const photoInput = document.getElementById('photoInput');
     const photoPreview = document.getElementById('photoPreview');
     const reviewPhoto = document.getElementById('reviewPhoto');
@@ -589,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Studying Checkbox Logic
     const yesBox = document.getElementById('childStudyingYes');
     const noBox = document.getElementById('childStudyingNo');
     const schoolField = document.getElementById('schoolNameField');
@@ -610,7 +587,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Update Review Summary
     function updateReview() {
         const fields = {
             guardianFirst: "reviewGuardianFirst",
@@ -656,7 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Studying Status Review
         const reviewStudying = document.getElementById('reviewChildIsStudying');
         if (reviewStudying) {
             reviewStudying.textContent = yesBox?.checked ? 'Yes' : (noBox?.checked ? 'No' : 'No');

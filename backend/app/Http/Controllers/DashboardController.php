@@ -9,15 +9,11 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the dashboard view with dynamic database stats.
-     */
+
     public function index()
     {   
-        // 1. Classroom Performance Metrics (KPI Cards)
         $guardiansCount = DB::table('guardians')->whereNull('deleted_at')->count();
-        
-        // Explicitly query 'children' table based on your migration override
+
         $childrenCount = DB::table('children')->whereNull('deleted_at')->count();
         
         $completedRecordsCount = DB::table('progress_records')
@@ -30,8 +26,6 @@ class DashboardController extends Controller
             ->whereNull('deleted_at')
             ->count();
 
-        // 2. Evaluation Action Alerts (Urgent red panel)
-        // Fetches the oldest pending record that needs layout initialization
         $rawUrgentRecord = DB::table('progress_records')
             ->join('children', 'progress_records.child_id', '=', 'children.id')
             ->where('progress_records.status', 'pending')
@@ -45,7 +39,6 @@ class DashboardController extends Controller
             ->orderBy('progress_records.created_at', 'asc')
             ->first();
 
-        // Transform raw data into an object mimicking Eloquent relationship properties for the Blade template
         $urgentAlertRecord = null;
         if ($rawUrgentRecord) {
             $urgentAlertRecord = (object) [
@@ -59,7 +52,6 @@ class DashboardController extends Controller
             ];
         }
 
-        // 3. Incomplete Tasks Queue (Yellow lists)
         $rawIncompleteTasks = DB::table('progress_records')
             ->join('children', 'progress_records.child_id', '=', 'children.id')
             ->where('progress_records.status', 'in_progress')
@@ -85,7 +77,6 @@ class DashboardController extends Controller
             ];
         });
 
-        // 4. Teacher Activity History Log
         $rawLogs = DB::table('logs')
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
@@ -102,7 +93,6 @@ class DashboardController extends Controller
             ];
         });
 
-        // 5. Master Student Evaluation Registry (Data Table)
         $rawRegistry = DB::table('progress_records')
             ->join('children', 'progress_records.child_id', '=', 'children.id')
             ->join('teachers', 'progress_records.teacher_id', '=', 'teachers.id')
@@ -140,7 +130,6 @@ class DashboardController extends Controller
             ];
         });
 
-        // 6. Return payload directly to layout template variable binders
         return view('dashboard', compact(
             'guardiansCount',
             'childrenCount',

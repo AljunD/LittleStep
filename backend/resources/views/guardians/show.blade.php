@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto my-10 px-4">
-    <!-- Navigation Back Link -->
     <div class="mb-6">
         <a href="{{ route('guardians.index') }}" 
            class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition">
@@ -15,7 +14,6 @@
         </a>
     </div>
 
-    <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
             <nav class="flex mb-2" aria-label="Breadcrumb">
@@ -53,7 +51,6 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-8">
             
-            <!-- Personal Information -->
             <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-lg font-bold text-gray-800">Personal Information</h2>
@@ -88,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- Linked Children -->
             <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-gray-800">Linked Children</h2>
@@ -134,9 +130,7 @@
             </div>
         </div>
 
-        <!-- Right Column: Account Status & Metadata -->
         <div class="space-y-6">
-            <!-- Account Status Card -->
             <div class="bg-gray-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mr-16 -mt-16 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
                 
@@ -176,7 +170,6 @@
                 </div>
             </div>
 
-            <!-- Metadata Card -->
             <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <div class="space-y-4">
                     <div class="flex items-center gap-3 text-gray-500">

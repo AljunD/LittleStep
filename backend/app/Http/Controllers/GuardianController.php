@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Hash;
 
 class GuardianController extends Controller
 {
-    /**
-     * Define shared custom error messages for input form validation.
-     */
     protected function validationMessages()
     {
         return [
@@ -38,8 +35,7 @@ class GuardianController extends Controller
             'municipality.max'               => 'The municipality field must not exceed 255 characters.',
             'province.max'                   => 'The province field must not exceed 255 characters.',
             'region.max'                     => 'The region field must not exceed 255 characters.',
-            
-            // Child Validation Messages
+
             'child_first_name.required'      => 'The child\'s first name is required.',
             'child_last_name.required'       => 'The child\'s last name is required.',
             'child_sex.required'             => 'Please select the child\'s sex.',
@@ -50,34 +46,23 @@ class GuardianController extends Controller
         ];
     }
 
-    /**
-     * Display a listing of guardians.
-     */
     public function index()
     {
         $guardians = Guardian::with('children')->paginate(10);
         return view('guardians.index', compact('guardians'));
     }
 
-    /**
-     * Show the form for creating a new guardian.
-     */
     public function create()
     {
         return view('guardians.create');
     }
 
-    /**
-     * Store a newly created guardian, user account, and child in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // User Account Validation
             'email'                 => ['required', 'email', 'max:255', 'unique:users,email'],
             'password'              => ['nullable', 'string', 'min:8', 'confirmed'],
 
-            // Guardian Validation
             'first_name'            => ['required', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
             'middle_name'           => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
             'last_name'             => ['required', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
@@ -89,7 +74,6 @@ class GuardianController extends Controller
             'province'              => ['nullable', 'string', 'max:255'],
             'region'                => ['nullable', 'string', 'max:255'],
 
-            // Child Validation
             'child_first_name'      => ['required', 'string', 'max:255'],
             'child_middle_name'     => ['nullable', 'string', 'max:255'],
             'child_last_name'       => ['required', 'string', 'max:255'],
@@ -116,7 +100,6 @@ class GuardianController extends Controller
         ], $this->validationMessages());
 
         DB::transaction(function () use ($request, $validated) {
-            // 1. Create User Account with Default Password Fallback
             $password = $validated['password'] ?? 'Password123!';
 
             $user = User::create([
@@ -125,7 +108,6 @@ class GuardianController extends Controller
                 'role'     => 'guardian',
             ]);
 
-            // 2. Build Guardian Address & Create Guardian
             $guardianAddress = implode(', ', array_filter([
                 $validated['barangay'] ?? null,
                 $validated['municipality'] ?? null,
@@ -144,7 +126,6 @@ class GuardianController extends Controller
                 'relationship_to_child' => $validated['relationship_to_child'],
             ]);
 
-            // 3. Build Child Address & Prepare Child Data
             $childAddress = implode(', ', array_filter([
                 $validated['child_barangay'] ?? null,
                 $validated['child_municipality'] ?? null,
@@ -157,7 +138,6 @@ class GuardianController extends Controller
                 $photoPath = $request->file('photo')->store('children_photos', 'public');
             }
 
-            // 4. Create Child Record linked to Guardian
             $guardian->children()->create([
                 'first_name'         => $validated['child_first_name'],
                 'middle_name'        => $validated['child_middle_name'] ?? null,
@@ -189,9 +169,6 @@ class GuardianController extends Controller
         return redirect()->route('guardians.create')->with('registration_success', true);
     }
 
-    /**
-     * Display the specified guardian.
-     */
     public function show($id)
     {
         $guardian = Guardian::with([
@@ -202,9 +179,6 @@ class GuardianController extends Controller
         return view('guardians.show', compact('guardian'));
     }
 
-    /**
-     * Show the form for editing the specified guardian.
-     */
     public function edit($id)
     {
         $guardian = Guardian::findOrFail($id);
@@ -218,9 +192,6 @@ class GuardianController extends Controller
         return view('guardians.edit', compact('guardian'));
     }
 
-    /**
-     * Update the specified guardian in storage.
-     */
     public function update(Request $request, $id)
     {
         $guardian = Guardian::with('user')->findOrFail($id);
@@ -281,9 +252,6 @@ class GuardianController extends Controller
                          ->with('success', 'Guardian updated successfully.');
     }
 
-    /**
-     * Soft delete the specified guardian, linked user, and all linked children.
-     */
     public function destroy($id)
     {
         $guardian = Guardian::with('children')->findOrFail($id);
@@ -317,18 +285,12 @@ class GuardianController extends Controller
                         ->with('success', 'Guardian and all linked children archived successfully.');
     }
 
-    /**
-     * Show the form for creating a child linked to the specified guardian.
-     */
     public function createChild($id)
     {
         $guardian = Guardian::findOrFail($id);
         return view('guardians.create-child', compact('guardian'));
     }
 
-    /**
-     * Store a newly created child linked to the specified guardian.
-     */
     public function storeChild(Request $request, $id)
     {
         $guardian = Guardian::findOrFail($id);
@@ -384,9 +346,6 @@ class GuardianController extends Controller
                          ->with('success', 'Child profile created successfully.');
     }
 
-    /**
-     * Unlink (soft-delete / archive) a child linked to a specific guardian.
-     */
     public function unlinkChild($guardianId, $childId)
     {
         $guardian = Guardian::findOrFail($guardianId);
@@ -404,9 +363,6 @@ class GuardianController extends Controller
         ]);
     }
 
-    /**
-     * Show the archive child preview page dynamically.
-     */
     public function archiveChild($id)
     {
         $guardian = Guardian::with('children')->findOrFail($id);

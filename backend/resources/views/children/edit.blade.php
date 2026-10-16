@@ -23,7 +23,6 @@
             </div>
         </div>
 
-        <!-- Dynamic Success Message Container -->
         <div id="success-message" class="{{ session('success') ? '' : 'hidden' }} p-12 text-center">
             <div class="max-w-md mx-auto">
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
@@ -36,7 +35,6 @@
             </div>
         </div>
 
-        <!-- Dynamic Failed Message Container -->
         <div id="failed-message" class="{{ session('error') || $errors->any() ? '' : 'hidden' }} p-12 text-center">
             <div class="max-w-md mx-auto">
                 <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
@@ -130,7 +128,6 @@
                             </select>
                         </div>
 
-                        <!-- Hidden input to submit boolean value for is_studying -->
                         <input type="hidden" name="is_studying" id="is_studying" value="{{ old('is_studying', $child->is_studying ? '1' : '0') }}">
 
                         <div class="flex items-center space-x-6 pt-8">
@@ -231,7 +228,6 @@
         editChildForm.submit();
     });
 
-    // Photo Preview
     document.getElementById('photoInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -243,7 +239,6 @@
         }
     });
 
-    // Studying Checkbox Toggle Logic
     const yesBox = document.getElementById('childStudyingYes');
     const noBox = document.getElementById('childStudyingNo');
     const schoolField = document.getElementById('schoolNameField');
@@ -260,7 +255,7 @@
             yesBox.checked = false;
             noBox.checked = true;
             schoolField.classList.add('hidden');
-            schoolInput.value = ''; // Clears the school input field
+            schoolInput.value = ''; 
             isStudyingInput.value = '0';
         }
     }

@@ -1,210 +1,236 @@
 @extends('components.app')
 
-@section('title', 'Create Evaluation - Gross Motor Domain')
+@section('title', 'Create Evaluation - ' . $domainName)
 
 @section('content')
 <div class="max-w-7xl mx-auto my-10 px-4">
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-black text-gray-900 uppercase tracking-tighter">Gross Motor Domain</h1>
+
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-medium">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg font-medium">{{ session('error') }}</div>
+    @endif
+
+    <div class="text-center mb-6">
+        <h1 class="text-3xl font-black text-gray-900 uppercase tracking-tighter">{{ $domainName }} Domain</h1>
         <p class="text-xs text-gray-500 mt-2 uppercase tracking-widest font-semibold">
-            Early Childhood Care and Development (ECCD) Checklist, Child’s Record 2
+            Early Childhood Care and Development (ECCD) Checklist
         </p>
-    </div>
+        @if($child)
+            <p class="text-sm text-gray-600 mt-3">
+                Evaluating: <span class="font-bold">{{ $child->first_name }} {{ $child->last_name }}</span>
+            </p>
+        @endif
 
-    <!-- Success Message -->
-    <div id="success-message" class="hidden p-12 text-center">
-        <div class="max-w-md mx-auto">
-            <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Evaluation Saved Successfully</h3>
-            <p class="text-gray-600 mb-8">The evaluation record has been saved and linked to the child profile.</p>
-            <a href="{{ route('progress.select-domain') }}" 
-               class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                Back to Domain Selection
-            </a>
+        <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+            You are filling:
+            <span class="bg-blue-600 text-white px-2 py-0.5 rounded">
+                {{ $currentRound }}{{ $currentRound == 1 ? 'st' : ($currentRound == 2 ? 'nd' : 'rd') }} Evaluation
+            </span>
         </div>
     </div>
 
-    <!-- Failed Message -->
-    <div id="failed-message" class="hidden p-12 text-center">
-        <div class="max-w-md mx-auto">
-            <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Evaluation Save Failed</h3>
-            <p class="text-gray-600 mb-8">Something went wrong while saving the evaluation. Please try again.</p>
-            <a href="{{ route('progress.select-domain') }}" 
-               class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                Back to Domain Selection
-            </a>
-        </div>
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+        <strong>Reminder:</strong>
+        @if($maxAllowedRound === 1)
+            The <strong>2nd and 3rd Evaluation</strong> columns are disabled until you complete the 
+            <strong>1st Evaluation of all 7 domains</strong>.
+        @elseif($maxAllowedRound === 2)
+            The <strong>3rd Evaluation</strong> column is disabled until you complete the 
+            <strong>2nd Evaluation of all 7 domains</strong>.
+        @else
+            All evaluation rounds are now available.
+        @endif
     </div>
 
-    <!-- Table -->
-    <div class="bg-white shadow-md border border-gray-300 overflow-hidden rounded-md" id="evaluation-form">
-        <div class="overflow-x-auto">
-            <table class="min-w-full border-collapse" id="grossMotorTable">
-                <thead>
-                    <tr class="bg-gray-200 text-gray-800">
-                        <th colspan="2" class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left">Gross Motor</th>
-                        <th class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left w-1/3">Material / Procedure</th>
-                        <th class="border border-gray-300 px-2 py-3 text-sm font-bold uppercase text-center">Present</th>
-                        <th class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left">Comments</th>
-                    </tr>
-                    <tr class="bg-gray-100 text-[10px] font-bold uppercase text-gray-600 border-b border-gray-300">
-                        <th colspan="3" class="border-r border-gray-300"></th>
-                        <th class="border-r border-gray-300 p-0">
-                            <div class="flex text-center border-b border-gray-300">
-                                <div class="w-24 border-r border-gray-300 py-1">1st Eval</div>
-                                <div class="w-24 border-r border-gray-300 py-1">2nd Eval</div>
-                                <div class="w-24 py-1">3rd Eval</div>
-                            </div>
-                            <div class="flex text-[9px] bg-white">
-                                <div class="w-12 border-r border-gray-200 py-1 text-green-600">Check</div>
-                                <div class="w-12 border-r border-gray-300 py-1 text-gray-400">Hyphen</div>
-                                <div class="w-12 border-r border-gray-200 py-1 text-green-600">Check</div>
-                                <div class="w-12 border-r border-gray-300 py-1 text-gray-400">Hyphen</div>
-                                <div class="w-12 border-r border-gray-200 py-1 text-green-600">Check</div>
-                                <div class="w-12 py-1 text-gray-400">Hyphen</div>
-                            </div>
-                        </th>
-                        <th class="bg-gray-50"></th>
-                    </tr>
-                </thead>
-                
-                <tbody class="text-sm">
-                    <!-- Example Row -->
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-2 py-4 text-center font-bold w-10 border border-gray-300">1.</td>
-                        <td class="px-4 py-4 font-semibold text-gray-800 border border-gray-300">
-                            Climbs on chair or other elevated piece of furniture like a bed without help
-                        </td>
-                        <td class="px-4 py-4 italic text-gray-600 border border-gray-300">
-                            Parental report will suffice.
-                        </td>
-                        <td class="p-0 border border-gray-300 bg-white">
-                            <div class="flex h-full min-h-[80px]">
-                                <!-- 1st Eval -->
-                                <div class="w-12 border-r border-gray-200 flex items-center justify-center">
-                                    <input type="checkbox" class="score-check" data-eval="1">
-                                </div>
-                                <div class="w-12 border-r border-gray-300 flex items-center justify-center bg-gray-50">
-                                    <input type="checkbox" class="score-hyphen" data-eval="1">
-                                </div>
-                                <!-- 2nd Eval -->
-                                <div class="w-12 border-r border-gray-200 flex items-center justify-center">
-                                    <input type="checkbox" class="score-check" data-eval="2">
-                                </div>
-                                <div class="w-12 border-r border-gray-300 flex items-center justify-center bg-gray-50">
-                                    <input type="checkbox" class="score-hyphen" data-eval="2">
-                                </div>
-                                <!-- 3rd Eval -->
-                                <div class="w-12 border-r border-gray-200 flex items-center justify-center">
-                                    <input type="checkbox" class="score-check" data-eval="3">
-                                </div>
-                                <div class="w-12 flex items-center justify-center bg-gray-50">
-                                    <input type="checkbox" class="score-hyphen" data-eval="3">
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 border border-gray-300">
-                            <textarea class="w-full h-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring focus:ring-blue-200 resize-none comments-field"
-                                      placeholder="Add observations..."></textarea>
-                        </td>
-                    </tr>
+    <form action="{{ route('progress.store') }}" method="POST" id="evaluation-form">
+        @csrf
+        <input type="hidden" name="child_id" value="{{ $child?->id }}">
+        <input type="hidden" name="domain" value="{{ $domainKey }}">
 
-                    <!-- Total Score Row -->
-                    <tr class="bg-gray-100 font-bold text-gray-800">
-                        <td colspan="2" class="border-r border-gray-300"></td>
-                        <td class="px-6 py-4 text-right uppercase tracking-widest text-sm border-r border-gray-300">Total Score</td>
-                        <td class="p-0 border border-gray-300">
-                            <div class="flex h-full text-center text-lg">
-                                <div class="w-24 border-r border-gray-300 py-3" id="totalEval1">0</div>
-                                <div class="w-24 border-r border-gray-300 py-3" id="totalEval2">0</div>
-                                <div class="w-24 py-3" id="totalEval3">0</div>
-                            </div>
-                        </td>
-                        <td class="border border-gray-300"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <div class="bg-white shadow-md border border-gray-300 overflow-hidden rounded-md">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200 text-gray-800">
+                            <th colspan="2" class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left">{{ $domainName }}</th>
+                            <th class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left w-1/3">Material / Procedure</th>
+                            <th class="border border-gray-300 px-2 py-3 text-sm font-bold uppercase text-center">Present</th>
+                            <th class="border border-gray-300 px-4 py-3 text-sm font-bold uppercase text-left">Comments</th>
+                        </tr>
+                        <tr class="bg-gray-100 text-[10px] font-bold uppercase text-gray-600 border-b border-gray-300">
+                            <th colspan="3" class="border-r border-gray-300"></th>
+                            <th class="border-r border-gray-300 p-0">
+                                <div class="flex text-center border-b border-gray-300">
+                                    <div class="w-24 border-r border-gray-300 py-1 {{ $currentRound === 1 ? 'bg-blue-100 text-blue-700' : '' }}">
+                                        1st Eval @if(in_array(1, $completedRounds)) <span class="text-green-600">✓</span> @endif
+                                    </div>
+                                    <div class="w-24 border-r border-gray-300 py-1 {{ $currentRound === 2 ? 'bg-blue-100 text-blue-700' : '' }}">
+                                        2nd Eval @if(in_array(2, $completedRounds)) <span class="text-green-600">✓</span> @endif
+                                    </div>
+                                    <div class="w-24 py-1 {{ $currentRound === 3 ? 'bg-blue-100 text-blue-700' : '' }}">
+                                        3rd Eval @if(in_array(3, $completedRounds)) <span class="text-green-600">✓</span> @endif
+                                    </div>
+                                </div>
+                                <div class="flex text-[9px] bg-white">
+                                    <div class="w-12 border-r border-gray-200 py-1 text-green-600">✓</div>
+                                    <div class="w-12 border-r border-gray-300 py-1 text-gray-400">—</div>
+                                    <div class="w-12 border-r border-gray-200 py-1 text-green-600">✓</div>
+                                    <div class="w-12 border-r border-gray-300 py-1 text-gray-400">—</div>
+                                    <div class="w-12 border-r border-gray-200 py-1 text-green-600">✓</div>
+                                    <div class="w-12 py-1 text-gray-400">—</div>
+                                </div>
+                            </th>
+                            <th class="bg-gray-50"></th>
+                        </tr>
+                    </thead>
 
-     <!-- Footer Actions -->
-    <!-- Footer Actions -->
-    <div class="flex justify-between items-center mt-10" id="footer-actions">
-        <p class="text-[10px] italic text-gray-500 flex items-center space-x-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span>Ensure all physical assessments are verified by the primary caregiver.</span>
-        </p>
-        <div class="flex space-x-4">
-            <a href="{{ route('progress.select-domain') }}" 
-            class="px-8 py-3 text-gray-600 font-bold hover:text-black transition inline-block">
-                Cancel
-            </a>
-            <button type="button" id="save-btn" 
-                    class="px-12 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md hover:shadow-blue-200 transform active:scale-95">
-                Save Evaluation
-            </button>
+                    <tbody class="text-sm">
+                        @forelse($items as $index => $item)
+                            @php
+                                // Get saved data for each round
+                                $saved1 = $savedResults[1][$item->id] ?? null;
+                                $saved2 = $savedResults[2][$item->id] ?? null;
+                                $saved3 = $savedResults[3][$item->id] ?? null;
+
+                                $present1 = $saved1['present'] ?? null;
+                                $present2 = $saved2['present'] ?? null;
+                                $present3 = $saved3['present'] ?? null;
+
+                                // Comments come from the current round
+                                $savedComment = $savedResults[$currentRound][$item->id]['comments'] ?? '';
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-2 py-4 text-center font-bold w-10 border border-gray-300">{{ $index + 1 }}.</td>
+                                <td class="px-4 py-4 font-semibold text-gray-800 border border-gray-300">{{ $item->activity }}</td>
+                                <td class="px-4 py-4 italic text-gray-600 border border-gray-300 text-xs">
+                                    {!! nl2br(e($item->materials_and_procedure)) !!}
+                                </td>
+                                <td class="p-0 border border-gray-300 bg-white">
+                                    <div class="flex h-full min-h-[80px]">
+
+                                        {{-- 1st Evaluation --}}
+                                        <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 1 ? 'bg-gray-100 opacity-50' : '' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][1]" value="check"
+                                                   class="score-check" data-eval="1"
+                                                   {{ $currentRound !== 1 ? 'disabled' : '' }}
+                                                   {{ $present1 === 'check' ? 'checked' : '' }}>
+                                        </div>
+                                        <div class="w-12 border-r border-gray-300 flex items-center justify-center {{ $currentRound !== 1 ? 'bg-gray-100 opacity-50' : 'bg-gray-50' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][1]" value="hyphen"
+                                                   class="score-hyphen" data-eval="1"
+                                                   {{ $currentRound !== 1 ? 'disabled' : '' }}
+                                                   {{ $present1 === 'hyphen' ? 'checked' : '' }}>
+                                        </div>
+
+                                        {{-- 2nd Evaluation --}}
+                                        <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 2 ? 'bg-gray-100 opacity-50' : '' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][2]" value="check"
+                                                   class="score-check" data-eval="2"
+                                                   {{ $currentRound !== 2 ? 'disabled' : '' }}
+                                                   {{ $present2 === 'check' ? 'checked' : '' }}>
+                                        </div>
+                                        <div class="w-12 border-r border-gray-300 flex items-center justify-center {{ $currentRound !== 2 ? 'bg-gray-100 opacity-50' : 'bg-gray-50' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][2]" value="hyphen"
+                                                   class="score-hyphen" data-eval="2"
+                                                   {{ $currentRound !== 2 ? 'disabled' : '' }}
+                                                   {{ $present2 === 'hyphen' ? 'checked' : '' }}>
+                                        </div>
+
+                                        {{-- 3rd Evaluation --}}
+                                        <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 3 ? 'bg-gray-100 opacity-50' : '' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][3]" value="check"
+                                                   class="score-check" data-eval="3"
+                                                   {{ $currentRound !== 3 ? 'disabled' : '' }}
+                                                   {{ $present3 === 'check' ? 'checked' : '' }}>
+                                        </div>
+                                        <div class="w-12 flex items-center justify-center {{ $currentRound !== 3 ? 'bg-gray-100 opacity-50' : 'bg-gray-50' }}">
+                                            <input type="checkbox" name="results[{{ $item->id }}][3]" value="hyphen"
+                                                   class="score-hyphen" data-eval="3"
+                                                   {{ $currentRound !== 3 ? 'disabled' : '' }}
+                                                   {{ $present3 === 'hyphen' ? 'checked' : '' }}>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 border border-gray-300">
+                                    <textarea name="comments[{{ $item->id }}]"
+                                              class="w-full h-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring focus:ring-blue-200 resize-none"
+                                              placeholder="Add observations..."
+                                              {{ $currentRound > 3 ? 'disabled' : '' }}>{{ $savedComment }}</textarea>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                                    No checklist items found. Run the seeder first.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+
+                    <tfoot>
+                        <tr class="bg-gray-100 font-bold text-gray-800">
+                            <td colspan="2" class="border border-gray-300"></td>
+                            <td class="px-6 py-4 text-right uppercase tracking-widest text-sm border border-gray-300">Total Score</td>
+                            <td class="p-0 border border-gray-300">
+                                <div class="flex h-full text-center text-lg">
+                                    <div class="w-24 border-r border-gray-300 py-3" id="totalEval1">0</div>
+                                    <div class="w-24 border-r border-gray-300 py-3" id="totalEval2">0</div>
+                                    <div class="w-24 py-3" id="totalEval3">0</div>
+                                </div>
+                            </td>
+                            <td class="border border-gray-300"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
-    </div>
+
+        <div class="flex justify-between items-center mt-10">
+            <p class="text-[10px] italic text-gray-500">
+                Only the current evaluation round is editable. Previous rounds show the saved answers (read-only).
+            </p>
+            <div class="flex space-x-4">
+                <a href="{{ route('progress.select-domain', ['child_id' => $child?->id]) }}"
+                   class="px-8 py-3 text-gray-600 font-bold hover:text-black transition">Cancel</a>
+                <button type="submit"
+                        class="px-12 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
+                    Save {{ $currentRound }}{{ $currentRound == 1 ? 'st' : ($currentRound == 2 ? 'nd' : 'rd') }} Evaluation
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 
 <script>
     function updateScores() {
-        let totals = {1:0, 2:0, 3:0};
-        document.querySelectorAll('.score-check').forEach(cb => {
-            if (cb.checked) {
-                totals[cb.dataset.eval]++;
-            }
+        const totals = {1: 0, 2: 0, 3: 0};
+        document.querySelectorAll('.score-check:checked').forEach(cb => {
+            if (!cb.disabled) totals[cb.dataset.eval]++;
         });
-        document.getElementById('totalEval1').textContent = totals[1];
-        document.getElementById('totalEval2').textContent = totals[2];
-        document.getElementById('totalEval3').textContent = totals[3];
+        // Also count disabled (previous) rounds so the totals stay visible
+        document.querySelectorAll('.score-check:checked').forEach(cb => {
+            totals[cb.dataset.eval]++;
+        });
+        // Prevent double counting
+        document.getElementById('totalEval1').textContent = document.querySelectorAll('.score-check[data-eval="1"]:checked').length;
+        document.getElementById('totalEval2').textContent = document.querySelectorAll('.score-check[data-eval="2"]:checked').length;
+        document.getElementById('totalEval3').textContent = document.querySelectorAll('.score-check[data-eval="3"]:checked').length;
     }
 
     document.querySelectorAll('.score-check, .score-hyphen').forEach(cb => {
-        cb.addEventListener('change', function() {
+        cb.addEventListener('change', function () {
+            if (this.disabled) return;
             const evalNum = this.dataset.eval;
-            const parentRow = this.closest('tr');
-
-            // Restrict only one checkbox per evaluation in this row
-            parentRow.querySelectorAll('[data-eval="'+evalNum+'"]').forEach(other => {
+            const row = this.closest('tr');
+            row.querySelectorAll(`[data-eval="${evalNum}"]`).forEach(other => {
                 if (other !== this) other.checked = false;
             });
-
-            // Require comments if hyphen is checked
-            const commentsField = parentRow.querySelector('.comments-field');
-            if (this.classList.contains('score-hyphen') && this.checked) {
-                commentsField.setAttribute('required', 'required');
-            } else if (this.classList.contains('score-hyphen') && !this.checked) {
-                commentsField.removeAttribute('required');
-            }
-
             updateScores();
         });
     });
 
-    // Toggle success/failed message on Save button click with confirmation
-    document.getElementById('save-btn').addEventListener('click', function() {
-        // Confirmation dialog
-        const confirmed = confirm("Are you sure you want to save this evaluation?");
-        if (!confirmed) return; // stop if user cancels
-
-        const isSuccess = Math.random() > 0.5; // simulate outcome
-        document.getElementById('evaluation-form').classList.add('hidden');
-        document.getElementById('footer-actions').classList.add('hidden'); // hide Cancel & Save buttons
-
-        if (isSuccess) {
-            document.getElementById('success-message').classList.remove('hidden');
-            document.getElementById('failed-message').classList.add('hidden');
-        } else {
-            document.getElementById('failed-message').classList.remove('hidden');
-            document.getElementById('success-message').classList.add('hidden');
-        }
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    document.addEventListener('DOMContentLoaded', updateScores);
 </script>
 @endsection

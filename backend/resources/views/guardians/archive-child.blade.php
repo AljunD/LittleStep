@@ -15,8 +15,7 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        
-        <!-- Header -->
+
         <div class="px-6 py-6 md:px-8 md:py-8 bg-gray-50 border-b border-gray-200">
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900">Archive Child Record</h1>
             <p class="text-sm text-gray-500 mt-1">
@@ -24,7 +23,6 @@
             </p>
         </div>
 
-        <!-- Success Message -->
         <div id="success-message" class="hidden p-8 md:p-12 text-center">
             <div class="max-w-md mx-auto">
                 <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
@@ -37,7 +35,6 @@
             </div>
         </div>
 
-        <!-- Failed Message -->
         <div id="failed-message" class="hidden p-8 md:p-12 text-center">
             <div class="max-w-md mx-auto">
                 <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
@@ -50,7 +47,6 @@
             </div>
         </div>
 
-        <!-- Child List Table -->
         <div id="child-list" class="p-6 md:p-8">
             <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -99,12 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const failedMessage = document.getElementById('failed-message');
     const csrfToken = '{{ csrf_token() }}';
 
-    // Attach event listeners to all Archive buttons
     document.querySelectorAll('.archive-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const endpointUrl = btn.getAttribute('data-url');
 
-            // Confirmation dialog
             const confirmed = confirm("Are you sure you want to archive this child record?");
             if (!confirmed) return;
 
@@ -112,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerText = "Archiving...";
 
             try {
-                // Execute actual DELETE HTTP request to Laravel route
                 const response = await fetch(endpointUrl, {
                     method: 'DELETE',
                     headers: {
@@ -141,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.innerText = "Archive Child";
             }
 
-            // Scroll to top for feedback banner visibility
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });

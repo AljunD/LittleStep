@@ -42,7 +42,6 @@
     </div>
     @endif
 
-    <!-- Search bar & Count counter -->
     <div id="search-container" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div class="relative flex-1 max-w-md">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">🔍</span>
@@ -80,7 +79,6 @@
         </div>
     </div>
 
-    <!-- Table Container -->
     <div id="table-container" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -185,7 +183,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Live Client-Side Table Filter Search
     const searchInput = document.getElementById('searchInput');
     const resultCount = document.getElementById('resultCount');
     const rows = document.querySelectorAll('#guardiansTableBody tr.guardian-row');
@@ -218,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Archive Handler – AJAX
     document.getElementById('guardiansTableBody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.archive-trigger-btn');
         if (btn) {
@@ -260,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Success – hide list UI and show success panel
                 document.getElementById('index-header')?.classList.add('hidden');
                 document.getElementById('search-container')?.classList.add('hidden');
                 document.getElementById('table-container')?.classList.add('hidden');
@@ -285,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Restore list UI
 function resetIndexLayout() {
     document.getElementById('index-header')?.classList.remove('hidden');
     document.getElementById('search-container')?.classList.remove('hidden');
