@@ -86,13 +86,13 @@ Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(fun
 
 Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::get('/', [ProgressController::class, 'index'])
-        ->name('progress.index');   
+        ->name('progress.index');
 
     Route::get('/select-domain/{child_id?}', [ProgressController::class, 'selectDomain'])
         ->name('progress.select-domain');
 
     Route::get('/create/{child_id?}', [ProgressController::class, 'create'])
-        ->name('progress.create'); 
+        ->name('progress.create');
 
     Route::get('/add-observation/{child_id?}', [ProgressController::class, 'addObservation'])
         ->name('progress.add-observation');
@@ -100,11 +100,20 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
     Route::post('/store-observation', [ProgressController::class, 'storeObservation'])
         ->name('progress.observation.store');
 
-    Route::get('/show/{id?}', fn() => view('progress.show'))
+    Route::get('/show/{id?}', [ProgressController::class, 'show'])
         ->name('progress.show');
 
-    Route::get('/edit/{id?}', fn() => view('progress.edit'))
+    Route::get('/{progressRecord}/download-pdf', [ProgressController::class, 'downloadPdf'])
+        ->name('progress.download-pdf');
+
+    Route::get('/{progressRecord}/pdf', [ProgressController::class, 'downloadPdf'])
+        ->name('progress.pdf');
+
+    Route::get('/edit/{id?}', [ProgressController::class, 'edit'])
         ->name('progress.edit');
+
+    Route::put('/edit/{id}', [ProgressController::class, 'update'])
+        ->name('progress.update');
 
     Route::post('/store', [ProgressController::class, 'store'])
         ->name('progress.store');

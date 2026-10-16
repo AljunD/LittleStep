@@ -135,10 +135,7 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'social_emotional', 'activity' => 'Cooperates with adults and peers in group situations', 'materials_and_procedure' => 'Parental report will suffice.'],
         ];
 
-        // Clear existing checklist items first (safe for re-seeding)
-        EccdChecklistItem::query()->forceDelete();
-
-        $counters = []; // per-domain item_number
+        $counters = []; 
 
         foreach ($checklist as $item) {
             $domain = $item['domain'];
@@ -147,19 +144,23 @@ class ECCDChecklistSeeder extends Seeder
                 $counters[$domain] = 1;
             }
 
-            EccdChecklistItem::create([
-                'domain'                  => $domain,
-                'activity'                => $item['activity'],
-                'materials_and_procedure' => $item['materials_and_procedure'],
-                'item_number'             => $counters[$domain],
-            ]);
+            EccdChecklistItem::updateOrCreate(
+                [
+                    'domain'      => $domain,
+                    'item_number' => $counters[$domain],
+                ],
+                [
+                    'activity'                => $item['activity'],
+                    'materials_and_procedure' => $item['materials_and_procedure'],
+                ]
+            );
 
             $counters[$domain]++;
         }
 
         $total = array_sum(array_map(fn($c) => $c - 1, $counters));
 
-        $this->command->info('✅ ECCD Checklist seeded successfully!');
+        $this->command->info('ECCD Checklist seeded successfully!');
         $this->command->info('   Total items: ' . $total);
         foreach ($counters as $domain => $count) {
             $this->command->info("   - {$domain}: " . ($count - 1) . ' items');
