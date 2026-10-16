@@ -16,6 +16,9 @@ class ProgressRecord extends Model
         'child_id',
         'teacher_id',
         'evaluation_date',
+        'evaluation_date_round_1',
+        'evaluation_date_round_2',
+        'evaluation_date_round_3',
         'evaluation_number',
         'status',
     ];

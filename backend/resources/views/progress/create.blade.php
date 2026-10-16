@@ -49,6 +49,25 @@
         <input type="hidden" name="child_id" value="{{ $child?->id }}">
         <input type="hidden" name="domain" value="{{ $domainKey }}">
 
+        <div class="mb-6 max-w-sm">
+            <label for="assessment_date" class="block text-sm font-bold text-gray-700 mb-1">
+                Assessment date ({{ $currentRound }}{{ $currentRound === 1 ? 'st' : ($currentRound === 2 ? 'nd' : 'rd') }} evaluation)
+            </label>
+            <input
+                type="date"
+                id="assessment_date"
+                name="assessment_date"
+                value="{{ old('assessment_date', $assessmentDate) }}"
+                min="{{ $child?->date_of_birth }}"
+                max="{{ now()->toDateString() }}"
+                required
+                class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring focus:ring-blue-200"
+            >
+            @error('assessment_date')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
         <div class="bg-white shadow-md border border-gray-300 overflow-hidden rounded-md">
             <div class="overflow-x-auto">
                 <table class="min-w-full border-collapse">
@@ -89,7 +108,6 @@
                     <tbody class="text-sm">
                         @forelse($items as $index => $item)
                             @php
-                                // Get saved data for each round
                                 $saved1 = $savedResults[1][$item->id] ?? null;
                                 $saved2 = $savedResults[2][$item->id] ?? null;
                                 $saved3 = $savedResults[3][$item->id] ?? null;
@@ -98,7 +116,6 @@
                                 $present2 = $saved2['present'] ?? null;
                                 $present3 = $saved3['present'] ?? null;
 
-                                // Comments come from the current round
                                 $savedComment = $savedResults[$currentRound][$item->id]['comments'] ?? '';
                             @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
@@ -110,7 +127,6 @@
                                 <td class="p-0 border border-gray-300 bg-white">
                                     <div class="flex h-full min-h-[80px]">
 
-                                        {{-- 1st Evaluation --}}
                                         <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 1 ? 'bg-gray-100 opacity-50' : '' }}">
                                             <input type="checkbox" name="results[{{ $item->id }}][1]" value="check"
                                                    class="score-check" data-eval="1"
@@ -124,7 +140,6 @@
                                                    {{ $present1 === 'hyphen' ? 'checked' : '' }}>
                                         </div>
 
-                                        {{-- 2nd Evaluation --}}
                                         <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 2 ? 'bg-gray-100 opacity-50' : '' }}">
                                             <input type="checkbox" name="results[{{ $item->id }}][2]" value="check"
                                                    class="score-check" data-eval="2"
@@ -138,7 +153,6 @@
                                                    {{ $present2 === 'hyphen' ? 'checked' : '' }}>
                                         </div>
 
-                                        {{-- 3rd Evaluation --}}
                                         <div class="w-12 border-r border-gray-200 flex items-center justify-center {{ $currentRound !== 3 ? 'bg-gray-100 opacity-50' : '' }}">
                                             <input type="checkbox" name="results[{{ $item->id }}][3]" value="check"
                                                    class="score-check" data-eval="3"
@@ -209,11 +223,9 @@
         document.querySelectorAll('.score-check:checked').forEach(cb => {
             if (!cb.disabled) totals[cb.dataset.eval]++;
         });
-        // Also count disabled (previous) rounds so the totals stay visible
         document.querySelectorAll('.score-check:checked').forEach(cb => {
             totals[cb.dataset.eval]++;
         });
-        // Prevent double counting
         document.getElementById('totalEval1').textContent = document.querySelectorAll('.score-check[data-eval="1"]:checked').length;
         document.getElementById('totalEval2').textContent = document.querySelectorAll('.score-check[data-eval="2"]:checked').length;
         document.getElementById('totalEval3').textContent = document.querySelectorAll('.score-check[data-eval="3"]:checked').length;

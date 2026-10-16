@@ -8,22 +8,109 @@ use App\Models\DomainResult;
 use App\Models\EccdChecklistItem;
 use App\Models\ProgressRecord;
 use App\Models\Teacher;
+use App\Services\EccdExpertSystem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ProgressController extends Controller
 {
-    /**
-     * Status of each round for one domain of one child
-     * Returns [1 => 'Pending'|'In Progress'|'Completed', 2 => ..., 3 => ...]
-     */
+    public function downloadPdf(ProgressRecord $progressRecord, EccdExpertSystem $expert)
+    {
+        $progressRecord->load([
+            'child.guardian',
+            'teacher',
+            'domainObservation',
+            'domains.checklistItem',
+            'domains.results',
+        ]);
+
+        $domainLabels = [
+            'gross_motor' => 'Gross Motor',
+            'fine_motor' => 'Fine Motor',
+            'self_help' => 'Self-Help',
+            'receptive_language' => 'Receptive Language',
+            'expressive_language' => 'Expressive Language',
+            'cognitive' => 'Cognitive',
+            'social_emotional' => 'Social-Emotional',
+        ];
+        $checklistItems = EccdChecklistItem::query()
+            ->whereIn('domain', array_keys($domainLabels))
+            ->orderBy('item_number')
+            ->orderBy('id')
+            ->get();
+        $domainEntries = $progressRecord->domains->keyBy(
+            fn (Domain $domain) => "{$domain->checklist_item_id}:{$domain->evaluation_round}"
+        );
+        $computedByRound = [];
+        $assessmentDates = [];
+
+        foreach ([1, 2, 3] as $round) {
+            $assessmentDates[$round] = $progressRecord->getAttribute("evaluation_date_round_{$round}")
+                ?? ($round === 1 ? $progressRecord->evaluation_date : null);
+            $computedByRound[$round] = $expert->compute($progressRecord, $round);
+        }
+
+        $preparedDomains = [];
+        foreach ($domainLabels as $domainKey => $domainLabel) {
+            $items = [];
+
+            foreach ($checklistItems->where('domain', $domainKey) as $checklistItem) {
+                $roundData = [];
+
+                foreach ([1, 2, 3] as $round) {
+                    $domainEntry = $domainEntries->get("{$checklistItem->id}:{$round}");
+                    $result = $domainEntry?->results->first();
+                    $present = $result ? $expert->normalizePresentValue($result->present) : null;
+                    $roundData[$round] = [
+                        'mark' => $present === 'check' ? '✓' : ($present === 'hyphen' ? '—' : ''),
+                        'comment' => trim((string) ($result?->comments ?? '')),
+                    ];
+                }
+
+                $items[] = [
+                    'number' => $checklistItem->item_number ?? $checklistItem->id,
+                    'activity' => $checklistItem->activity,
+                    'procedure' => $checklistItem->materials_and_procedure ?? '',
+                    'rounds' => $roundData,
+                ];
+            }
+
+            $preparedDomains[$domainKey] = [
+                'key' => $domainKey,
+                'label' => $domainLabel,
+                'items' => $items,
+            ];
+        }
+
+        $pdf = Pdf::loadView('progress.pdf.report', [
+            'progressRecord' => $progressRecord,
+            'child' => $progressRecord->child,
+            'teacher' => $progressRecord->teacher,
+            'guardian' => $progressRecord->child?->guardian,
+            'observation' => $progressRecord->domainObservation,
+            'domainLabels' => $domainLabels,
+            'preparedDomains' => $preparedDomains,
+            'computedByRound' => $computedByRound,
+            'assessmentDates' => $assessmentDates,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("ECCD-Checklist-Child-{$progressRecord->child_id}.pdf");
+    }
+
     private function getDomainRoundStatus(int $childId, string $domainKey): array
     {
         $status = [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
 
         $progressRecord = ProgressRecord::where('child_id', $childId)->first();
         if (!$progressRecord) {
+            return $status;
+        }
+
+        $totalItems = EccdChecklistItem::ofType($domainKey)->count();
+        if ($totalItems === 0) {
             return $status;
         }
 
@@ -34,14 +121,16 @@ class ProgressController extends Controller
                 ->with('results')
                 ->get();
 
-            $totalItems  = $domainItems->count();
-            $filledCount = $domainItems->filter(fn($d) => $d->results->isNotEmpty())->count();
+            $answeredCount = $domainItems->filter(function ($domainItem) {
+                return $domainItem->status === 'completed'
+                    && $domainItem->results->contains(
+                        fn($result) => in_array($result->present, ['check', 'hyphen'], true)
+                    );
+            })->count();
 
-            if ($totalItems === 0) {
-                $status[$round] = 'Pending';
-            } elseif ($filledCount === $totalItems) {
+            if ($domainItems->count() === $totalItems && $answeredCount === $totalItems) {
                 $status[$round] = 'Completed';
-            } elseif ($filledCount > 0) {
+            } elseif ($answeredCount > 0 || $domainItems->isNotEmpty()) {
                 $status[$round] = 'In Progress';
             } else {
                 $status[$round] = 'Pending';
@@ -84,25 +173,19 @@ class ProgressController extends Controller
         return $max;
     }
 
-    /**
-     * ONE ProgressRecord per child
-     */
-    private function getOrCreateProgressRecord(int $childId, int $teacherId): ProgressRecord
+    private function getOrCreateProgressRecord(int $childId, int $teacherId, string $assessmentDate): ProgressRecord
     {
         return ProgressRecord::firstOrCreate(
             ['child_id' => $childId],
             [
                 'teacher_id'        => $teacherId,
-                'evaluation_date'   => now()->toDateString(),
+                'evaluation_date'   => $assessmentDate,
                 'evaluation_number' => 1,
                 'status'            => 'in_progress',
             ]
         );
     }
 
-    // =========================================================================
-    // INDEX
-    // =========================================================================
     public function index()
     {
         $children = Child::with(['progressRecords.domains.checklistItem', 'progressRecords.teacher'])
@@ -163,9 +246,6 @@ class ProgressController extends Controller
         return view('progress.index', compact('children'));
     }
 
-    // =========================================================================
-    // SELECT DOMAIN
-    // =========================================================================
     public function selectDomain($child_id = null)
     {
         $childId = $child_id ?? request('child_id');
@@ -201,9 +281,6 @@ class ProgressController extends Controller
         return view('progress.select-domain', compact('child', 'childId', 'domains', 'maxAllowedRound'));
     }
 
-    // =========================================================================
-    // CREATE
-    // =========================================================================
     public function create(Request $request, $child_id = null)
     {
         $child     = $child_id ? Child::findOrFail($child_id) : null;
@@ -228,6 +305,7 @@ class ProgressController extends Controller
         $completedRounds = [];
         $savedResults    = [];
         $maxAllowedRound = 1;
+        $progressRecord  = null;
 
         if ($child) {
             $maxAllowedRound = $this->getMaxAllowedRound($child->id);
@@ -269,6 +347,9 @@ class ProgressController extends Controller
             }
         }
 
+        $assessmentDate = $progressRecord?->getAttribute("evaluation_date_round_{$currentRound}")
+            ?? now()->toDateString();
+
         $domainNames = [
             'gross_motor'          => 'Gross Motor',
             'fine_motor'           => 'Fine Motor',
@@ -288,49 +369,54 @@ class ProgressController extends Controller
             'completedRounds' => $completedRounds,
             'savedResults'    => $savedResults,
             'maxAllowedRound' => $maxAllowedRound,
+            'assessmentDate'  => $assessmentDate,
         ]);
     }
 
-    // =========================================================================
-    // STORE  (FIXED)
-    // =========================================================================
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'child_id' => 'required|exists:children,id',
             'domain'   => 'required|in:gross_motor,fine_motor,self_help,receptive_language,expressive_language,cognitive,social_emotional',
+            'assessment_date' => 'required|date|before_or_equal:today',
             'results'  => 'nullable|array',
+            'results.*.*' => [
+                'nullable',
+                Rule::in(['check', 'hyphen', 'present', '—', true, false, 1, 0, '1', '0']),
+            ],
             'comments' => 'nullable|array',
+            'comments.*' => 'nullable|string',
         ]);
 
-        $childId   = $request->child_id;
-        $domainKey = $request->domain;
+        $childId   = (int) $validated['child_id'];
+        $domainKey = $validated['domain'];
+        $child = Child::findOrFail($childId);
+        $request->validate([
+            'assessment_date' => 'after_or_equal:' . $child->date_of_birth,
+        ]);
+        $assessmentDate = $validated['assessment_date'];
         $results   = $request->input('results', []);
         $comments  = $request->input('comments', []);
 
         $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
 
+        $statuses = $this->getDomainRoundStatus($childId, $domainKey);
+        $completedRounds = [];
+        foreach ([1, 2, 3] as $r) {
+            if ($statuses[$r] === 'Completed') $completedRounds[] = $r;
+        }
+
+        $currentRound = min(count($completedRounds) + 1, 3);
+
+        $maxAllowedRound = $this->getMaxAllowedRound($childId);
+        if ($currentRound > $maxAllowedRound) {
+            return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
+        }
+
         DB::beginTransaction();
 
         try {
-            // Determine current round for this domain
-            $statuses = $this->getDomainRoundStatus($childId, $domainKey);
-            $completedRounds = [];
-            foreach ([1, 2, 3] as $r) {
-                if ($statuses[$r] === 'Completed') $completedRounds[] = $r;
-            }
-
-            $currentRound = count($completedRounds) + 1;
-            if ($currentRound > 3) $currentRound = 3;
-
-            // Global lock
-            $maxAllowedRound = $this->getMaxAllowedRound($childId);
-            if ($currentRound > $maxAllowedRound) {
-                return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
-            }
-
-            // ===== ONE ProgressRecord per child =====
-            $progressRecord = $this->getOrCreateProgressRecord($childId, $teacher->id);
+            $progressRecord = $this->getOrCreateProgressRecord($childId, $teacher->id, $assessmentDate);
 
             // Existing domain rows for this domain + this round
             $existingDomains = Domain::where('progress_record_id', $progressRecord->id)
@@ -347,13 +433,22 @@ class ProgressController extends Controller
 
             $filledCount = 0;
             $totalItems  = $masterItems->count();
+            $expert = app(EccdExpertSystem::class);
 
             foreach ($masterItems as $master) {
-                $presentValue = $results[$master->id][$currentRound] ?? null;
+                $roundResults = $results[$master->id] ?? [];
+                $answerSubmitted = is_array($roundResults)
+                    && array_key_exists($currentRound, $roundResults)
+                    && $roundResults[$currentRound] !== null
+                    && $roundResults[$currentRound] !== '';
+                $presentValue = $answerSubmitted
+                    ? $expert->normalizePresentValue($roundResults[$currentRound])
+                    : null;
+                $comment = $comments[$master->id] ?? null;
+                $hasComment = is_string($comment) && trim($comment) !== '';
 
                 if (isset($existingDomains[$master->id])) {
                     $domain = $existingDomains[$master->id];
-                    $domain->results()->delete();
                 } else {
                     $domain = Domain::create([
                         'progress_record_id' => $progressRecord->id,
@@ -363,38 +458,54 @@ class ProgressController extends Controller
                     ]);
                 }
 
-                if ($presentValue) {
-                    DomainResult::create([
+                if ($presentValue !== null || $hasComment) {
+                    $result = $domain->results()->first();
+                    $resultData = [
                         'domain_id' => $domain->id,
-                        'present'   => $presentValue,
-                        'comments'  => $comments[$master->id] ?? null,
+                        'present'   => $presentValue ?? 'hyphen',
+                        'comments'  => $hasComment ? $comment : null,
+                    ];
+
+                    if ($result) {
+                        $result->update($resultData);
+                    } else {
+                        DomainResult::create($resultData);
+                    }
+
+                    $domain->update([
+                        'status' => $presentValue !== null ? 'completed' : 'pending',
                     ]);
 
-                    // Mark this item as completed
-                    $domain->update(['status' => 'completed']);
-                    $filledCount++;
+                    if ($presentValue !== null) {
+                        $filledCount++;
+                    }
                 } else {
-                    // No answer → pending
+                    $domain->results()->delete();
                     $domain->update(['status' => 'pending']);
                 }
             }
 
-            // Update ProgressRecord overall status
+            $progressRecord->update([
+                "evaluation_date_round_{$currentRound}" => $assessmentDate,
+                'evaluation_date' => $assessmentDate,
+            ]);
+
             $global = $this->getGlobalRoundCompleted($childId);
 
             if ($global[1] >= 7 && $global[2] >= 7 && $global[3] >= 7) {
                 $progressRecord->update([
                     'status'            => 'completed',
                     'evaluation_number' => 3,
-                    'evaluation_date'   => now()->toDateString(),
                 ]);
             } else {
                 $progressRecord->update([
                     'status'            => 'in_progress',
                     'evaluation_number' => $currentRound,
-                    'evaluation_date'   => now()->toDateString(),
                 ]);
             }
+
+            $computed = $expert->compute($progressRecord, $currentRound);
+            $expert->saveScores($progressRecord, $currentRound, $computed);
 
             DB::commit();
 
@@ -406,7 +517,7 @@ class ProgressController extends Controller
                 ->route('progress.select-domain', ['child_id' => $childId])
                 ->with('success', $message);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return back()
                 ->withInput()
@@ -430,6 +541,193 @@ class ProgressController extends Controller
         $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
 
         return view('progress.create-observation', compact('child', 'progressRecord', 'teacher'));
+    }
+
+    public function edit(?int $id = null)
+    {
+        if ($id === null) {
+            return redirect()
+                ->route('progress.index')
+                ->with('error', 'Select a progress record to edit.');
+        }
+
+        $progressRecord = ProgressRecord::with([
+            'child.guardian',
+            'teacher',
+            'domainObservation',
+            'domains.checklistItem',
+            'domains.results',
+        ])->findOrFail($id);
+
+        $domainLabels = [
+            'gross_motor' => 'Gross Motor',
+            'fine_motor' => 'Fine Motor',
+            'self_help' => 'Self-Help',
+            'receptive_language' => 'Receptive Language',
+            'expressive_language' => 'Expressive Language',
+            'cognitive' => 'Cognitive',
+            'social_emotional' => 'Social-Emotional',
+        ];
+
+        $itemsByDomain = EccdChecklistItem::query()
+            ->whereIn('domain', array_keys($domainLabels))
+            ->orderBy('item_number')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('domain');
+        $savedResults = [];
+
+        foreach ($progressRecord->domains as $domain) {
+            $result = $domain->results->first();
+            if (!$result || !$domain->checklistItem) {
+                continue;
+            }
+
+            $savedResults[$domain->evaluation_round][$domain->checklist_item_id] = [
+                'present' => $result->present,
+                'comments' => $result->comments,
+            ];
+        }
+
+        $assessmentDates = [];
+        foreach ([1, 2, 3] as $round) {
+            $assessmentDates[$round] = $progressRecord->getAttribute("evaluation_date_round_{$round}")
+                ?? ($round === 1 ? $progressRecord->evaluation_date : null);
+        }
+
+        return view('progress.edit', compact(
+            'progressRecord',
+            'domainLabels',
+            'itemsByDomain',
+            'savedResults',
+            'assessmentDates'
+        ));
+    }
+
+    public function update(Request $request, int $id, EccdExpertSystem $expert)
+    {
+        $progressRecord = ProgressRecord::with('child')->findOrFail($id);
+        $rounds = [1, 2, 3];
+        $childDateOfBirth = $progressRecord->child?->date_of_birth;
+        $dateRules = ['nullable', 'date', 'before_or_equal:today'];
+        if ($childDateOfBirth !== null) {
+            $dateRules[] = 'after_or_equal:' . $childDateOfBirth;
+        }
+
+        $validated = $request->validate([
+            'assessment_dates' => ['required', 'array'],
+            'assessment_dates.1' => array_merge(['required'], $dateRules),
+            'assessment_dates.2' => $dateRules,
+            'assessment_dates.3' => $dateRules,
+            'results' => ['nullable', 'array'],
+            'results.*.*' => ['nullable', Rule::in(['', 'check', 'hyphen'])],
+            'comments' => ['nullable', 'array'],
+            'comments.*.*' => ['nullable', 'string'],
+            'observation' => ['nullable', 'array'],
+            'observation.place_administered' => ['nullable', 'string'],
+            'observation.background_observations' => ['nullable', 'string'],
+            'observation.family_environment_notes' => ['nullable', 'string'],
+            'observation.stimulating_activities_notes' => ['nullable', 'string'],
+            'observation.home_environment_notes' => ['nullable', 'string'],
+            'observation.other_notes' => ['nullable', 'string'],
+        ]);
+
+        $responseErrors = [];
+        foreach ($validated['comments'] ?? [] as $itemId => $roundComments) {
+            foreach ($roundComments as $round => $comment) {
+                $answer = $validated['results'][$itemId][$round] ?? '';
+                if (trim((string) $comment) !== '' && $answer === '') {
+                    $responseErrors["comments.{$itemId}.{$round}"] = 'Select a present or not-present response before saving this comment.';
+                }
+            }
+        }
+        if ($responseErrors !== []) {
+            return back()->withErrors($responseErrors)->withInput();
+        }
+
+        $validItemIds = EccdChecklistItem::query()
+            ->whereIn('domain', [
+                'gross_motor', 'fine_motor', 'self_help',
+                'receptive_language', 'expressive_language',
+                'cognitive', 'social_emotional',
+            ])
+            ->pluck('id')
+            ->map(fn ($itemId) => (int) $itemId)
+            ->all();
+
+        DB::transaction(function () use ($progressRecord, $validated, $validItemIds, $rounds, $expert) {
+            foreach ($rounds as $round) {
+                $date = $validated['assessment_dates'][$round] ?? null;
+                $progressRecord->setAttribute("evaluation_date_round_{$round}", $date);
+
+                foreach ($validItemIds as $itemId) {
+                    $answer = $validated['results'][$itemId][$round] ?? '';
+                    $comment = trim((string) ($validated['comments'][$itemId][$round] ?? ''));
+                    $domain = Domain::firstOrNew([
+                        'progress_record_id' => $progressRecord->id,
+                        'checklist_item_id' => $itemId,
+                        'evaluation_round' => $round,
+                    ]);
+
+                    if (!$domain->exists && $answer === '' && $comment === '') {
+                        continue;
+                    }
+
+                    if (!$domain->exists) {
+                        $domain->status = 'pending';
+                        $domain->save();
+                    }
+
+                    if ($answer === '') {
+                        $domain->results()->delete();
+                        $domain->update(['status' => 'pending']);
+                        continue;
+                    }
+
+                    $domain->results()->updateOrCreate(
+                        [],
+                        [
+                            'present' => $answer,
+                            'comments' => $comment !== '' ? $comment : null,
+                        ]
+                    );
+                    $domain->update(['status' => 'completed']);
+                }
+            }
+
+            $progressRecord->evaluation_date = $validated['assessment_dates'][1] ?? null;
+            $global = $this->getGlobalRoundCompleted($progressRecord->child_id);
+            $allRoundsComplete = $global[1] >= 7 && $global[2] >= 7 && $global[3] >= 7;
+            $progressRecord->status = $allRoundsComplete ? 'completed' : 'in_progress';
+            $progressRecord->evaluation_number = $allRoundsComplete
+                ? 3
+                : $this->getMaxAllowedRound($progressRecord->child_id);
+            $progressRecord->save();
+
+            $progressRecord->load('child');
+            foreach ($rounds as $round) {
+                $computed = $expert->compute($progressRecord, $round);
+                $expert->saveScores($progressRecord, $round, $computed);
+            }
+
+            $observation = $validated['observation'] ?? [];
+            $progressRecord->domainObservation()->updateOrCreate(
+                [],
+                [
+                    'place_administered' => $observation['place_administered'] ?? null,
+                    'background_observations' => $observation['background_observations'] ?? null,
+                    'family_environment_notes' => $observation['family_environment_notes'] ?? null,
+                    'stimulating_activities_notes' => $observation['stimulating_activities_notes'] ?? null,
+                    'home_environment_notes' => $observation['home_environment_notes'] ?? null,
+                    'other_notes' => $observation['other_notes'] ?? null,
+                    'status' => 'completed',
+                ]
+            );
+        });
+
+        return redirect()
+            ->route('progress.show', $progressRecord->id)
+            ->with('success', 'Progress record updated successfully.');
     }
 
     public function storeObservation(Request $request)
@@ -485,24 +783,129 @@ class ProgressController extends Controller
     public function show($id = null)
     {
         $progressRecord = ProgressRecord::with([
-            'child', 'teacher', 'domains.checklistItem', 'domains.results', 'domainScores', 'domainObservation'
+            'child',
+            'teacher',
+            'domains.checklistItem',
+            'domains.results',
+            'domainScores',
+            'domainObservation',
         ])->find($id);
 
         if (!$progressRecord) {
             $progressRecord = ProgressRecord::with([
-                'child', 'teacher', 'domains.checklistItem', 'domains.results', 'domainScores', 'domainObservation'
+                'child',
+                'teacher',
+                'domains.checklistItem',
+                'domains.results',
+                'domainScores',
+                'domainObservation',
             ])
             ->where('child_id', $id)
             ->first();
         }
 
         $child = $progressRecord?->child ?? Child::find($id);
-        return view('progress.show', compact('progressRecord', 'child', 'id'));
-    }
 
-    public function edit($id = null)
-    {
-        $progressRecord = $id ? ProgressRecord::with(['child', 'teacher'])->find($id) : null;
-        return view('progress.edit', compact('progressRecord', 'id'));
+        $domainKeys = [
+            'gross_motor'         => 'Gross Motor',
+            'fine_motor'          => 'Fine Motor',
+            'self_help'           => 'Self-Help',
+            'receptive_language'  => 'Receptive Language',
+            'expressive_language' => 'Expressive Language',
+            'cognitive'           => 'Cognitive',
+            'social_emotional'    => 'Social-Emotional',
+        ];
+
+        $preparedDomains = [];
+        $rawScoresByRound = [1 => [], 2 => [], 3 => []];
+        $computedByRound = [1 => null, 2 => null, 3 => null];
+        $ageByRound = [1 => null, 2 => null, 3 => null];
+        $assessmentDates = [1 => null, 2 => null, 3 => null];
+        $expert = app(EccdExpertSystem::class);
+
+        if ($progressRecord) {
+            foreach ([1, 2, 3] as $round) {
+                $assessmentDates[$round] = $progressRecord->getAttribute("evaluation_date_round_{$round}")
+                    ?? ($round === 1 ? $progressRecord->evaluation_date : null);
+            }
+
+            $allDomains = $progressRecord->domains;
+
+            foreach ($domainKeys as $key => $name) {
+                $masterItems = EccdChecklistItem::ofType($key)
+                    ->orderBy('item_number')
+                    ->orderBy('id')
+                    ->get();
+
+                $items = [];
+
+                foreach ($masterItems as $master) {
+                    $vals = [null, null, null]; // round 1, 2, 3
+                    $commentsByRound = [1 => null, 2 => null, 3 => null];
+
+                    for ($r = 1; $r <= 3; $r++) {
+                        $domainEntry = $allDomains->first(function ($d) use ($master, $r) {
+                            return $d->checklist_item_id == $master->id
+                                && $d->evaluation_round == $r;
+                        });
+
+                        $result = $domainEntry?->results->first();
+                        if ($result) {
+                            $vals[$r - 1] = $expert->normalizePresentValue($result->present);
+                            $comment = trim((string) $result->comments);
+                            if ($comment !== '') {
+                                $commentsByRound[$r] = $comment;
+                            }
+                        }
+                    }
+
+                    $roundLabels = [1 => '1st', 2 => '2nd', 3 => '3rd'];
+                    $itemComments = [];
+                    foreach ($commentsByRound as $round => $comment) {
+                        if ($comment !== null) {
+                            $itemComments[] = "{$roundLabels[$round]}: {$comment}";
+                        }
+                    }
+
+                    $items[] = [
+                        'id'       => $master->item_number ?? $master->id,
+                        'task'     => $master->activity,
+                        'proc'     => $master->materials_and_procedure ?? 'Parental report will suffice.',
+                        'val'      => $vals,
+                        'comments' => implode(' | ', $itemComments),
+                    ];
+                }
+
+                $preparedDomains[$key] = [
+                    'name'  => $name,
+                    'items' => $items,
+                ];
+            }
+
+            foreach ([1, 2, 3] as $round) {
+                $rawScoresByRound[$round] = $expert->computeRawScores($progressRecord, $round);
+            }
+
+            foreach ([1, 2, 3] as $round) {
+                $computedByRound[$round] = $expert->compute($progressRecord, $round);
+                $ageByRound[$round] = $computedByRound[$round]['age'];
+            }
+        }
+
+        $computed = $computedByRound[1];
+        $currentRound = $progressRecord?->evaluation_number ?? 1;
+
+        return view('progress.show', compact(
+            'progressRecord',
+            'child',
+            'id',
+            'preparedDomains',
+            'rawScoresByRound',
+            'computed',
+            'computedByRound',
+            'currentRound',
+            'ageByRound',
+            'assessmentDates'
+        ));
     }
 }

@@ -88,13 +88,15 @@ return new class extends Migration {
         });
 
         // ====================== PROGRESS RECORDS ======================
-        // Option 2: ONE progress record per child
         Schema::create('progress_records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('child_id')->unique()->constrained('children')->onDelete('cascade'); // unique = 1:1
+            $table->foreignId('child_id')->unique()->constrained('children')->onDelete('cascade');
             $table->foreignId('teacher_id')->constrained('teachers')->onDelete('cascade');
             $table->date('evaluation_date');
-            $table->tinyInteger('evaluation_number')->default(1); // tracks current highest round
+            $table->date('evaluation_date_round_1')->nullable();
+            $table->date('evaluation_date_round_2')->nullable();
+            $table->date('evaluation_date_round_3')->nullable();
+            $table->tinyInteger('evaluation_number')->default(1);
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
@@ -120,7 +122,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('progress_record_id')->constrained('progress_records')->onDelete('cascade');
             $table->foreignId('checklist_item_id')->constrained('eccd_checklist_items')->onDelete('cascade');
-            $table->tinyInteger('evaluation_round')->default(1); // ← MUST BE HERE
+            $table->tinyInteger('evaluation_round')->default(1);
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
@@ -130,6 +132,7 @@ return new class extends Migration {
                 'domains_unique_item_per_round'
             );
         });
+
         // ====================== DOMAIN RESULTS ======================
         Schema::create('domain_results', function (Blueprint $table) {
             $table->id();
