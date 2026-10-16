@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import {View, Text, StyleSheet, ImageBackground, Image, 
+        TextInput, TouchableOpacity,SafeAreaView, StatusBar,
 import {
   View,
   Text,
