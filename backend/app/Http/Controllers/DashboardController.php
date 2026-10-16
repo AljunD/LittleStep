@@ -165,6 +165,8 @@ class DashboardController extends Controller
             ];
         });
 
+        recordLog('viewed', 'Dashboard', 0, 'Teacher dashboard viewed.');
+
         return view('dashboard', compact(
             'guardiansCount',
             'childrenCount',

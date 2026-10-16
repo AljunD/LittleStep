@@ -96,6 +96,12 @@ class ProgressObservationTest extends TestCase
             'other_notes' => 'No additional concerns.',
             'status' => 'completed',
         ]);
+        $this->assertDatabaseHas('logs', [
+            'user_id' => $user->id,
+            'action' => 'saved',
+            'entity_type' => 'ProgressRecord',
+            'details' => 'Observation notes saved.',
+        ]);
 
         $this->get(route('progress.add-observation', ['child_id' => $child->id]))
             ->assertOk()

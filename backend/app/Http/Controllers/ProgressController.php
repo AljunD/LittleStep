@@ -99,6 +99,8 @@ class ProgressController extends Controller
             'assessmentDates' => $assessmentDates,
         ])->setPaper('a4', 'portrait');
 
+        recordLog('downloaded', 'ProgressRecord', $progressRecord->id, 'ECCD progress report PDF downloaded.');
+
         return $pdf->download("ECCD-Checklist-Child-{$progressRecord->child_id}.pdf");
     }
 
@@ -530,6 +532,13 @@ class ProgressController extends Controller
             $computed = $expert->compute($progressRecord, $currentRound);
             $expert->saveScores($progressRecord, $currentRound, $computed);
 
+            recordLog(
+                'saved',
+                'ProgressRecord',
+                $progressRecord->id,
+                "Assessment results saved for domain {$domainKey}, round {$currentRound}."
+            );
+
             DB::commit();
 
             $message = $filledCount === $totalItems
@@ -754,6 +763,8 @@ class ProgressController extends Controller
                     'status' => 'completed',
                 ]
             );
+
+            recordLog('updated', 'ProgressRecord', $progressRecord->id, 'Assessment results and observation notes updated.');
         });
 
         return redirect()
@@ -805,6 +816,8 @@ class ProgressController extends Controller
                     'status' => 'completed',
                 ]
             );
+
+            recordLog('saved', 'ProgressRecord', $progressRecord->id, 'Observation notes saved.');
         });
 
         return redirect()
@@ -841,6 +854,7 @@ class ProgressController extends Controller
 
         abort_unless($progressRecord, 404);
         $child = $progressRecord->child;
+        recordLog('viewed', 'ProgressRecord', $progressRecord->id, 'Progress record viewed.');
 
         $domainKeys = [
             'gross_motor' => 'Gross Motor',

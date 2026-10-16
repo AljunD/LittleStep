@@ -68,6 +68,7 @@ class ChildrenController extends Controller
         $child = $this->currentTeacher($request)->ownedChildren()
             ->with('guardian.user')
             ->findOrFail($id);
+        recordLog('viewed', 'Child', $child->id, 'Child record viewed.');
 
         return view('children.show', compact('child'));
     }
@@ -164,6 +165,8 @@ class ChildrenController extends Controller
         abort_unless($disk->exists($child->photo_path), 404);
         $mimeType = $disk->mimeType($child->photo_path);
         abort_unless(in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'], true), 404);
+
+        recordLog('viewed', 'Child', $child->id, 'Child photo viewed.');
 
         return $disk->response($child->photo_path, null, [
             'Content-Type' => $mimeType,

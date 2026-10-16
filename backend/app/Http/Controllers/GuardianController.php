@@ -208,6 +208,8 @@ class GuardianController extends Controller
             },
         ])->findOrFail($id);
 
+        recordLog('viewed', 'Guardian', $guardian->id, 'Guardian record viewed.');
+
         return view('guardians.show', compact('guardian'));
     }
 
