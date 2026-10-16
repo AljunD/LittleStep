@@ -2,22 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Guardian;
 use App\Models\Child;
+use App\Models\Guardian;
+use App\Models\Teacher;
+use Illuminate\Http\Request;
 
 class ArchiveController extends Controller
 {
-
     public function index(Request $request)
     {
+        $teacher = $this->currentTeacher($request);
+
         $archivedGuardians = Guardian::onlyTrashed()
+            ->whereHas('children', function ($query) use ($teacher) {
+                $query->withTrashed()
+                    ->whereHas('progressRecords', function ($progressQuery) use ($teacher) {
+                        $progressQuery->withTrashed()->where('teacher_id', $teacher->id);
+                    });
+            })
             ->with(['user' => function ($query) {
                 $query->withTrashed();
             }])
             ->paginate(10, ['*'], 'guardians_page');
 
         $archivedChildren = Child::onlyTrashed()
+            ->whereHas('progressRecords', function ($query) use ($teacher) {
+                $query->withTrashed()->where('teacher_id', $teacher->id);
+            })
             ->with(['guardian' => function ($query) {
                 $query->withTrashed();
             }])
@@ -26,43 +37,62 @@ class ArchiveController extends Controller
         return view('archives.index', compact('archivedGuardians', 'archivedChildren'));
     }
 
-    public function restore($id)
+    public function restore(Request $request, int $id)
     {
-        try {
-            $guardian = Guardian::withTrashed()->findOrFail($id);
-            $guardian->restore();
+        $teacher = $this->currentTeacher($request);
+        $guardian = Guardian::onlyTrashed()
+            ->whereHas('children', function ($query) use ($teacher) {
+                $query->withTrashed()
+                    ->whereHas('progressRecords', function ($progressQuery) use ($teacher) {
+                        $progressQuery->withTrashed()->where('teacher_id', $teacher->id);
+                    });
+            })
+            ->whereDoesntHave('children', function ($query) use ($teacher) {
+                $query->withTrashed()
+                    ->whereDoesntHave('progressRecords', function ($progressQuery) use ($teacher) {
+                        $progressQuery->withTrashed()->where('teacher_id', $teacher->id);
+                    });
+            })
+            ->with(['user' => function ($query) {
+                $query->withTrashed();
+            }])
+            ->findOrFail($id);
 
-            if ($guardian->user) {
-                $guardian->user->restore();
-            }
+        $guardian->restore();
+        $guardian->user?->restore();
 
-            if (function_exists('recordLog')) {
-                recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: ' . $guardian->first_name . ' ' . $guardian->last_name);
-            }
-
-            return redirect()->route('archives.index')
-                             ->with('success', 'Guardian and linked user restored successfully.');
-        } catch (\Exception $e) {
-            return redirect()->route('archives.index')
-                             ->with('error', 'Failed to restore guardian. Please try again.');
+        if (function_exists('recordLog')) {
+            recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: '.$guardian->first_name.' '.$guardian->last_name);
         }
+
+        return redirect()->route('archives.index')
+            ->with('success', 'Guardian and linked user restored successfully.');
     }
 
-    public function restoreChild($id)
+    public function restoreChild(Request $request, int $id)
     {
-        try {
-            $child = Child::withTrashed()->findOrFail($id);
-            $child->restore();
+        $teacher = $this->currentTeacher($request);
+        $child = Child::onlyTrashed()
+            ->whereHas('progressRecords', function ($query) use ($teacher) {
+                $query->withTrashed()->where('teacher_id', $teacher->id);
+            })
+            ->findOrFail($id);
 
-            if (function_exists('recordLog')) {
-                recordLog('restored', 'Child', $child->id, 'Child restored: ' . $child->first_name . ' ' . $child->last_name);
-            }
+        $child->restore();
 
-            return redirect()->route('archives.index')
-                             ->with('success', 'Child record restored successfully.');
-        } catch (\Exception $e) {
-            return redirect()->route('archives.index')
-                             ->with('error', 'Failed to restore child record. Please try again.');
+        if (function_exists('recordLog')) {
+            recordLog('restored', 'Child', $child->id, 'Child restored: '.$child->first_name.' '.$child->last_name);
         }
+
+        return redirect()->route('archives.index')
+            ->with('success', 'Child record restored successfully.');
+    }
+
+    private function currentTeacher(Request $request): Teacher
+    {
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+
+        return $teacher;
     }
 }

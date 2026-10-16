@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,5 +31,21 @@ class Teacher extends Model
     public function progressRecords()
     {
         return $this->hasMany(ProgressRecord::class);
+    }
+
+    public function ownedChildren(): Builder
+    {
+        return Child::query()->whereHas('progressRecords', function (Builder $query) {
+            $query->withTrashed()->where('teacher_id', $this->id);
+        });
+    }
+
+    public function ownedGuardians(): Builder
+    {
+        return Guardian::query()->whereHas('children', function (Builder $query) {
+            $query->whereHas('progressRecords', function (Builder $progressQuery) {
+                $progressQuery->withTrashed()->where('teacher_id', $this->id);
+            });
+        });
     }
 }

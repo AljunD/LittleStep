@@ -6,11 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <style>
+    <style nonce="{{ request()->attributes->get('cspNonce') }}">
         /* Custom Scrollbar for the form area */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -56,6 +56,46 @@
             <div class="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-white/10"></div>
         </div>
     </div>
+
+    <script nonce="{{ request()->attributes->get('cspNonce') }}">
+        (() => {
+            const unlockForm = (form) => {
+                form.dataset.submitting = 'false';
+                form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((button) => {
+                    button.disabled = false;
+                    if (button.dataset.originalText !== undefined) {
+                        button.textContent = button.dataset.originalText;
+                    }
+                });
+            };
+
+            document.querySelectorAll('form[data-lock-submit]').forEach((form) => {
+                form.dataset.submitting = 'false';
+
+                form.addEventListener('submit', (event) => {
+                    if (form.dataset.submitting === 'true') {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    form.dataset.submitting = 'true';
+                    form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((button) => {
+                        button.disabled = true;
+                        if (button.dataset.submittingText) {
+                            button.dataset.originalText = button.textContent;
+                            button.textContent = button.dataset.submittingText;
+                        }
+                    });
+                });
+            });
+
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    document.querySelectorAll('form[data-lock-submit]').forEach(unlockForm);
+                }
+            });
+        })();
+    </script>
 
 </body>
 </html>

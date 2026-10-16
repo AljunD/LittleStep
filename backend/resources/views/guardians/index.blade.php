@@ -25,7 +25,7 @@
                 <p class="text-xs text-green-700">{{ session('success') }}</p>
             </div>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800 text-lg font-bold px-2">&times;</button>
+        <button type="button" data-dismiss-alert class="text-green-600 hover:text-green-800 text-lg font-bold px-2">&times;</button>
     </div>
     @endif
 
@@ -38,7 +38,7 @@
                 <p class="text-xs text-red-700">{{ session('error') ?? session('failed') }}</p>
             </div>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800 text-lg font-bold px-2">&times;</button>
+        <button type="button" data-dismiss-alert class="text-red-600 hover:text-red-800 text-lg font-bold px-2">&times;</button>
     </div>
     @endif
 
@@ -72,7 +72,7 @@
             <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
             <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Failed</h3>
             <p class="text-gray-600 mb-8 text-sm">Something went wrong while archiving the guardian. Please try again.</p>
-            <button type="button" onclick="resetIndexLayout()" 
+            <button type="button" id="reset-index-layout"
                class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95 text-sm">
                 Go Back and Try Again
             </button>
@@ -181,8 +181,13 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-dismiss-alert]').forEach(button => {
+        button.addEventListener('click', () => button.parentElement.remove());
+    });
+    document.getElementById('reset-index-layout')?.addEventListener('click', resetIndexLayout);
+
     const searchInput = document.getElementById('searchInput');
     const resultCount = document.getElementById('resultCount');
     const rows = document.querySelectorAll('#guardiansTableBody tr.guardian-row');

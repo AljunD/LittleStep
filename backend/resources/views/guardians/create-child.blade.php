@@ -214,7 +214,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
     document.getElementById('photoInput')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {

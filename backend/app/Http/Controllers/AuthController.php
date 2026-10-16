@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Teacher;
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use App\Models\User;
-use App\Models\Teacher;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class AuthController extends Controller
 {
@@ -28,39 +29,57 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
         $request->validate([
-            'first_name'        => 'required|string|max:255',
-            'middle_name'       => 'nullable|string|max:255',
-            'last_name'         => 'required|string|max:255',
-            'sex'               => 'required|string|in:Male,Female', // Added validation
-            'contact_number'    => 'required|string|max:20',
-            'address'           => 'required|string|max:500',
-            'email'             => 'required|string|email|max:255|unique:users',
-            'password'          => 'required|string|min:8|confirmed',
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'sex' => 'required|string|in:Male,Female',
+            'contact_number' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                PasswordRule::min(12)->max(72),
+                static function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 72) {
+                        $fail('The password may not exceed 72 bytes.');
+                    }
+                },
+            ],
         ]);
 
         $cleanEmail = Str::lower(trim($request->email));
 
-        $user = User::create([
-            'email'    => $cleanEmail,
-            'password' => Hash::make($request->password),
-            'role'     => 'teacher',
-        ]);
+        [$user, $teacher] = DB::transaction(function () use ($request, $cleanEmail) {
+            $user = User::create([
+                'email' => $cleanEmail,
+                'password' => Hash::make($request->password),
+                'role' => 'teacher',
+            ]);
 
-        $teacher = Teacher::create([
-            'user_id'        => $user->id,
-            'first_name'     => $request->first_name,
-            'middle_name'    => $request->middle_name,
-            'last_name'      => $request->last_name,
-            'sex'            => $request->sex, // Added field
-            'contact_number' => $request->contact_number,
-            'address'        => $request->address,
-        ]);
+            $teacher = Teacher::create([
+                'user_id' => $user->id,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'sex' => $request->sex,
+                'contact_number' => $request->contact_number,
+                'address' => $request->address,
+            ]);
+
+            return [$user, $teacher];
+        });
 
         event(new Registered($user));
         Auth::login($user);
+        $request->session()->regenerate();
 
-        recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered: ' . $teacher->first_name . ' ' . $teacher->last_name);
+        recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered.', $user->id);
 
         return redirect()->route('verification.notice')
             ->with('success', 'Registration successful! Please verify your email.');
@@ -70,12 +89,12 @@ class AuthController extends Controller
     {
         return view('auth.login');
     }
-    
+
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|max:1024',
         ]);
 
         $credentials['email'] = Str::lower(trim($credentials['email']));
@@ -87,25 +106,31 @@ class AuthController extends Controller
 
             if ($user->role !== 'teacher') {
                 Auth::logout();
-                recordLog('login_denied', 'User', $user->id, 'Non-teacher attempted login: ' . $user->email);
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                recordLog('login_denied', 'User', $user->id, 'Non-teacher attempted web login.', $user->id);
+
                 return back()->withErrors([
                     'email' => 'Only teachers are allowed to access the web portal.',
                 ])->onlyInput('email');
             }
 
-            if (!$user->hasVerifiedEmail()) {
+            if (! $user->hasVerifiedEmail()) {
                 Auth::logout();
-                recordLog('login_denied', 'User', $user->id, 'Unverified email attempted login: ' . $user->email);
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                recordLog('login_denied', 'User', $user->id, 'Unverified email attempted web login.', $user->id);
+
                 return redirect()->route('verification.notice')
                     ->withErrors(['email' => 'You must verify your email before logging in.']);
             }
 
-            recordLog('login', 'User', $user->id, 'Teacher logged in: ' . $user->email);
+            recordLog('login', 'User', $user->id, 'Teacher logged in.', $user->id);
 
             return redirect()->intended('/dashboard');
         }
 
-        recordLog('login_failed', 'User', 0, 'Failed login attempt for email: ' . $request->email);
+        recordLog('login_failed', 'User', 0, 'Failed login attempt.');
 
         return back()->withErrors([
             'email' => 'Invalid credentials provided.',
@@ -122,7 +147,7 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         if ($userId) {
-            recordLog('logout', 'User', $userId, 'Teacher logged out: ' . $user->email);
+            recordLog('logout', 'User', $userId, 'Teacher logged out.', $userId);
         }
 
         return redirect()->route('login');
@@ -135,18 +160,13 @@ class AuthController extends Controller
 
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate(['email' => 'required|email|max:255']);
 
         $email = Str::lower(trim($request->email));
 
-        $status = Password::sendResetLink(['email' => $email]);
+        Password::sendResetLink(['email' => $email]);
 
-        if ($status === Password::RESET_LINK_SENT) {
-            recordLog('password_reset_link', 'User', 0, 'Password reset link sent to: ' . $email);
-            return back()->with(['success' => __($status)]);
-        }
-
-        return back()->withErrors(['email' => __($status)])->onlyInput('email');
+        return back()->with(['success' => 'If an account exists for that email, a password reset link will be sent.']);
     }
 
     public function showResetForm($token)
@@ -157,9 +177,19 @@ class AuthController extends Controller
     public function reset(Request $request)
     {
         $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
+            'token' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                PasswordRule::min(12)->max(72),
+                static function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 72) {
+                        $fail('The password may not exceed 72 bytes.');
+                    }
+                },
+            ],
         ]);
 
         $status = Password::reset(
@@ -173,8 +203,9 @@ class AuthController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->save();
+                $user->tokens()->delete();
 
-                recordLog('password_reset', 'User', $user->id, 'Password reset for: ' . $user->email);
+                recordLog('password_reset', 'User', $user->id, 'Password reset.', $user->id);
             }
         );
 
@@ -183,21 +214,34 @@ class AuthController extends Controller
             : back()->withErrors(['email' => [__($status)]])->onlyInput('email');
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function verify(Request $request)
     {
-        $request->fulfill();
+        $userId = $request->route('id');
+        $hash = $request->route('hash');
 
-        $user = Auth::user();
+        $user = User::findOrFail($userId);
+
+        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
 
         Mail::send('emails.account-details', [
             'user' => $user,
         ], function ($message) use ($user) {
             $message->to($user->email)
-                    ->subject('Your KidWatch2 Account Details');
+                ->subject('Your LittleStep Account Is Verified');
         });
 
-        recordLog('email_verified', 'User', $user->id, 'Email verified for: ' . $user->email);
+        recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
 
-        return redirect()->route('verification.confirmation');
+        if ($user->role === 'teacher') {
+            return redirect()->route('login')->with('status', 'Your email has been verified successfully. You may now log in.');
+        }
+
+        return redirect()->route('guardian.verification.confirmation')->with('status', 'Your email has been verified successfully.');
     }
 }

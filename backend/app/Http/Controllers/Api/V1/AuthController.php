@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -12,27 +14,26 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required'
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|max:1024',
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        $user = User::where('email', Str::lower(trim($credentials['email'])))->first();
+        if (! $user || ! Hash::check($credentials['password'], $user->password) || $user->role !== 'guardian' || ! $user->guardian) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        $user = Auth::user();
-
-        // Ensure only guardians can log in here
-        if ($user->role !== 'guardian') {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if (! $user->hasVerifiedEmail()) {
+            return response()->json([
+                'error' => 'Email not verified. Please verify your email before logging in.',
+            ], 403);
         }
 
-        // Create Sanctum token
         $token = $user->createToken('guardian-token')->plainTextToken;
 
         return response()->json([
-            'token'    => $token,
-            'guardian' => $user->guardian // guardian profile from guardians table
+            'token' => $token,
+            'guardian' => $user->guardian, // guardian profile from guardians table
         ], 200);
     }
 
@@ -43,6 +44,7 @@ class AuthController extends Controller
 
         if ($user && $user->currentAccessToken()) {
             $user->currentAccessToken()->delete();
+
             return response()->json(['message' => 'Logged out'], 200);
         }
 
@@ -56,6 +58,7 @@ class AuthController extends Controller
 
         if ($user) {
             $user->tokens()->delete();
+
             return response()->json(['message' => 'Logged out from all devices'], 200);
         }
 

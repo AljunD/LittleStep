@@ -217,7 +217,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
     function updateScores() {
         const totals = {1: 0, 2: 0, 3: 0};
         document.querySelectorAll('.score-check:checked').forEach(cb => {

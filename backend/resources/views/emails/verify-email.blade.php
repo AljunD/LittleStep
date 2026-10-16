@@ -2,24 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verify Your KidWatch2 Account</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your LittleStep Account</title>
 </head>
-<body class="bg-gray-100 font-sans p-6">
-    <div class="max-w-lg mx-auto bg-white rounded-xl shadow-md p-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Verify Your KidWatch2 Account</h2>
-        <p class="text-gray-700 mb-6">
-            Click the button below to verify your email address and activate your account.
-        </p>
-
-        <a href="{{ $verificationUrl }}"
-           class="inline-block bg-gray-900 hover:bg-black text-white font-semibold px-6 py-3 rounded-lg transition">
-            Verify Email
-        </a>
-
-        <p class="mt-8 text-gray-500 text-sm">
-            This link will expire in 60 minutes. If you did not create an account, no further action is required.
-        </p>
-    </div>
+<body style="margin:0;padding:32px 12px;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;">
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;color:#111827;">Verify your LittleStep account</h1>
+                            <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#374151;">
+                                Use the secure link below to verify your email address. The link expires in 60 minutes.
+                            </p>
+                            <p style="margin:0 0 24px;">
+                                <a href="{{ $verificationUrl }}" rel="noopener noreferrer" referrerpolicy="no-referrer" style="display:inline-block;padding:12px 24px;background-color:#111827;color:#ffffff;text-decoration:none;font-weight:bold;border-radius:8px;">
+                                    Verify Email
+                                </a>
+                            </p>
+                            <p style="margin:0;font-size:14px;line-height:1.6;color:#6b7280;">
+                                If you did not create this account, you can ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

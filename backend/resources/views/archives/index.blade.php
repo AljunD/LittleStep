@@ -89,7 +89,7 @@
                                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
                                             View
                                         </a>
-                                        <form action="{{ route('guardians.restore', $guardian->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to restore this guardian and linked user account?')">
+                                        <form action="{{ route('guardians.restore', $guardian->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to restore this guardian and linked user account?">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
@@ -151,7 +151,7 @@
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap text-right">
                                     <div class="flex justify-end space-x-2">
-                                        <form action="{{ route('children.restore', $child->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to restore this child record?')">
+                                        <form action="{{ route('children.restore', $child->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to restore this child record?">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"

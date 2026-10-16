@@ -2,42 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Log;
-use App\Models\User;
+use Illuminate\Http\Request;
 
 class LogsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Log::with('user')->latest();
+        $filters = $request->validate([
+            'action' => ['nullable', 'string', 'max:50'],
+            'entity_type' => ['nullable', 'string', 'max:100'],
+            'from_date' => ['nullable', 'date'],
+            'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        $query = Log::with('user')
+            ->where('user_id', $request->user()->id)
+            ->latest();
+
+        if (! empty($filters['action'])) {
+            $query->where('action', $filters['action']);
         }
 
-        if ($request->filled('action')) {
-            $query->where('action', $request->action);
+        if (! empty($filters['entity_type'])) {
+            $query->where('entity_type', $filters['entity_type']);
         }
 
-        if ($request->filled('entity_type')) {
-            $query->where('entity_type', $request->entity_type);
-        }
-
-        if ($request->filled('from_date') && $request->filled('to_date')) {
+        if (! empty($filters['from_date']) && ! empty($filters['to_date'])) {
             $query->whereBetween('created_at', [
-                $request->from_date . ' 00:00:00',
-                $request->to_date . ' 23:59:59'
+                $filters['from_date'].' 00:00:00',
+                $filters['to_date'].' 23:59:59',
             ]);
         }
 
-        if ($request->filled('search')) {
-            $query->where('details', 'like', '%' . $request->search . '%');
+        if (! empty($filters['search'])) {
+            $query->where('details', 'like', '%'.$filters['search'].'%');
         }
 
         $logs = $query->paginate(15)->withQueryString();
-
-        $users = User::orderBy('email')->get();
+        $users = collect([$request->user()]);
 
         return view('logs.index', compact('logs', 'users'));
     }

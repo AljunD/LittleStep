@@ -18,7 +18,7 @@
         </div>
         <h1 class="text-3xl font-bold text-green-600 mb-2">Email Verified Successfully!</h1>
         <p class="text-gray-600 text-lg max-w-md mx-auto">
-            Your account has been verified. We’ve also sent an email with your full account details.
+            Your account email address is verified. For your security, personal profile details and passwords are never included in email.
         </p>
     </div>
 
