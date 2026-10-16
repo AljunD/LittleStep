@@ -88,7 +88,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
 document.addEventListener('DOMContentLoaded', () => {
     const childList = document.getElementById('child-list');
     const successMessage = document.getElementById('success-message');

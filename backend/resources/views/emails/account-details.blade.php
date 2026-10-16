@@ -2,27 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Your LittleStep Account Details</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your LittleStep Account Is Verified</title>
 </head>
-<body class="bg-gray-100 font-sans">
-    <div class="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6 mt-10">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Your KidWatch2 Account Has Been Verified!</h2>
-        <p class="text-gray-700 mb-4">Here are your account details:</p>
-        <ul class="space-y-2 text-gray-800">
-            <li><strong>Name:</strong> {{ $user->teacher->first_name }} {{ $user->teacher->middle_name }} {{ $user->teacher->last_name }}</li>
-            <li><strong>Contact Number:</strong> {{ $user->teacher->contact_number }}</li>
-            <li><strong>Address:</strong> {{ $user->teacher->address }}</li>
-            <li><strong>Email:</strong> {{ $user->email }}</li>
-            <li><strong>Password:</strong> (Use the password you set during registration)</li>
-        </ul>
-        <p class="mt-6 text-gray-700">You can now log in and access your dashboard.</p>
-        <div class="mt-6">
-            <a href="{{ route('dashboard') }}"
-               class="inline-block bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-black transition">
-               Go to Dashboard
-            </a>
-        </div>
-    </div>
+<body style="margin:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;background-color:#f3f4f6;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;">
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;color:#111827;">Your LittleStep email is verified</h1>
+                            <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#374151;">
+                                Your account email address has been verified. For your security, this email does not include personal profile details or passwords.
+                            </p>
+                            <p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;">
+                                You can now sign in to LittleStep using the password you chose during registration.
+                            </p>
+                            <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#4b5563;">
+                                If you did not create this account, contact your system administrator.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

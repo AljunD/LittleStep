@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChildrenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
-use App\Http\Controllers\ChildrenController;
-use App\Http\Controllers\ProgressController;
-use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\LogsController;
+use App\Http\Controllers\ProgressController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,21 +16,29 @@ Route::get('/', function () {
 
 Route::prefix('auth')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('auth.register.form');
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:5,1')
+        ->name('auth.register.submit');
 
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('auth.login.submit');
 
-    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::post('/logout', [AuthController::class, 'logout'])
+        ->middleware('auth')
+        ->name('auth.logout');
 
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('auth.password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('auth.password.email');
-    
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+        ->middleware('throttle:5,1')
+        ->name('auth.password.email');
+
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
-    
-    Route::post('/reset-password', [AuthController::class, 'reset'])->name('auth.password.update');
+
+    Route::post('/reset-password', [AuthController::class, 'reset'])
+        ->middleware('throttle:5,1')
+        ->name('auth.password.update');
 });
 
 Route::get('/email/verify', function () {
@@ -38,17 +46,22 @@ Route::get('/email/verify', function () {
 })->middleware('auth')->name('verification.notice');
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
-    ->middleware(['auth', 'signed'])
+    ->middleware('signed')
     ->name('verification.verify');
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
+
     return back()->with('success', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 Route::get('/email/confirmation', function () {
     return view('emails.verified');
-})->middleware('auth')->name('verification.confirmation');
+})->name('verification.confirmation');
+
+Route::get('/guardian/email/confirmation', function () {
+    return view('emails.guardian-verified');
+})->name('guardian.verification.confirmation');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'teacher'])
@@ -75,6 +88,7 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
 Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
 
     Route::resource('children', ChildrenController::class);
+    Route::get('/children/{id}/photo', [ChildrenController::class, 'photo'])->name('children.photo');
 });
 
 Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(function () {
@@ -120,5 +134,5 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
 });
 
 Route::get('/logs', [LogsController::class, 'index'])
-    ->middleware(['auth','verified','teacher'])
+    ->middleware(['auth', 'verified', 'teacher'])
     ->name('logs.index');

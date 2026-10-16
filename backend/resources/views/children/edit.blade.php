@@ -190,7 +190,7 @@
                         <div class="flex-shrink-0">
                             <div class="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
                                 <img id="photoPreview" 
-                                     src="{{ $child->photo_path ? asset('storage/' . $child->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($child->first_name . ' ' . $child->last_name) . '&background=DBEAFE&color=1E40AF' }}" 
+                                     src="{{ $child->photo_path ? route('children.photo', $child->id) : asset('images/sample-child.jpg') }}"
                                      class="w-full h-full object-cover">
                             </div>
                         </div>
@@ -215,7 +215,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
     const saveBtn = document.getElementById('saveBtn');
     const editChildForm = document.getElementById('editChildForm');
 

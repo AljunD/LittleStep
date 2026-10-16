@@ -98,9 +98,9 @@
                             <div class="flex items-center space-x-4">
                                 <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 font-bold text-xl overflow-hidden shrink-0">
                                     @if($child->photo_path)
-                                        <img src="{{ asset('storage/' . $child->photo_path) }}" alt="{{ $child->first_name }}" class="w-full h-full object-cover">
+                                        <img src="{{ route('children.photo', $child->id) }}" alt="{{ $child->first_name }}" class="w-full h-full object-cover">
                                     @else
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($child->first_name . ' ' . $child->last_name) }}&background=DBEAFE&color=1E40AF" alt="{{ $child->first_name }}">
+                                        <img src="{{ asset('images/sample-child.jpg') }}" alt="{{ $child->first_name }}">
                                     @endif
                                 </div>
                                 <div>

@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Child;
 use App\Models\Domain;
 use App\Models\DomainResult;
 use App\Models\EccdChecklistItem;
 use App\Models\ProgressRecord;
-use App\Models\Teacher;
 use App\Services\EccdExpertSystem;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -19,6 +17,10 @@ class ProgressController extends Controller
 {
     public function downloadPdf(ProgressRecord $progressRecord, EccdExpertSystem $expert)
     {
+        $teacher = request()->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $progressRecord = $teacher->progressRecords()->findOrFail($progressRecord->id);
+
         $progressRecord->load([
             'child.guardian',
             'teacher',
@@ -97,6 +99,8 @@ class ProgressController extends Controller
             'assessmentDates' => $assessmentDates,
         ])->setPaper('a4', 'portrait');
 
+        recordLog('downloaded', 'ProgressRecord', $progressRecord->id, 'ECCD progress report PDF downloaded.');
+
         return $pdf->download("ECCD-Checklist-Child-{$progressRecord->child_id}.pdf");
     }
 
@@ -105,7 +109,7 @@ class ProgressController extends Controller
         $status = [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
 
         $progressRecord = ProgressRecord::where('child_id', $childId)->first();
-        if (!$progressRecord) {
+        if (! $progressRecord) {
             return $status;
         }
 
@@ -117,14 +121,14 @@ class ProgressController extends Controller
         for ($round = 1; $round <= 3; $round++) {
             $domainItems = Domain::where('progress_record_id', $progressRecord->id)
                 ->where('evaluation_round', $round)
-                ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                ->whereHas('checklistItem', fn ($q) => $q->where('domain', $domainKey))
                 ->with('results')
                 ->get();
 
             $answeredCount = $domainItems->filter(function ($domainItem) {
                 return $domainItem->status === 'completed'
                     && $domainItem->results->contains(
-                        fn($result) => in_array($result->present, ['check', 'hyphen'], true)
+                        fn ($result) => in_array($result->present, ['check', 'hyphen'], true)
                     );
             })->count();
 
@@ -145,7 +149,7 @@ class ProgressController extends Controller
         $definedDomains = [
             'gross_motor', 'fine_motor', 'self_help',
             'receptive_language', 'expressive_language',
-            'cognitive', 'social_emotional'
+            'cognitive', 'social_emotional',
         ];
 
         $global = [1 => 0, 2 => 0, 3 => 0];
@@ -167,8 +171,12 @@ class ProgressController extends Controller
         $global = $this->getGlobalRoundCompleted($childId);
 
         $max = 1;
-        if ($global[1] >= 7) $max = 2;
-        if ($global[2] >= 7) $max = 3;
+        if ($global[1] >= 7) {
+            $max = 2;
+        }
+        if ($global[2] >= 7) {
+            $max = 3;
+        }
 
         return $max;
     }
@@ -178,24 +186,27 @@ class ProgressController extends Controller
         return ProgressRecord::firstOrCreate(
             ['child_id' => $childId],
             [
-                'teacher_id'        => $teacherId,
-                'evaluation_date'   => $assessmentDate,
+                'teacher_id' => $teacherId,
+                'evaluation_date' => $assessmentDate,
                 'evaluation_number' => 1,
-                'status'            => 'in_progress',
+                'status' => 'in_progress',
             ]
         );
     }
 
     public function index()
     {
-        $children = Child::with(['progressRecords.domains.checklistItem', 'progressRecords.teacher'])
+        $teacher = Auth::user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $children = $teacher->ownedChildren()
+            ->with(['progressRecords' => fn ($query) => $query->where('teacher_id', $teacher->id)->with(['domains.checklistItem', 'teacher'])])
             ->orderBy('first_name')
             ->paginate(10);
 
         $definedDomains = [
             'gross_motor', 'fine_motor', 'self_help',
             'receptive_language', 'expressive_language',
-            'cognitive', 'social_emotional'
+            'cognitive', 'social_emotional',
         ];
 
         $children->getCollection()->transform(function ($child) use ($definedDomains) {
@@ -214,10 +225,14 @@ class ProgressController extends Controller
                 foreach ([1, 2, 3] as $round) {
                     if ($statuses[$round] === 'Completed') {
                         $roundStats[$round]['completed']++;
-                        if ($round > $highestRoundWithRecord) $highestRoundWithRecord = $round;
+                        if ($round > $highestRoundWithRecord) {
+                            $highestRoundWithRecord = $round;
+                        }
                     } elseif ($statuses[$round] === 'In Progress') {
                         $roundStats[$round]['in_progress']++;
-                        if ($round > $highestRoundWithRecord) $highestRoundWithRecord = $round;
+                        if ($round > $highestRoundWithRecord) {
+                            $highestRoundWithRecord = $round;
+                        }
                     } else {
                         $roundStats[$round]['pending']++;
                     }
@@ -246,19 +261,21 @@ class ProgressController extends Controller
         return view('progress.index', compact('children'));
     }
 
-    public function selectDomain($child_id = null)
+    public function selectDomain(Request $request, $child_id = null)
     {
         $childId = $child_id ?? request('child_id');
-        $child   = $childId ? Child::findOrFail($childId) : null;
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $child = $childId ? $teacher->ownedChildren()->findOrFail($childId) : null;
 
         $definedDomains = [
-            'gross_motor'         => 'Gross Motor',
-            'fine_motor'          => 'Fine Motor',
-            'self_help'           => 'Self Help',
-            'receptive_language'  => 'Receptive Language',
+            'gross_motor' => 'Gross Motor',
+            'fine_motor' => 'Fine Motor',
+            'self_help' => 'Self Help',
+            'receptive_language' => 'Receptive Language',
             'expressive_language' => 'Expressive Language',
-            'cognitive'           => 'Cognitive',
-            'social_emotional'    => 'Social Emotional',
+            'cognitive' => 'Cognitive',
+            'social_emotional' => 'Social Emotional',
         ];
 
         $maxAllowedRound = $child ? $this->getMaxAllowedRound($child->id) : 1;
@@ -271,9 +288,9 @@ class ProgressController extends Controller
                 : [1 => 'Pending', 2 => 'Pending', 3 => 'Pending'];
 
             $domains[] = [
-                'key'               => $key,
-                'name'              => $name,
-                'round_status'      => $roundStatus,
+                'key' => $key,
+                'name' => $name,
+                'round_status' => $roundStatus,
                 'max_allowed_round' => $maxAllowedRound,
             ];
         }
@@ -283,16 +300,18 @@ class ProgressController extends Controller
 
     public function create(Request $request, $child_id = null)
     {
-        $child     = $child_id ? Child::findOrFail($child_id) : null;
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $child = $child_id ? $teacher->ownedChildren()->findOrFail($child_id) : null;
         $domainKey = $request->query('domain');
 
         $allowed = [
             'gross_motor', 'fine_motor', 'self_help',
             'receptive_language', 'expressive_language',
-            'cognitive', 'social_emotional'
+            'cognitive', 'social_emotional',
         ];
 
-        if (!in_array($domainKey, $allowed)) {
+        if (! in_array($domainKey, $allowed)) {
             abort(404, 'Invalid domain');
         }
 
@@ -301,17 +320,17 @@ class ProgressController extends Controller
             ->orderBy('id')
             ->get();
 
-        $currentRound    = 1;
+        $currentRound = 1;
         $completedRounds = [];
-        $savedResults    = [];
+        $savedResults = [];
         $maxAllowedRound = 1;
-        $progressRecord  = null;
+        $progressRecord = null;
 
         if ($child) {
             $maxAllowedRound = $this->getMaxAllowedRound($child->id);
             $statuses = $this->getDomainRoundStatus($child->id, $domainKey);
 
-            $progressRecord = ProgressRecord::where('child_id', $child->id)->first();
+            $progressRecord = $teacher->progressRecords()->where('child_id', $child->id)->first();
 
             foreach ([1, 2, 3] as $round) {
                 if ($statuses[$round] === 'Completed') {
@@ -323,7 +342,7 @@ class ProgressController extends Controller
                 if ($progressRecord) {
                     $domainItems = Domain::where('progress_record_id', $progressRecord->id)
                         ->where('evaluation_round', $round)
-                        ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                        ->whereHas('checklistItem', fn ($q) => $q->where('domain', $domainKey))
                         ->with('results')
                         ->get();
 
@@ -331,7 +350,7 @@ class ProgressController extends Controller
                         $result = $domainItem->results->first();
                         if ($result) {
                             $savedResults[$round][$domainItem->checklist_item_id] = [
-                                'present'  => $result->present,
+                                'present' => $result->present,
                                 'comments' => $result->comments,
                             ];
                         }
@@ -340,7 +359,9 @@ class ProgressController extends Controller
             }
 
             $currentRound = count($completedRounds) + 1;
-            if ($currentRound > 3) $currentRound = 3;
+            if ($currentRound > 3) {
+                $currentRound = 3;
+            }
 
             if ($currentRound > $maxAllowedRound) {
                 $currentRound = $maxAllowedRound;
@@ -351,25 +372,25 @@ class ProgressController extends Controller
             ?? now()->toDateString();
 
         $domainNames = [
-            'gross_motor'          => 'Gross Motor',
-            'fine_motor'           => 'Fine Motor',
-            'self_help'            => 'Self-Help',
-            'receptive_language'   => 'Receptive Language',
-            'expressive_language'  => 'Expressive Language',
-            'cognitive'            => 'Cognitive',
-            'social_emotional'     => 'Social-Emotional',
+            'gross_motor' => 'Gross Motor',
+            'fine_motor' => 'Fine Motor',
+            'self_help' => 'Self-Help',
+            'receptive_language' => 'Receptive Language',
+            'expressive_language' => 'Expressive Language',
+            'cognitive' => 'Cognitive',
+            'social_emotional' => 'Social-Emotional',
         ];
 
         return view('progress.create', [
-            'child'           => $child,
-            'domainKey'       => $domainKey,
-            'domainName'      => $domainNames[$domainKey],
-            'items'           => $items,
-            'currentRound'    => $currentRound,
+            'child' => $child,
+            'domainKey' => $domainKey,
+            'domainName' => $domainNames[$domainKey],
+            'items' => $items,
+            'currentRound' => $currentRound,
             'completedRounds' => $completedRounds,
-            'savedResults'    => $savedResults,
+            'savedResults' => $savedResults,
             'maxAllowedRound' => $maxAllowedRound,
-            'assessmentDate'  => $assessmentDate,
+            'assessmentDate' => $assessmentDate,
         ]);
     }
 
@@ -377,33 +398,37 @@ class ProgressController extends Controller
     {
         $validated = $request->validate([
             'child_id' => 'required|exists:children,id',
-            'domain'   => 'required|in:gross_motor,fine_motor,self_help,receptive_language,expressive_language,cognitive,social_emotional',
+            'domain' => 'required|in:gross_motor,fine_motor,self_help,receptive_language,expressive_language,cognitive,social_emotional',
             'assessment_date' => 'required|date|before_or_equal:today',
-            'results'  => 'nullable|array',
+            'results' => 'nullable|array',
             'results.*.*' => [
                 'nullable',
                 Rule::in(['check', 'hyphen', 'present', '—', true, false, 1, 0, '1', '0']),
             ],
             'comments' => 'nullable|array',
-            'comments.*' => 'nullable|string',
+            'comments.*' => 'nullable|string|max:5000',
         ]);
 
-        $childId   = (int) $validated['child_id'];
+        $childId = (int) $validated['child_id'];
         $domainKey = $validated['domain'];
-        $child = Child::findOrFail($childId);
+        $child = Auth::user()?->teacher?->ownedChildren()->findOrFail($childId);
+        abort_unless($child, 403, 'A teacher profile is required.');
         $request->validate([
-            'assessment_date' => 'after_or_equal:' . $child->date_of_birth,
+            'assessment_date' => 'after_or_equal:'.$child->date_of_birth,
         ]);
         $assessmentDate = $validated['assessment_date'];
-        $results   = $request->input('results', []);
-        $comments  = $request->input('comments', []);
+        $results = $request->input('results', []);
+        $comments = $request->input('comments', []);
 
-        $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
+        $teacher = Auth::user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
 
         $statuses = $this->getDomainRoundStatus($childId, $domainKey);
         $completedRounds = [];
         foreach ([1, 2, 3] as $r) {
-            if ($statuses[$r] === 'Completed') $completedRounds[] = $r;
+            if ($statuses[$r] === 'Completed') {
+                $completedRounds[] = $r;
+            }
         }
 
         $currentRound = min(count($completedRounds) + 1, 3);
@@ -421,7 +446,7 @@ class ProgressController extends Controller
             // Existing domain rows for this domain + this round
             $existingDomains = Domain::where('progress_record_id', $progressRecord->id)
                 ->where('evaluation_round', $currentRound)
-                ->whereHas('checklistItem', fn($q) => $q->where('domain', $domainKey))
+                ->whereHas('checklistItem', fn ($q) => $q->where('domain', $domainKey))
                 ->with('results')
                 ->get()
                 ->keyBy('checklist_item_id');
@@ -432,7 +457,7 @@ class ProgressController extends Controller
                 ->get();
 
             $filledCount = 0;
-            $totalItems  = $masterItems->count();
+            $totalItems = $masterItems->count();
             $expert = app(EccdExpertSystem::class);
 
             foreach ($masterItems as $master) {
@@ -452,9 +477,9 @@ class ProgressController extends Controller
                 } else {
                     $domain = Domain::create([
                         'progress_record_id' => $progressRecord->id,
-                        'checklist_item_id'  => $master->id,
-                        'evaluation_round'   => $currentRound,
-                        'status'             => 'pending',
+                        'checklist_item_id' => $master->id,
+                        'evaluation_round' => $currentRound,
+                        'status' => 'pending',
                     ]);
                 }
 
@@ -462,8 +487,8 @@ class ProgressController extends Controller
                     $result = $domain->results()->first();
                     $resultData = [
                         'domain_id' => $domain->id,
-                        'present'   => $presentValue ?? 'hyphen',
-                        'comments'  => $hasComment ? $comment : null,
+                        'present' => $presentValue ?? 'hyphen',
+                        'comments' => $hasComment ? $comment : null,
                     ];
 
                     if ($result) {
@@ -494,18 +519,25 @@ class ProgressController extends Controller
 
             if ($global[1] >= 7 && $global[2] >= 7 && $global[3] >= 7) {
                 $progressRecord->update([
-                    'status'            => 'completed',
+                    'status' => 'completed',
                     'evaluation_number' => 3,
                 ]);
             } else {
                 $progressRecord->update([
-                    'status'            => 'in_progress',
+                    'status' => 'in_progress',
                     'evaluation_number' => $currentRound,
                 ]);
             }
 
             $computed = $expert->compute($progressRecord, $currentRound);
             $expert->saveScores($progressRecord, $currentRound, $computed);
+
+            recordLog(
+                'saved',
+                'ProgressRecord',
+                $progressRecord->id,
+                "Assessment results saved for domain {$domainKey}, round {$currentRound}."
+            );
 
             DB::commit();
 
@@ -519,31 +551,34 @@ class ProgressController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
+            report($e);
+
             return back()
                 ->withInput()
-                ->with('error', 'Failed to save evaluation: ' . $e->getMessage());
+                ->with('error', 'Failed to save evaluation. Please try again.');
         }
     }
 
-    public function addObservation($child_id = null)
+    public function addObservation(Request $request, $child_id = null)
     {
         $childId = $child_id ?? request('child_id');
-        if (!$childId) {
+        if (! $childId) {
             return redirect()
                 ->route('progress.index')
                 ->with('error', 'Select a child before adding observation notes.');
         }
 
-        $child = Child::findOrFail($childId);
-        $progressRecord = ProgressRecord::with(['domainObservation', 'teacher'])
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $child = $teacher->ownedChildren()->findOrFail($childId);
+        $progressRecord = $teacher->progressRecords()->with(['domainObservation', 'teacher'])
             ->where('child_id', $child->id)
             ->first();
-        $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
 
         return view('progress.create-observation', compact('child', 'progressRecord', 'teacher'));
     }
 
-    public function edit(?int $id = null)
+    public function edit(Request $request, ?int $id = null)
     {
         if ($id === null) {
             return redirect()
@@ -551,7 +586,9 @@ class ProgressController extends Controller
                 ->with('error', 'Select a progress record to edit.');
         }
 
-        $progressRecord = ProgressRecord::with([
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $progressRecord = $teacher->progressRecords()->with([
             'child.guardian',
             'teacher',
             'domainObservation',
@@ -579,7 +616,7 @@ class ProgressController extends Controller
 
         foreach ($progressRecord->domains as $domain) {
             $result = $domain->results->first();
-            if (!$result || !$domain->checklistItem) {
+            if (! $result || ! $domain->checklistItem) {
                 continue;
             }
 
@@ -606,12 +643,14 @@ class ProgressController extends Controller
 
     public function update(Request $request, int $id, EccdExpertSystem $expert)
     {
-        $progressRecord = ProgressRecord::with('child')->findOrFail($id);
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $progressRecord = $teacher->progressRecords()->with('child')->findOrFail($id);
         $rounds = [1, 2, 3];
         $childDateOfBirth = $progressRecord->child?->date_of_birth;
         $dateRules = ['nullable', 'date', 'before_or_equal:today'];
         if ($childDateOfBirth !== null) {
-            $dateRules[] = 'after_or_equal:' . $childDateOfBirth;
+            $dateRules[] = 'after_or_equal:'.$childDateOfBirth;
         }
 
         $validated = $request->validate([
@@ -622,14 +661,14 @@ class ProgressController extends Controller
             'results' => ['nullable', 'array'],
             'results.*.*' => ['nullable', Rule::in(['', 'check', 'hyphen'])],
             'comments' => ['nullable', 'array'],
-            'comments.*.*' => ['nullable', 'string'],
+            'comments.*.*' => ['nullable', 'string', 'max:5000'],
             'observation' => ['nullable', 'array'],
-            'observation.place_administered' => ['nullable', 'string'],
-            'observation.background_observations' => ['nullable', 'string'],
-            'observation.family_environment_notes' => ['nullable', 'string'],
-            'observation.stimulating_activities_notes' => ['nullable', 'string'],
-            'observation.home_environment_notes' => ['nullable', 'string'],
-            'observation.other_notes' => ['nullable', 'string'],
+            'observation.place_administered' => ['nullable', 'string', 'max:255'],
+            'observation.background_observations' => ['nullable', 'string', 'max:5000'],
+            'observation.family_environment_notes' => ['nullable', 'string', 'max:5000'],
+            'observation.stimulating_activities_notes' => ['nullable', 'string', 'max:5000'],
+            'observation.home_environment_notes' => ['nullable', 'string', 'max:5000'],
+            'observation.other_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $responseErrors = [];
@@ -669,11 +708,11 @@ class ProgressController extends Controller
                         'evaluation_round' => $round,
                     ]);
 
-                    if (!$domain->exists && $answer === '' && $comment === '') {
+                    if (! $domain->exists && $answer === '' && $comment === '') {
                         continue;
                     }
 
-                    if (!$domain->exists) {
+                    if (! $domain->exists) {
                         $domain->status = 'pending';
                         $domain->save();
                     }
@@ -681,6 +720,7 @@ class ProgressController extends Controller
                     if ($answer === '') {
                         $domain->results()->delete();
                         $domain->update(['status' => 'pending']);
+
                         continue;
                     }
 
@@ -723,6 +763,8 @@ class ProgressController extends Controller
                     'status' => 'completed',
                 ]
             );
+
+            recordLog('updated', 'ProgressRecord', $progressRecord->id, 'Assessment results and observation notes updated.');
         });
 
         return redirect()
@@ -734,17 +776,18 @@ class ProgressController extends Controller
     {
         $validated = $request->validate([
             'child_id' => ['required', 'integer', 'exists:children,id'],
-            'date_administered' => ['required', 'date'],
-            'place_administered' => ['nullable', 'string'],
-            'background_observations' => ['nullable', 'string'],
-            'family_environment_notes' => ['nullable', 'string'],
-            'stimulating_activities_notes' => ['nullable', 'string'],
-            'home_environment_notes' => ['nullable', 'string'],
-            'other_notes' => ['nullable', 'string'],
+            'date_administered' => ['required', 'date', 'before_or_equal:today'],
+            'place_administered' => ['nullable', 'string', 'max:255'],
+            'background_observations' => ['nullable', 'string', 'max:5000'],
+            'family_environment_notes' => ['nullable', 'string', 'max:5000'],
+            'stimulating_activities_notes' => ['nullable', 'string', 'max:5000'],
+            'home_environment_notes' => ['nullable', 'string', 'max:5000'],
+            'other_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $child = Child::findOrFail($validated['child_id']);
-        $teacher = Teacher::where('user_id', Auth::id())->firstOrFail();
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $child = $teacher->ownedChildren()->findOrFail($validated['child_id']);
 
         DB::transaction(function () use ($validated, $child, $teacher) {
             $progressRecord = ProgressRecord::firstOrCreate(
@@ -773,6 +816,8 @@ class ProgressController extends Controller
                     'status' => 'completed',
                 ]
             );
+
+            recordLog('saved', 'ProgressRecord', $progressRecord->id, 'Observation notes saved.');
         });
 
         return redirect()
@@ -780,9 +825,12 @@ class ProgressController extends Controller
             ->with('success', 'Observation notes saved successfully.');
     }
 
-    public function show($id = null)
+    public function show(Request $request, $id = null)
     {
-        $progressRecord = ProgressRecord::with([
+        abort_unless($id !== null, 404);
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+        $progressRecord = $teacher->progressRecords()->with([
             'child',
             'teacher',
             'domains.checklistItem',
@@ -791,8 +839,8 @@ class ProgressController extends Controller
             'domainObservation',
         ])->find($id);
 
-        if (!$progressRecord) {
-            $progressRecord = ProgressRecord::with([
+        if (! $progressRecord) {
+            $progressRecord = $teacher->progressRecords()->with([
                 'child',
                 'teacher',
                 'domains.checklistItem',
@@ -800,20 +848,22 @@ class ProgressController extends Controller
                 'domainScores',
                 'domainObservation',
             ])
-            ->where('child_id', $id)
-            ->first();
+                ->where('child_id', $id)
+                ->first();
         }
 
-        $child = $progressRecord?->child ?? Child::find($id);
+        abort_unless($progressRecord, 404);
+        $child = $progressRecord->child;
+        recordLog('viewed', 'ProgressRecord', $progressRecord->id, 'Progress record viewed.');
 
         $domainKeys = [
-            'gross_motor'         => 'Gross Motor',
-            'fine_motor'          => 'Fine Motor',
-            'self_help'           => 'Self-Help',
-            'receptive_language'  => 'Receptive Language',
+            'gross_motor' => 'Gross Motor',
+            'fine_motor' => 'Fine Motor',
+            'self_help' => 'Self-Help',
+            'receptive_language' => 'Receptive Language',
             'expressive_language' => 'Expressive Language',
-            'cognitive'           => 'Cognitive',
-            'social_emotional'    => 'Social-Emotional',
+            'cognitive' => 'Cognitive',
+            'social_emotional' => 'Social-Emotional',
         ];
 
         $preparedDomains = [];
@@ -868,16 +918,16 @@ class ProgressController extends Controller
                     }
 
                     $items[] = [
-                        'id'       => $master->item_number ?? $master->id,
-                        'task'     => $master->activity,
-                        'proc'     => $master->materials_and_procedure ?? 'Parental report will suffice.',
-                        'val'      => $vals,
+                        'id' => $master->item_number ?? $master->id,
+                        'task' => $master->activity,
+                        'proc' => $master->materials_and_procedure ?? 'Parental report will suffice.',
+                        'val' => $vals,
                         'comments' => implode(' | ', $itemComments),
                     ];
                 }
 
                 $preparedDomains[$key] = [
-                    'name'  => $name,
+                    'name' => $name,
                     'items' => $items,
                 ];
             }

@@ -67,7 +67,7 @@
                         </td>
 
                         <td class="px-4 py-4 text-xs text-gray-600 border-r border-gray-300 italic">
-                            {!! $item['proc'] !!}
+                            {!! nl2br(e($item['proc'] ?? '')) !!}
                         </td>
 
                         <td class="p-0 border-r border-gray-300">

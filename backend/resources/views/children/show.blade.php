@@ -18,7 +18,7 @@
             <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
                 <div class="relative">
                     <div class="w-40 h-40 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-gray-200">
-                        <img src="{{ $child->photo_path ? asset('storage/' . $child->photo_path) : asset('images/sample-child.jpg') }}" 
+                        <img src="{{ $child->photo_path ? route('children.photo', $child->id) : asset('images/sample-child.jpg') }}"
                              alt="{{ $child->first_name }}'s Photo" 
                              class="w-full h-full object-cover">
                     </div>
@@ -48,7 +48,7 @@
                             </svg>
                             Edit Profile
                         </a>
-                        <form action="{{ route('children.destroy', $child->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to archive this record?');">
+                        <form action="{{ route('children.destroy', $child->id) }}" method="POST" data-confirm="Are you sure you want to archive this record?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-100 transition">

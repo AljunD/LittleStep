@@ -42,14 +42,14 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">New Password <span class="text-gray-400 text-xs">(optional)</span></label>
-                            <input type="password" id="guardianPassword" name="password"
+                            <input type="password" id="guardianPassword" name="password" minlength="12" autocomplete="new-password"
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border" 
                                 placeholder="Leave blank to keep current password">
                             <p id="error-password" class="text-xs font-semibold text-red-600 mt-1 hidden"></p>
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Confirm New Password</label>
-                            <input type="password" id="guardianConfirmPassword" name="password_confirmation"
+                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" autocomplete="new-password"
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             <p id="error-password_confirmation" class="text-xs font-semibold text-red-600 mt-1 hidden"></p>
                         </div>
@@ -159,7 +159,7 @@
                 <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Update Failed</h3>
                 <p class="text-gray-600 mb-8">Something went wrong while applying the updates. Please check your data fields and try again.</p>
-                <button type="button" onclick="resetFormLayout()" 
+                <button type="button" id="reset-form-layout"
                    class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
                     Go Back and Try Again
                 </button>
@@ -169,7 +169,9 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
+    document.getElementById('reset-form-layout')?.addEventListener('click', resetFormLayout);
+
     document.getElementById('editGuardianForm').addEventListener('submit', function(e) {
         e.preventDefault();
 

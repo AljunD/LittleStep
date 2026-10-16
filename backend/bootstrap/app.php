@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Auth\Middleware\Authenticate;
 use App\Http\Middleware\ApiAuthenticate;
+use App\Http\Middleware\GuardianMiddleware;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TeacherMiddleware;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,10 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->replace(Authenticate::class, ApiAuthenticate::class);
+        $middleware->appendToGroup('web', SecurityHeaders::class);
+        $middleware->appendToGroup('api', SecurityHeaders::class);
 
         $middleware->alias([
-            'auth'    => ApiAuthenticate::class,
-            'teacher' => TeacherMiddleware::class, // ✅ Teacher-only middleware
+            'auth' => ApiAuthenticate::class,
+            'guardian' => GuardianMiddleware::class,
+            'teacher' => TeacherMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

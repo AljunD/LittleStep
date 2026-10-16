@@ -611,7 +611,7 @@
     </div>
 </div>
 
-<style>
+<style nonce="{{ request()->attributes->get('cspNonce') }}">
     .border-navy-900 { border-color: #001f5b; }
     .bg-navy-900 { background-color: #001f5b; }
     

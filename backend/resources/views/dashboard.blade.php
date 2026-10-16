@@ -7,13 +7,13 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Portal Dashboard</h1>
-            <p class="text-sm text-gray-500">Overview of student progress tracking and school portal records.</p>
+            <p class="text-sm text-gray-500">Overview of your assigned children and progress records.</p>
         </div>
     </div>
 
     <div class="bg-gray-50/70 p-6 rounded-2xl border border-gray-100 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Classroom Performance Metrics</h2>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Classroom Metrics</h2>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -21,7 +21,7 @@
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Registered Guardians</p>
                 <div class="flex items-baseline space-x-2 mt-1">
                     <span class="text-2xl font-black text-gray-900">{{ $guardiansCount }}</span>
-                    <span class="text-[10px] font-medium text-gray-400">Guardian Accounts</span>
+                    <span class="text-[10px] font-medium text-gray-400">Linked to your children</span>
                 </div>
             </div>
             
@@ -29,7 +29,7 @@
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Linked Children</p>
                 <div class="flex items-baseline space-x-2 mt-1">
                     <span class="text-2xl font-black text-gray-900">{{ $childrenCount }}</span>
-                    <span class="text-[10px] font-medium text-gray-400">Children Table Records</span>
+                    <span class="text-[10px] font-medium text-gray-400">Assigned to you</span>
                 </div>
             </div>
             
@@ -69,7 +69,7 @@
                             {{ $urgentAlertRecord->child->first_name }} {{ $urgentAlertRecord->child->middle_name }} {{ $urgentAlertRecord->child->last_name }}
                         </h4>
                         <p class="text-[11px] text-red-700 mt-0.5 font-medium">
-                            Evaluation checklist completely empty.
+                            This record is pending your evaluation.
                         </p>
                     </div>
                     
@@ -80,9 +80,9 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Evaluation No:</span>
-                            <span class="font-semibold text-gray-800">Test #{{ $urgentAlertRecord->evaluation_number }}</span>
+                            <span class="font-semibold text-gray-800">{{ $urgentAlertRecord->evaluation_number }}</span>
                         </div>
-                        <p class="text-[11px] text-gray-400 italic pt-1">Please initialize domain values to begin tracking.</p>
+                        <p class="text-[11px] text-gray-400 italic pt-1">Open the progress record to begin or continue tracking.</p>
                     </div>
                 </div>
             @else
@@ -119,7 +119,7 @@
         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 space-y-4">
             <div>
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Teacher Activity History Log</h3>
-                <p class="text-xs text-gray-400 mt-0.5">Live changes tracking from recent system logs.</p>
+                <p class="text-xs text-gray-400 mt-0.5">Recent changes made from your account.</p>
             </div>
 
             <div class="divide-y divide-gray-50 max-h-80 overflow-y-auto pr-2">
@@ -156,7 +156,7 @@
         <div class="px-6 py-4 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Master Student Evaluation Registry</h3>
-                <p class="text-xs text-gray-400 mt-0.5">List of milestone trackers registered on the children table matrix.</p>
+                <p class="text-xs text-gray-400 mt-0.5">Milestone trackers assigned to you.</p>
             </div>
             <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest bg-gray-50 border border-gray-100 px-2 py-1 rounded">
                 progress_records logs
@@ -170,7 +170,7 @@
                         <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Assigned Teacher</th>
                         <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Evaluation Date</th>
                         <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Evaluation No.</th>
-                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status Enum</th>
+                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 text-xs">
@@ -183,7 +183,7 @@
                                 {{ $record->teacher->first_name }} {{ $record->teacher->last_name }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500">
-                                {{ \Carbon\Carbon::parse($record->evaluation_date)->format('Y-m-d') }}
+                                {{ $record->evaluation_date ? \Carbon\Carbon::parse($record->evaluation_date)->format('Y-m-d') : '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-700">
                                 {{ $record->evaluation_number }}

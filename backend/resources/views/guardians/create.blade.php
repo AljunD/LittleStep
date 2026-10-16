@@ -145,12 +145,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label for="guardianPassword" class="text-sm font-semibold text-gray-700">Password <span class="text-red-500">*</span></label>
-                            <input type="password" id="guardianPassword" name="password" value="{{ old('password', 'Password123!') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
+                            <input type="password" id="guardianPassword" name="password" minlength="12" autocomplete="new-password" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
                             @error('password') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label for="guardianConfirmPassword" class="text-sm font-semibold text-gray-700">Confirm Password <span class="text-red-500">*</span></label>
-                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" value="{{ old('password_confirmation', 'Password123!') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
+                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" autocomplete="new-password" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
                         </div>
                     </div>
 
@@ -466,7 +466,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
 document.addEventListener('DOMContentLoaded', () => {
     const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3')];
     const labels = [document.getElementById('label-step1'), document.getElementById('label-step2'), document.getElementById('label-step3')];

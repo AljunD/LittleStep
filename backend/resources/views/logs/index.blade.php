@@ -7,7 +7,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">System Logs</h1>
-            <p class="text-sm text-gray-500">View all recorded actions across the system.</p>
+            <p class="text-sm text-gray-500">View actions recorded from your account.</p>
         </div>
         <a href="{{ route('dashboard') }}" 
            class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow hover:bg-blue-700 transition transform active:scale-95">
@@ -17,9 +17,8 @@
 
     <form method="GET" class="flex flex-wrap gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
         <select name="user_id" class="border rounded px-3 py-2 text-sm">
-            <option value="">All Users</option>
             @foreach($users as $user)
-                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
+                <option value="{{ $user->id }}" selected>
                     {{ $user->email }}
                 </option>
             @endforeach

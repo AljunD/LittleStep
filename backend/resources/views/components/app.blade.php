@@ -5,7 +5,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>@yield('title', 'KidWatch')</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -84,7 +84,7 @@
 
     <div class="flex-1 flex flex-col min-w-0 h-screen">
       <div class="lg:hidden bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-        <button onclick="toggleSidebar()" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
+        <button id="sidebar-toggle" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
           <i class="fas fa-bars text-2xl"></i>
         </button>
         <h1 class="text-lg font-black text-[#081028] uppercase tracking-tighter">KidWatch</h1>
@@ -101,15 +101,22 @@
     </div>
   </div>
 
-  <div onclick="toggleSidebar()" id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity duration-300"></div>
+  <div id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity duration-300"></div>
 
-  <script>
+  <script nonce="{{ request()->attributes->get('cspNonce') }}">
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebar-overlay');
       sidebar.classList.toggle('-translate-x-full');
       overlay.classList.toggle('hidden');
     }
+
+    document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
+    document.getElementById('sidebar-overlay')?.addEventListener('click', toggleSidebar);
+    document.addEventListener('submit', event => {
+      const form = event.target.closest('form[data-confirm]');
+      if (form && !confirm(form.dataset.confirm)) event.preventDefault();
+    });
   </script>
 </body>
 </html>
