@@ -1,6 +1,7 @@
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -11,20 +12,54 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  getGuardianApiErrorMessage,
+  getGuardianChildren,
+  GuardianChild,
+} from "../services/guardianApi";
 
 export default function SelectStudentScreen({ navigation }: any) {
-  const students = [
-    {
-      name: "Dela Cruz, Juan",
-      firstName: "Juan",
-      image: require("../assets/images/juan.jpg"),
-    },
-    {
-      name: "Dela Cruz, Maria",
-      firstName: "Maria",
-      image: require("../assets/images/maria.jpg"),
-    },
-  ];
+  const [students, setStudents] = useState<GuardianChild[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const loadStudents = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      setStudents(await getGuardianChildren());
+    } catch (error) {
+      setErrorMessage(getGuardianApiErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getGuardianChildren()
+      .then((children) => {
+        if (isMounted) {
+          setStudents(children);
+        }
+      })
+      .catch((error: unknown) => {
+        if (isMounted) {
+          setErrorMessage(getGuardianApiErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -50,38 +85,76 @@ export default function SelectStudentScreen({ navigation }: any) {
 
           {/* STUDENT CARDS */}
           <View style={styles.studentContainer}>
-            {students.map((student) => (
-              <TouchableOpacity
-                key={student.firstName}
-                style={styles.studentCard}
-                activeOpacity={0.85}
-                onPress={() =>
-                  navigation.navigate("Dashboard", { student })
-                }
-              >
-                <Image
-                  source={student.image}
-                  style={styles.profile}
-                  resizeMode="cover"
-                />
+            {loading ? (
+              <View style={styles.stateMessage}>
+                <ActivityIndicator color="#0BA8BD" />
+                <Text style={styles.stateText}>Loading your children...</Text>
+              </View>
+            ) : errorMessage ? (
+              <View style={styles.stateMessage}>
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {errorMessage}
+                </Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  activeOpacity={0.8}
+                  onPress={() => void loadStudents()}
+                >
+                  <Text style={styles.retryText}>Try again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : students.length === 0 ? (
+              <View style={styles.stateMessage}>
+                <Text style={styles.stateText}>
+                  No children are currently linked to your guardian account.
+                </Text>
+              </View>
+            ) : students.map((student, index) => {
+                const fullName = [
+                  student.first_name,
+                  student.middle_name,
+                  student.last_name,
+                ].filter(Boolean).join(" ");
+                const image = index % 2 === 0
+                  ? require("../assets/images/juan.jpg")
+                  : require("../assets/images/maria.jpg");
 
-                <View style={styles.studentInfo}>
-                  <Text style={styles.studentName}>
-                    {student.name}
-                  </Text>
+                return (
+                  <TouchableOpacity
+                    key={student.id}
+                    style={styles.studentCard}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      navigation.navigate("Dashboard", {
+                        student: {
+                          id: student.id,
+                          name: fullName,
+                          firstName: student.first_name,
+                          lastName: student.last_name,
+                          image,
+                        },
+                      })
+                    }
+                  >
+                    <Image
+                      source={image}
+                      style={styles.profile}
+                      resizeMode="cover"
+                    />
 
-                  <Text style={styles.progress}>
-                    View Progress Records
-                  </Text>
-                </View>
+                    <View style={styles.studentInfo}>
+                      <Text style={styles.studentName}>{fullName}</Text>
+                      <Text style={styles.progress}>View Progress Records</Text>
+                    </View>
 
-                <Ionicons
-                  name="chevron-forward"
-                  size={22}
-                  color="#C7C7C7"
-                />
-              </TouchableOpacity>
-            ))}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={22}
+                      color="#C7C7C7"
+                    />
+                  </TouchableOpacity>
+                );
+              })}
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -161,5 +234,34 @@ const styles = StyleSheet.create({
   progress: {
     color: "#B8B8B8",
     fontSize: 11,
+  },
+  stateMessage: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    gap: 12,
+  },
+  stateText: {
+    color: "#555555",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  errorText: {
+    color: "#B42318",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#0BA8BD",
+    borderRadius: 20,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+  },
+  retryText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

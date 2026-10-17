@@ -12,13 +12,23 @@ class GuardianController extends Controller
     // GET /guardian/profile
     public function profile(Request $request)
     {
-        return response()->json($request->user()->guardian, 200);
+        $guardian = $request->user()->guardian;
+
+        return response()->json([
+            'id' => $guardian->id,
+            'first_name' => $guardian->first_name,
+            'middle_name' => $guardian->middle_name,
+            'last_name' => $guardian->last_name,
+        ], 200);
     }
 
     // GET /guardian/children
     public function children(Request $request)
     {
-        return response()->json($request->user()->guardian->children, 200);
+        $children = $request->user()->guardian->children()
+            ->get(['id', 'first_name', 'middle_name', 'last_name', 'sex', 'date_of_birth']);
+
+        return response()->json($children, 200);
     }
 
     // GET /guardian/children/{id}

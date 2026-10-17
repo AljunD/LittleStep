@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import {View, Text, StyleSheet, ImageBackground, Image, 
-        TextInput, TouchableOpacity,SafeAreaView, StatusBar,
+import React, { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -13,10 +12,47 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  getGuardianApiErrorMessage,
+  loginGuardian,
+} from "../services/guardianApi";
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, route }: any) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(
+    route?.params?.initialError ?? null,
+  );
+  const submittingRef = useRef(false);
+
+  const handleLogin = async () => {
+    if (submittingRef.current) {
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      setErrorMessage("Enter your email address and password.");
+      return;
+    }
+
+    submittingRef.current = true;
+    setSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const guardian = await loginGuardian(normalizedEmail, password, rememberMe);
+      navigation.replace("SelectStudent", { guardian });
+    } catch (error) {
+      setErrorMessage(getGuardianApiErrorMessage(error));
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ImageBackground
@@ -77,6 +113,13 @@ export default function LoginScreen({ navigation }: any) {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              maxLength={255}
+              value={email}
+              onChangeText={setEmail}
+              editable={!submitting}
+              returnKeyType="next"
             />
           </View>
 
@@ -94,9 +137,21 @@ export default function LoginScreen({ navigation }: any) {
               placeholderTextColor="#A5A5A5"
               secureTextEntry={!passwordVisible}
               autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="current-password"
+              textContentType="password"
+              maxLength={1024}
+              value={password}
+              onChangeText={setPassword}
+              editable={!submitting}
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
             />
 
             <TouchableOpacity
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
               onPress={() =>
                 setPasswordVisible(!passwordVisible)
               }
@@ -119,6 +174,7 @@ export default function LoginScreen({ navigation }: any) {
             {/* REMEMBER ME */}
             <TouchableOpacity
               style={styles.remember}
+              disabled={submitting}
               onPress={() =>
                 setRememberMe(!rememberMe)
               }
@@ -144,7 +200,7 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
 
             {/* FORGOT PASSWORD */}
-            <TouchableOpacity>
+            <TouchableOpacity disabled={submitting}>
               <Text style={styles.forgot}>
                 Forgot password?
               </Text>
@@ -152,17 +208,28 @@ export default function LoginScreen({ navigation }: any) {
 
           </View>
 
+          {errorMessage ? (
+            <Text accessibilityRole="alert" style={styles.errorMessage}>
+              {errorMessage}
+            </Text>
+          ) : null}
+
           {/* LOGIN */}
           <TouchableOpacity
-            style={styles.loginButton}
+            style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
             activeOpacity={0.85}
-            onPress={() =>
-              navigation.navigate("SelectStudent")
-            }
+            disabled={submitting}
+            accessibilityRole="button"
+            onPress={handleLogin}
           >
-            <Text style={styles.loginText}>
-              Login
-            </Text>
+            {submitting ? (
+              <View style={styles.loadingContent}>
+                <ActivityIndicator color="#FFFFFF" size="small" />
+                <Text style={styles.loginText}>Signing in...</Text>
+              </View>
+            ) : (
+              <Text style={styles.loginText}>Login</Text>
+            )}
           </TouchableOpacity>
 
         </View>
@@ -280,6 +347,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+  errorMessage: {
+    color: "#B42318",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: -9,
+    marginBottom: 13,
+  },
+
   /* LOGIN BUTTON */
 
   loginButton: {
@@ -289,6 +364,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 3,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+
+  loadingContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
   },
 
   loginText: {

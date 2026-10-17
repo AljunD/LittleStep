@@ -1,8 +1,14 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+import {
+  getGuardianApiErrorMessage,
+  GuardianProfile,
+  restoreGuardianSession,
+} from "./services/guardianApi";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SelectStudentScreen from "./screens/SelectStudentScreen";
@@ -18,10 +24,52 @@ import LanguageScreen from "./screens/LanguageScreen";
 const Stack = createStackNavigator();
 
 export default function App() {
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
+  const [initialRoute, setInitialRoute] = useState("Welcome");
+  const [guardian, setGuardian] = useState<GuardianProfile | null>(null);
+  const [initialError, setInitialError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const restoreSession = async () => {
+      try {
+        const restoredGuardian = await restoreGuardianSession();
+        if (isMounted && restoredGuardian) {
+          setGuardian(restoredGuardian);
+          setInitialRoute("SelectStudent");
+        }
+      } catch (error) {
+        if (isMounted) {
+          setInitialRoute("Login");
+          setInitialError(getGuardianApiErrorMessage(error));
+        }
+      } finally {
+        if (isMounted) {
+          setIsRestoringSession(false);
+        }
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (isRestoringSession) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator color="#0BA8BD" size="large" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen
@@ -32,11 +80,13 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
+          initialParams={{ initialError }}
         />
 
         <Stack.Screen
           name="SelectStudent"
           component={SelectStudentScreen}
+          initialParams={{ guardian }}
         />
 
         <Stack.Screen
@@ -84,3 +134,12 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+});
