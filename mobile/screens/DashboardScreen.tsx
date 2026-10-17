@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Alert,
   View,
   Text,
   Image,
@@ -11,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { logoutGuardian } from "../services/guardianApi";
 
 export default function DashboardScreen({
   navigation,
@@ -44,6 +46,22 @@ export default function DashboardScreen({
       : student.image
       ? student.image
       : require("../assets/images/juan.jpg");
+
+  const handleLogout = async () => {
+    try {
+      await logoutGuardian();
+    } catch {
+      Alert.alert(
+        "Signed out on this device",
+        "The app cleared its saved sign-in, but could not confirm that the server revoked the token. It will expire automatically.",
+      );
+    } finally {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Welcome" }],
+      });
+    }
+  };
 
   const activities = [
     {
@@ -90,7 +108,7 @@ export default function DashboardScreen({
       title: "Logout",
       icon: "log-out-outline",
       color: "#FFE5D2",
-      onPress: () => navigation.navigate("Login"),
+      onPress: () => void handleLogout(),
     },
   ];
 

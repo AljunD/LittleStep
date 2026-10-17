@@ -29,11 +29,19 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $user->createToken('guardian-token')->plainTextToken;
+        $expiresAt = now()->addHours(12);
+        $token = $user->createToken('guardian-mobile', ['*'], $expiresAt)->plainTextToken;
+        $guardian = $user->guardian;
 
         return response()->json([
             'token' => $token,
-            'guardian' => $user->guardian, // guardian profile from guardians table
+            'guardian' => [
+                'id' => $guardian->id,
+                'first_name' => $guardian->first_name,
+                'middle_name' => $guardian->middle_name,
+                'last_name' => $guardian->last_name,
+            ],
+            'expires_at' => $expiresAt->toIso8601String(),
         ], 200);
     }
 
