@@ -5,13 +5,6 @@ namespace App\Services;
 use App\Models\ProgressRecord;
 use Illuminate\Support\Carbon;
 
-/**
- * Builds the downloadable ECCD Checklist, Child's Record 2 (20 pages, US Letter).
- *
- * Each page uses the official form as its background (resources/pdf/childs-record-2/page-NN.jpg, taken from the
- * official Child's Record 2 PDF) and overlays the child's data at the positions measured on that form, in PDF points
- * (612 × 792, origin top-left). The view only paints what this class returns.
- */
 class ChildsRecord2Report
 {
     public const PAGE_WIDTH = 612;
@@ -22,10 +15,6 @@ class ChildsRecord2Report
 
     private const ROUND_LABELS = [1 => '1st', 2 => '2nd', 3 => '3rd'];
 
-    /**
-     * Checklist pages 4–16: Present column centres (1st/2nd/3rd Eval), Comments column, TOTAL SCORE row and
-     * the [top, bottom] of every item row, measured on the official form.
-     */
     private const CHECKLIST_PAGES = [
         4 => ['domain' => 'gross_motor', 'present' => [415.7, 443.0, 469.6], 'comments' => [483.3, 567.4], 'total' => null,
             'rows' => [1 => [105.3, 144.2], 2 => [144.2, 225.8], 3 => [225.8, 299.4], 4 => [299.4, 348.1], 5 => [348.1, 439.3], 6 => [439.3, 537.8], 7 => [537.8, 657.8], 8 => [657.8, 696.5], 9 => [696.5, 740.2]]],
@@ -55,25 +44,21 @@ class ChildsRecord2Report
             'rows' => [15 => [87.0, 125.3], 16 => [125.3, 183.7], 17 => [183.7, 209.8], 18 => [209.8, 254.9], 19 => [254.9, 301.9], 20 => [301.9, 349.0], 21 => [349.0, 410.0], 22 => [410.0, 485.4], 23 => [485.4, 535.4], 24 => [535.4, 599.4]]],
     ];
 
-    /** Page 19: dot x per domain (Child's Record 2 order) and the y of scaled scores 19 and 1, per evaluation panel. */
     private const SCALED_CHART = [
         1 => ['x' => [100.0, 119.0, 137.0, 157.3, 175.3, 194.4, 213.5], 'y19' => 244.9, 'y1' => 721.9, 'age' => [141.0, 212.4]],
         2 => ['x' => [269.3, 288.4, 306.4, 326.6, 344.6, 363.8, 382.9], 'y19' => 245.8, 'y1' => 722.8, 'age' => [309.7, 381.1]],
         3 => ['x' => [436.8, 456.0, 474.0, 494.2, 512.2, 531.4, 550.4], 'y19' => 245.4, 'y1' => 722.4, 'age' => [477.3, 548.7]],
     ];
 
-    /** Page 20: y of each labelled standard score on the axis (the printed scale is not perfectly linear). */
     private const STANDARD_AXIS = [
         160 => 138.7, 150 => 178.9, 140 => 218.4, 130 => 259.3, 120 => 299.5, 110 => 339.0, 100 => 379.4,
         90 => 419.6, 80 => 459.1, 70 => 497.8, 60 => 539.3, 50 => 578.9, 40 => 619.8, 30 => 657.8, 20 => 694.4,
     ];
 
-    /** Page 20 age columns ("3 years & 1 month", "4 years", "5 years"): [left, ruler centre, right]. */
     private const STANDARD_COLUMNS = [3 => [121.5, 195.5, 270.6], 4 => [270.6, 345.8, 419.5], 5 => [419.5, 494.4, 568.5]];
 
     public function __construct(private EccdExpertSystem $expert) {}
 
-    /** @return list<array{template: string, items: list<array>, svg: string|null}> */
     public function build(ProgressRecord $progressRecord): array
     {
         $progressRecord->loadMissing(['child', 'teacher', 'domainObservation', 'domains.checklistItem', 'domains.results']);
@@ -114,7 +99,6 @@ class ChildsRecord2Report
         return $pages;
     }
 
-    /** [domain][item_number][round] => ['mark' => '✔'|'—', 'comment' => string] */
     private function answers(ProgressRecord $progressRecord): array
     {
         $answers = [];
@@ -139,7 +123,6 @@ class ChildsRecord2Report
         return $answers;
     }
 
-    /** Page 1: Sociodemographic Profile. */
     private function profilePage($child): array
     {
         if (! $child) {
@@ -169,7 +152,6 @@ class ChildsRecord2Report
             $items[] = $this->text(498, 436, 26, $birth->format('Y'), 7, 'center');
         }
 
-        // The address is stored as "Barangay, Municipality/City, Province, Region".
         $parts = array_map('trim', explode(',', (string) $child->address));
         if (count($parts) === 4) {
             foreach ([[140, 88], [228, 90], [318, 80], [398, 124]] as $index => [$left, $width]) {
@@ -188,7 +170,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 2: Computation of the Child's Age (Year / Month / Day rows and examiner per assessment). */
     private function agePage(array $computed, string $examiner): array
     {
         $blocks = [1 => [343.0, 363.0, 382.7, 404.3], 2 => [404.3, 424.1, 444.2, 462.5], 3 => [462.5, 484.6, 504.8, 525.0]];
@@ -220,7 +201,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Pages 4–16: ✔ / — per evaluation, teacher comments and the domain TOTAL SCORE. */
     private function checklistPage(array $layout, array $answers, array $computed): array
     {
         $items = [];
@@ -264,7 +244,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 17: examiner notes written on the form's ruled lines (16 pt apart). */
     private function notesPage(ProgressRecord $progressRecord, string $examiner): array
     {
         $observation = $progressRecord->domainObservation;
@@ -294,7 +273,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 18: raw and scaled scores per domain, sum, standard score and interpretation per evaluation. */
     private function summaryPage(array $computed): array
     {
         $rawColumns = [1 => [207.3, 263.4], 2 => [322.3, 379.3], 3 => [440.8, 502.6]];
@@ -331,7 +309,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 19: "Child's Age" above each scaled-score panel. */
     private function scaledAgeLabels(array $computed): array
     {
         $items = [];
@@ -344,7 +321,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 20: "Date Tested" under the age column of each evaluation. */
     private function standardDates(array $computed): array
     {
         $datesByColumn = [];
@@ -361,7 +337,6 @@ class ChildsRecord2Report
         return $items;
     }
 
-    /** Page 19 overlay: an x on each domain's scaled score, connected per evaluation. */
     private function scaledChartSvg(array $computed): ?string
     {
         $shapes = '';
@@ -381,7 +356,6 @@ class ChildsRecord2Report
         return $this->svg($shapes);
     }
 
-    /** Page 20 overlay: an x on each standard score in the column for the child's age, connected across evaluations. */
     private function standardChartSvg(array $computed): ?string
     {
         $points = array_map(fn (array $point) => [$point['x'], $point['y']], $this->standardPoints($computed));
@@ -389,7 +363,6 @@ class ChildsRecord2Report
         return $this->svg($this->connectedMarks($points));
     }
 
-    /** @return list<array{x: float, y: float, column: int, date: string}> */
     private function standardPoints(array $computed): array
     {
         $byColumn = [];
@@ -405,7 +378,6 @@ class ChildsRecord2Report
             ];
         }
 
-        // Several evaluations in the same age column sit side by side around its ruler.
         $points = [];
         foreach ($byColumn as $column => $entries) {
             $count = count($entries);
@@ -467,7 +439,6 @@ class ChildsRecord2Report
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
-    /** One line of text sitting on a form underline (top = text box top). */
     private function text(float $left, float $top, float $width, mixed $value, float $size = 8, string $align = 'left'): array
     {
         return [
@@ -476,10 +447,8 @@ class ChildsRecord2Report
         ];
     }
 
-    /** Text centred in a cell. $lines > 1 allows wrapping (e.g. the interpretation cell). */
     private function centered(float $left, float $right, float $top, float $bottom, mixed $value, float $size, bool $bold = false, int $lines = 1): array
     {
-        // 1.4 × the font size leaves room for descenders (y, g, p) inside the clipped box.
         $lineHeight = $size * 1.4;
         $height = $lineHeight * $lines;
 
@@ -490,7 +459,6 @@ class ChildsRecord2Report
         ];
     }
 
-    /** ✔ / — in a Present cell, centred on ($x, $y). */
     private function mark(float $x, float $y, string $mark): array
     {
         return $this->centered($x - 9, $x + 9, $y - 6, $y + 6, $mark, $mark === '✔' ? 10 : 9, true);

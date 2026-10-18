@@ -51,12 +51,6 @@ const navigationDarkTheme = {
   },
 };
 
-/**
- * Deep links. Only the Login link from the email-verification page is accepted
- * (littlestep://login, or exp://<host>/--/login in Expo Go). Any other path is ignored, so links can't
- * open protected screens, and only `verified=1` is read from the query: other parameters (e.g. a
- * crafted `initialError` message) never reach the screen. A guardian who is already signed in stays where they are.
- */
 const linking: LinkingOptions<ParamListBase> = {
   prefixes: [Linking.createURL("/"), "littlestep://"],
   config: {
@@ -135,7 +129,6 @@ function AppNavigator() {
   return (
     <NavigationContainer
       theme={isDark ? navigationDarkTheme : DefaultTheme}
-      // Native only: on web, linking would rewrite the browser address for every screen.
       linking={Platform.OS === "web" ? undefined : linking}
     >
       <Stack.Navigator

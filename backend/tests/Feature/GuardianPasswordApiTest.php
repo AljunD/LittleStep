@@ -9,10 +9,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-/**
- * Guardians who sign in with the default password are told to change it (`must_change_password`),
- * and can change it from the mobile app with PUT /api/v1/guardian/password.
- */
 class GuardianPasswordApiTest extends TestCase
 {
     use RefreshDatabase;
@@ -78,14 +74,12 @@ class GuardianPasswordApiTest extends TestCase
         $this->assertTrue(Hash::check(self::NEW_PASSWORD, $this->user->fresh()->password));
         $this->assertDatabaseHas('logs', ['action' => 'password_changed', 'entity_id' => $this->guardian->id, 'user_id' => $this->user->id]);
 
-        // This device stays signed in; the other one is signed out.
         $this->assertSame(1, $this->user->tokens()->count());
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/v1/guardian/profile')->assertOk();
         $this->app['auth']->forgetGuards();
         $this->withToken($otherDevice)->getJson('/api/v1/guardian/profile')->assertUnauthorized();
 
-        // The new password works for the next sign-in, without the reminder.
         $this->login(self::NEW_PASSWORD)->assertOk()->assertJsonPath('must_change_password', false);
     }
 
@@ -107,7 +101,6 @@ class GuardianPasswordApiTest extends TestCase
             ], $overrides));
 
             if ($field === null) {
-                // A longer variant of the default is a different password, so it is allowed.
                 $response->assertOk();
 
                 continue;

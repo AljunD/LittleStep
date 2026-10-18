@@ -13,7 +13,6 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
-    // POST /guardian/login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -45,12 +44,10 @@ class AuthController extends Controller
                 'last_name' => $guardian->last_name,
             ],
             'expires_at' => $expiresAt->toIso8601String(),
-            // The password just verified is the default one teachers give new accounts, so the app asks for a new one.
             'must_change_password' => self::isDefaultPassword($credentials['password']),
         ], 200);
     }
 
-    // PUT /guardian/password
     public function changePassword(Request $request)
     {
         $validated = $request->validate([
@@ -68,7 +65,6 @@ class AuthController extends Controller
         $user = $request->user();
         $user->forceFill(['password' => Hash::make($validated['password'])])->save();
 
-        // Sign out every other device; this app keeps its current session.
         $currentToken = $user->currentAccessToken();
         $user->tokens()
             ->when($currentToken instanceof PersonalAccessToken, fn ($tokens) => $tokens->whereKeyNot($currentToken->getKey()))
@@ -86,7 +82,6 @@ class AuthController extends Controller
         return $default !== '' && hash_equals($default, $password);
     }
 
-    // POST /guardian/logout
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -100,7 +95,6 @@ class AuthController extends Controller
         return response()->json(['error' => 'No active session'], 401);
     }
 
-    // OPTIONAL: Logout everywhere (delete all tokens)
     public function logoutAll(Request $request)
     {
         $user = $request->user();

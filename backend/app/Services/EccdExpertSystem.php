@@ -12,7 +12,6 @@ use LogicException;
 
 class EccdExpertSystem
 {
-    /** The 7 official ECCD domains, in Child's Record 2 order. */
     public const DOMAIN_LABELS = [
         'gross_motor' => 'Gross Motor',
         'fine_motor' => 'Fine Motor',
@@ -33,14 +32,12 @@ class EccdExpertSystem
         'social_emotional',
     ];
 
-    /** Child's Record 2 age bands (Technical Manual §6), used to describe the band in explanations. */
     private const AGE_BAND_RANGES = [
         '3.1-4.0' => ['label' => '3.1–4.0', 'range' => '3 years 1 month to 4 years 0 months'],
         '4.1-5.0' => ['label' => '4.1–5.0', 'range' => '4 years 1 month to 5 years 0 months'],
         '5.1-5.11' => ['label' => '5.1–5.11', 'range' => '5 years 1 month to 5 years 11 months'],
     ];
 
-    /** @var array<string, list<int>>|null checklist item ids per domain, loaded once per instance */
     private ?array $checklistItemIdsByDomain = null;
 
     public function compute(ProgressRecord $progressRecord, int $round = 1): array
@@ -59,12 +56,6 @@ class EccdExpertSystem
         );
     }
 
-    /**
-     * Runs the official pipeline on a set of answers (age → raw → scaled → sum → standard → interpretation).
-     * Used for saved results (compute()) and for the teacher's unsaved live preview.
-     *
-     * @param  array<int, string>  $answers  checklist item id => 'check' | 'hyphen'
-     */
     public function computeFromAnswers($birthDate, $testDate, array $answers): array
     {
         $age = $testDate === null
@@ -134,13 +125,13 @@ class EccdExpertSystem
         $totalMonths = ($years * 12) + $months;
 
         if ($totalMonths >= 37 && $totalMonths <= 48) {
-            return '3.1-4.0';   // 3y1m – 4y0m
+            return '3.1-4.0';
         }
         if ($totalMonths >= 49 && $totalMonths <= 60) {
-            return '4.1-5.0';   // 4y1m – 5y0m
+            return '4.1-5.0';
         }
         if ($totalMonths >= 61 && $totalMonths <= 71) {
-            return '5.1-5.11';  // 5y1m – 5y11m
+            return '5.1-5.11';
         }
 
         return 'unknown';
@@ -153,11 +144,6 @@ class EccdExpertSystem
         return $this->rawScoresFromAnswers($this->roundAnswers($progressRecord, $round));
     }
 
-    /**
-     * The saved ✓ / — answers for one round. Only completed entries count, as in Child's Record 2.
-     *
-     * @return array<int, string> checklist item id => 'check' | 'hyphen'
-     */
     public function roundAnswers(ProgressRecord $progressRecord, int $round): array
     {
         $this->validateRound($round);
@@ -178,11 +164,6 @@ class EccdExpertSystem
         return $answers;
     }
 
-    /**
-     * Raw score = number of ✓ per domain. A domain only gets a raw score once every one of its items is answered.
-     *
-     * @param  array<int, string>  $answers  checklist item id => 'check' | 'hyphen'
-     */
     public function rawScoresFromAnswers(array $answers): array
     {
         $rawScores = array_fill_keys(self::DOMAIN_KEYS, null);
@@ -209,13 +190,6 @@ class EccdExpertSystem
         return $rawScores;
     }
 
-    /**
-     * Step-by-step account of how a result was reached (the expert system's explanation facility).
-     * Shared by the teacher web pages, the live preview and the guardian API.
-     *
-     * @param  array  $computed  output of compute() / computeFromAnswers()
-     * @param  array<int, string>  $answers  the answers that produced $computed
-     */
     public function explain(array $computed, array $answers): array
     {
         $age = $computed['age'] ?? null;
@@ -311,7 +285,6 @@ class EccdExpertSystem
         ];
     }
 
-    /** explain() for a saved round. */
     public function explainRound(ProgressRecord $progressRecord, int $round): array
     {
         $this->validateRound($round);
@@ -329,19 +302,12 @@ class EccdExpertSystem
         );
     }
 
-    /**
-     * Skills to practise next: for each domain, the official checklist items marked — (not yet present)
-     * in the latest round where that domain was assessed. Nothing is invented; it is the checklist itself.
-     *
-     * @return array<string, array{label: string, round: int, items: list<array{id: int, item_number: int|null, activity: string}>}>
-     */
     public function skillsToPractice(ProgressRecord $progressRecord): array
     {
         $rows = Domain::with(['results', 'checklistItem'])
             ->where('progress_record_id', $progressRecord->id)
             ->get();
 
-        // [domain][round] => list of answered rows
         $answered = [];
         foreach ($rows as $row) {
             $domainKey = $row->checklistItem?->domain;
@@ -378,7 +344,6 @@ class EccdExpertSystem
         return $skills;
     }
 
-    /** @return array<string, list<int>> */
     private function checklistItemIdsByDomain(): array
     {
         if ($this->checklistItemIdsByDomain === null) {
@@ -605,7 +570,6 @@ class EccdExpertSystem
 
     public function interpret(?int $standardScore, array $scaledScores): array
     {
-        // Overall interpretation from Standard Score
         $overall = match (true) {
             $standardScore === null   => 'Insufficient data',
             $standardScore <= 69      => 'Suggest significant delay in overall development',
@@ -627,7 +591,6 @@ class EccdExpertSystem
         ];
     }
 
-    /** Technical Manual Table 6: interpretation of one domain's scaled score. */
     public function interpretScaledScore(int $scaled): string
     {
         return match (true) {

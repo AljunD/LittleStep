@@ -11,7 +11,6 @@
 <form method="POST" action="{{ route('auth.register.submit') }}" class="space-y-6" data-lock-submit>
     @csrf
 
-    {{-- First Name --}}
     <div>
         <label for="first_name" class="block text-sm font-semibold text-gray-600 mb-2">First Name</label>
         <input type="text" id="first_name" name="first_name" placeholder="Juan"
@@ -23,7 +22,6 @@
         @enderror
     </div>
 
-    {{-- Middle Name --}}
     <div>
         <label for="middle_name" class="block text-sm font-semibold text-gray-600 mb-2">Middle Name</label>
         <input type="text" id="middle_name" name="middle_name" placeholder="Santos"
@@ -35,7 +33,6 @@
         @enderror
     </div>
 
-    {{-- Last Name --}}
     <div>
         <label for="last_name" class="block text-sm font-semibold text-gray-600 mb-2">Last Name</label>
         <input type="text" id="last_name" name="last_name" placeholder="Dela Cruz"
@@ -47,7 +44,6 @@
         @enderror
     </div>
 
-    {{-- Sex --}}
     <div>
         <label for="sex" class="block text-sm font-semibold text-gray-600 mb-2">Sex</label>
         <select id="sex" name="sex" required
@@ -62,7 +58,6 @@
     </div>
 
 
-    {{-- Contact Number --}}
     <div>
         <label for="contact_number" class="block text-sm font-semibold text-gray-600 mb-2">Contact Number</label>
         <input type="text" id="contact_number" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" placeholder="09123456789"
@@ -74,7 +69,6 @@
         @enderror
     </div>
 
-    {{-- Address --}}
     <div>
         <label for="address" class="block text-sm font-semibold text-gray-600 mb-2">Address</label>
         <textarea id="address" name="address" rows="3" maxlength="500" autocomplete="street-address" placeholder="123 Barangay Street, Quezon City" required
@@ -84,7 +78,6 @@
         @enderror
     </div>
 
-    {{-- Email --}}
     <div>
         <label for="email" class="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
         <input type="email" id="email" name="email" placeholder="teacher@example.com"
@@ -96,7 +89,6 @@
         @enderror
     </div>
 
-    {{-- Password --}}
     <div>
         <label for="password" class="block text-sm font-semibold text-gray-600 mb-2">Password</label>
         <input type="password" id="password" name="password" minlength="12" maxlength="72" autocomplete="new-password" placeholder="12-72 characters" required
@@ -106,14 +98,12 @@
         @enderror
     </div>
 
-    {{-- Confirm Password --}}
     <div>
         <label for="password_confirmation" class="block text-sm font-semibold text-gray-600 mb-2">Confirm Password</label>
         <input type="password" id="password_confirmation" name="password_confirmation" minlength="12" maxlength="72" autocomplete="new-password" placeholder="12-72 characters" required
                class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
     </div>
 
-    {{-- Submit --}}
     <x-button type="submit" class="w-full" data-submitting-text="Registering...">Register</x-button>
 </form>
 

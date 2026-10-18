@@ -15,12 +15,10 @@ import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import { StackNavigationProp } from "@react-navigation/stack";
 
-// Upper bounds so the logo doesn't balloon on tablets and wide web windows.
 const LOGO_MAX_WIDTH = 360;
 const LOGO_MAX_HEIGHT = 160;
 
 const BACKGROUND = require("../assets/images/back.jpg");
-// back.jpg is a 687 x 1024 portrait illustration.
 const BACKGROUND_ASPECT = 687 / 1024;
 
 type RootStackParamList = {
@@ -39,12 +37,8 @@ type Props = {
 
 export default function WelcomeScreen({ navigation }: Props) {
   const { isDark } = useAppTheme();
-  // Read on every render (not once at import) so sizes follow rotation and window resizes.
   const { width, height } = useWindowDimensions();
 
-  // On screens wider than the portrait artwork (landscape tablets, desktop web),
-  // "cover" would zoom in and crop it to a thin strip. Show the whole illustration
-  // in a centered full-height frame instead, over a blurred copy that fills the sides.
   const framedWidth = height * BACKGROUND_ASPECT;
   const frameArtwork = width > framedWidth * 1.15;
   const frameInset = frameArtwork ? (width - framedWidth) / 2 : 0;

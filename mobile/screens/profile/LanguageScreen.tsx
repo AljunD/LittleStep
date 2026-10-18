@@ -40,7 +40,6 @@ export default function LanguageScreen({
     useState("English");
   const [saveFailed, setSaveFailed] = useState(false);
 
-  // The language is a device setting (there is no language field on the server).
   useEffect(() => {
     let isMounted = true;
 
@@ -76,7 +75,6 @@ export default function LanguageScreen({
         backgroundColor={isDark ? DarkColors.background : COLORS.background}
       />
 
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -101,7 +99,6 @@ export default function LanguageScreen({
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Language options */}
       <ScrollView
         style={[styles.content, isDark && darkStyles.container]}
         contentContainerStyle={styles.contentContainer}
@@ -185,7 +182,6 @@ export default function LanguageScreen({
         </Text>
       </ScrollView>
 
-      {/* Bottom navigation */}
       <View
         style={[
           styles.bottomNav,

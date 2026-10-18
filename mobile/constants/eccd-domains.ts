@@ -12,15 +12,12 @@ export type EccdDomainKey =
 
 export type EccdDomain = {
   key: EccdDomainKey;
-  /** Official domain name, as used by the backend and Child's Record 2. */
   label: string;
-  /** Guardian-friendly name shown on cards. */
   title: string;
   icon: ComponentProps<typeof Ionicons>["name"];
   color: string;
 };
 
-/** The 7 official ECCD domains, in Child's Record 2 order. */
 export const ECCD_DOMAINS: EccdDomain[] = [
   {
     key: "gross_motor",

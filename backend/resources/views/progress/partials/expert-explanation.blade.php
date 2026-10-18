@@ -1,8 +1,3 @@
-{{--
-    Expert system explanation for the progress record page:
-    - "How was this computed?" for each round with an assessment date (EccdExpertSystem::explainRound)
-    - focus items for the next round (EccdExpertSystem::skillsToPractice)
---}}
 @php
     $roundLabels = [1 => '1st', 2 => '2nd', 3 => '3rd'];
     $latestExplainedRound = $explanations ? max(array_keys($explanations)) : null;

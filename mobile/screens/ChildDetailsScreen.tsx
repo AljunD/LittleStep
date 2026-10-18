@@ -40,7 +40,6 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
         backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
-      {/* Page Header */}
       <View style={[styles.header, isDark && darkStyles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -53,7 +52,6 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Student Information */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[

@@ -64,7 +64,6 @@
         </div>
 
         @if ($child)
-            {{-- Live score preview: EccdExpertSystem scores the marks on screen (nothing is saved until "Save"). --}}
             <div id="live-preview" data-preview-url="{{ route('progress.preview') }}" aria-live="polite"
                  class="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -144,7 +143,6 @@
                                 $saved2 = $savedResults[2][$item->id] ?? null;
                                 $saved3 = $savedResults[3][$item->id] ?? null;
 
-                                // After a failed save, the current round shows what the teacher entered instead of the saved answers.
                                 $restoreInput = session()->hasOldInput();
                                 $present1 = $restoreInput && $currentRound === 1 ? old("results.{$item->id}.1") : ($saved1['present'] ?? null);
                                 $present2 = $restoreInput && $currentRound === 2 ? old("results.{$item->id}.2") : ($saved2['present'] ?? null);
@@ -275,7 +273,6 @@
 
     document.addEventListener('DOMContentLoaded', updateScores);
 
-    // Live score preview: re-scores the marks on screen through progress.preview (read-only).
     (() => {
         const panel = document.getElementById('live-preview');
         const form = document.getElementById('evaluation-form');

@@ -13,10 +13,6 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-/**
- * Every success/error message must reach the page the user lands on,
- * rendered once by the shared <x-flash-messages /> component.
- */
 class FlashMessagesTest extends TestCase
 {
     use RefreshDatabase;
@@ -283,14 +279,12 @@ class FlashMessagesTest extends TestCase
             'status' => 'pending',
         ]);
 
-        // Another active child remains, so the teacher stays on the archive-child page.
         $response = $this->actingAs($this->teacherUser)->followingRedirects()
             ->delete(route('guardians.unlink-child', ['guardianId' => $this->guardian->id, 'childId' => $this->child->id]));
         $this->assertFlashShownOnce($response, 'success', 'Child profile archived successfully.');
         $response->assertSee('Archive Child Record');
         $this->assertSoftDeleted($this->child);
 
-        // The last active child: the guardian is no longer listed, so the teacher returns to the guardians list.
         $response = $this->actingAs($this->teacherUser)->followingRedirects()
             ->delete(route('guardians.unlink-child', ['guardianId' => $this->guardian->id, 'childId' => $sibling->id]));
         $this->assertFlashShownOnce($response, 'success', 'Child profile archived successfully.');
@@ -329,7 +323,6 @@ class FlashMessagesTest extends TestCase
 
     public function test_children_create_route_is_not_exposed(): void
     {
-        // Children are registered through a guardian (guardians.create-child); there is no standalone form.
         $this->actingAs($this->teacherUser)->get('/children/create')->assertNotFound();
     }
 }

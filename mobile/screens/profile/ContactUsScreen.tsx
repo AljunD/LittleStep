@@ -25,7 +25,6 @@ type TeacherGroup = {
   childNames: string[];
 };
 
-/** One card per teacher, listing every child of this guardian they handle. */
 function groupByTeacher(contacts: GuardianContact[]) {
   const groups = new Map<string, TeacherGroup>();
   const unassigned: string[] = [];
@@ -169,7 +168,6 @@ export default function ContactUsScreen({ navigation, route }: any) {
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -207,7 +205,6 @@ export default function ContactUsScreen({ navigation, route }: any) {
         {renderBody()}
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View
         style={[
           styles.bottomNav,

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // ====================== SESSIONS ======================
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
@@ -18,7 +17,6 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // ====================== USERS ======================
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
@@ -30,7 +28,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== TEACHERS ======================
         Schema::create('teachers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
@@ -44,7 +41,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== GUARDIANS ======================
         Schema::create('guardians', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
@@ -59,7 +55,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== CHILDREN ======================
         Schema::create('children', function (Blueprint $table) {
             $table->id();
             $table->foreignId('guardian_id')->constrained('guardians')->onDelete('cascade');
@@ -87,7 +82,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== PROGRESS RECORDS ======================
         Schema::create('progress_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('child_id')->unique()->constrained('children')->onDelete('cascade');
@@ -102,7 +96,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== ECCD CHECKLIST ITEMS ======================
         Schema::create('eccd_checklist_items', function (Blueprint $table) {
             $table->id();
             $table->enum('domain', [
@@ -117,7 +110,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== DOMAINS ======================
         Schema::create('domains', function (Blueprint $table) {
             $table->id();
             $table->foreignId('progress_record_id')->constrained('progress_records')->onDelete('cascade');
@@ -133,7 +125,6 @@ return new class extends Migration {
             );
         });
 
-        // ====================== DOMAIN RESULTS ======================
         Schema::create('domain_results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('domain_id')->constrained('domains')->onDelete('cascade');
@@ -143,7 +134,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== DOMAIN OBSERVATIONS ======================
         Schema::create('domain_observations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('progress_record_id')->unique()->constrained('progress_records')->onDelete('cascade');
@@ -158,7 +148,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== DOMAIN SCORES ======================
         Schema::create('domain_scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('progress_record_id')->constrained('progress_records')->onDelete('cascade');
@@ -176,7 +165,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== LOGS ======================
         Schema::create('logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
@@ -188,7 +176,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== PERSONAL ACCESS TOKENS ======================
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');
@@ -200,7 +187,6 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // ====================== PASSWORD RESET TOKENS ======================
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
@@ -208,7 +194,6 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
-        // ====================== CACHE ======================
         Schema::create('cache', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->mediumText('value');

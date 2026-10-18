@@ -36,7 +36,6 @@ class ArchiveController extends Controller
             ->paginate(10, ['*'], 'children_page')
             ->appends(['tab' => 'children']);
 
-        // Which list is open on load; pagination links and restores keep their own tab.
         $activeTab = $request->query('tab') === 'children' ? 'children' : 'guardians';
 
         return view('archives.index', compact('archivedGuardians', 'archivedChildren', 'activeTab'));

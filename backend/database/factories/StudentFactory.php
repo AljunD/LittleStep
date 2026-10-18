@@ -9,7 +9,7 @@ class StudentFactory extends Factory
     public function definition(): array
     {
         return [
-            'guardian_id' => null, // link in seeder
+            'guardian_id' => null,
             'first_name' => $this->faker->firstName(),
             'middle_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),

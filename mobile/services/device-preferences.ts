@@ -1,10 +1,6 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
-/**
- * Small, non-sensitive settings kept on this device only (e.g. language).
- * SecureStore on iOS/Android, localStorage on web. Failures fall back to defaults.
- */
 export async function readDevicePreference(key: string): Promise<string | null> {
   try {
     return Platform.OS === "web"

@@ -41,7 +41,6 @@ export default function ProfileScreen({
   const guardianName = fullName(account.data);
   const [usingDefaultPassword, setUsingDefaultPassword] = useState(isUsingDefaultPassword);
 
-  // Re-read when returning from Change Password, so the hint disappears once the password is changed.
   useFocusEffect(
     useCallback(() => {
       setUsingDefaultPassword(isUsingDefaultPassword());
@@ -117,7 +116,6 @@ export default function ProfileScreen({
         backgroundColor={isDark ? DarkColors.background : COLORS.background}
       />
 
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -144,7 +142,6 @@ export default function ProfileScreen({
           />
         }
       >
-        {/* Guardian account card */}
         <View style={[styles.profileCard, isDark && darkStyles.iconContainer]}>
           <View style={[styles.avatarContainer, isDark && darkStyles.avatarContainer]}>
             {initials ? (
@@ -192,14 +189,12 @@ export default function ProfileScreen({
           />
         </View>
 
-        {/* Section heading */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>
             Account Settings
           </Text>
         </View>
 
-        {/* Settings menu */}
         <View style={[styles.menuCard, isDark && darkStyles.card]}>
           {profileItems.map((item, index) => (
             <React.Fragment key={item.title}>
@@ -249,7 +244,6 @@ export default function ProfileScreen({
         </View>
       </ScrollView>
 
-      {/* Bottom navigation */}
       <View
         style={[
           styles.bottomNav,

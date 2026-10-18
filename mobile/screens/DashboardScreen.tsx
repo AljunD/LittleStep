@@ -39,7 +39,6 @@ export default function DashboardScreen({
   const { width, height } = useWindowDimensions();
   const { isDark } = useAppTheme();
 
-  // Automatically reduce spacing on shorter phones
   const compact = height < Layout.compactHeight;
   const small = width < Layout.smallWidth;
 
@@ -55,8 +54,6 @@ export default function DashboardScreen({
   const loadedChildIdRef = useRef<number | null>(null);
   const photoSource = photo && photo.childId === studentId ? photo.source : null;
 
-  // Reload every time the dashboard comes into view (e.g. back from a domain),
-  // so a new teacher entry moves that domain to the front of Recent Activities.
   useFocusEffect(
     useCallback(() => {
       if (typeof studentId !== "number") {
@@ -72,7 +69,6 @@ export default function DashboardScreen({
           }
         })
         .catch((error: unknown) => {
-          // On a background reload keep showing the last data; only alert when there is nothing to show.
           if (isActive && loadedChildIdRef.current !== studentId) {
             Alert.alert("Unable to load dashboard", getGuardianApiErrorMessage(error));
           }
@@ -104,7 +100,6 @@ export default function DashboardScreen({
   const currentDashboard = dashboard?.child.id === studentId ? dashboard : null;
   const photoUrl = currentDashboard?.child.photo_url ?? null;
 
-  // Load the photo once per child, not on every dashboard reload.
   useEffect(() => {
     if (!photoUrl || typeof studentId !== "number") {
       return undefined;
@@ -121,7 +116,6 @@ export default function DashboardScreen({
         }
       })
       .catch(() => {
-        // Keep the placeholder; the rest of the dashboard is still usable.
       })
       .finally(() => {
         if (isMounted) {
@@ -163,7 +157,6 @@ export default function DashboardScreen({
     }
   };
 
-  // The server lists domains most recently updated by the teacher first.
   const recentDomains = (currentDashboard?.progress.recent_activity ?? [])
     .map((entry) => getEccdDomain(entry.domain))
     .filter((domain): domain is EccdDomain => domain !== undefined);
@@ -224,7 +217,6 @@ export default function DashboardScreen({
         backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
-      {/* FIXED HEADER */}
       <View
         style={[
           styles.header,
@@ -243,7 +235,6 @@ export default function DashboardScreen({
 
       </View>
 
-      {/* CONTENT: fills the screen, scrolls when it doesn't fit (short phones, large text) */}
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
@@ -270,7 +261,6 @@ export default function DashboardScreen({
             />
           }
         >
-          {/* STUDENT CARD */}
           <View
             style={[
               styles.studentCard,
@@ -323,7 +313,6 @@ export default function DashboardScreen({
 
           </View>
 
-          {/* LATEST RESULT: opens the expert system's step-by-step explanation */}
           {latestRoundData && (
             <TouchableOpacity
               style={[styles.resultCard, compact && styles.compactResultCard, isDark && darkStyles.surface]}
@@ -353,7 +342,6 @@ export default function DashboardScreen({
             </TouchableOpacity>
           )}
 
-          {/* RECENT ACTIVITIES */}
           <View style={styles.section}>
             <View style={styles.sectionHeading}>
               <Text
@@ -420,7 +408,6 @@ export default function DashboardScreen({
             </View>
           </View>
 
-          {/* QUICK ACTIONS */}
           <View style={styles.section}>
             <View style={styles.sectionHeading}>
               <Text
@@ -470,7 +457,6 @@ export default function DashboardScreen({
         </ScrollView>
       </ImageBackground>
 
-      {/* FIXED BOTTOM NAVIGATION */}
       <View
         style={[
           styles.bottomNav,
@@ -588,7 +574,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
-    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
     ...Platform.select({
       web: { boxShadow: "0px 3px 8px rgba(49, 87, 79, 0.08)" },
       default: {

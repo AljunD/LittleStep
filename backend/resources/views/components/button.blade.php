@@ -1,9 +1,3 @@
-{{--
-    The one button used across the teacher portal and auth pages: every button is 40px tall with the same
-    radius, font and focus ring. Renders a link when `href` is given, otherwise a <button> (pass type="submit" in forms).
-    Variants: primary (save / main action), secondary (cancel, back, neutral), danger (destructive).
-    Row and record actions go in <x-action-menu> instead.
---}}
 @props(['variant' => 'primary', 'href' => null, 'icon' => null, 'type' => 'button'])
 @php
     $variants = [

@@ -458,7 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formContainer) formContainer.scrollTop = 0;
     }
 
-    {{-- Reopen the step that holds the failed field; guardian/account errors stay on step 1. --}}
     @if ($errors->any() && ! $errors->hasAny(['email', 'password', 'first_name', 'middle_name', 'last_name', 'sex', 'contact_number', 'relationship_to_child', 'barangay', 'municipality', 'province', 'region']))
         goToStep(2);
     @else
@@ -498,11 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('back3')?.addEventListener('click', () => goToStep(2));
 
-    // Confirm and Save. requestSubmit() (unlike submit()) fires the layout's double-submit lock.
     const saveBtn = document.getElementById('saveBtn');
     saveBtn?.addEventListener('click', () => {
         if (form.dataset.submitting === 'true') return;
-        // Show the step holding the first invalid field instead of failing silently on a hidden step.
         const firstInvalid = form.querySelector(':invalid');
         if (firstInvalid) {
             const stepIndex = steps.findIndex((step) => step?.contains(firstInvalid));

@@ -1,6 +1,3 @@
-{{--
-    Outline icons (24 × 24, stroke) used by <x-button> and <x-action-menu.item>, so every action shows the same icon everywhere.
---}}
 @props(['name'])
 @php
     $paths = [

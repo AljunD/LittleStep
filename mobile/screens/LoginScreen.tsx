@@ -35,10 +35,8 @@ export default function LoginScreen({ navigation, route }: any) {
     route?.params?.initialError ?? null,
   );
   const submittingRef = useRef(false);
-  // Opened from the email-verification page (deep link, see App.tsx). Only a boolean is passed, never text.
   const justVerified = route?.params?.verified === true && !errorMessage;
 
-  // Opened straight from a link there is no screen behind Login, so Back goes to Welcome.
   const goBack = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -106,7 +104,6 @@ export default function LoginScreen({ navigation, route }: any) {
 
       <SafeAreaView style={styles.safeArea}>
 
-        {/* BACK */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={goBack}
@@ -120,7 +117,6 @@ export default function LoginScreen({ navigation, route }: any) {
           />
         </TouchableOpacity>
 
-        {/* Keeps the form above the keyboard and scrollable on short screens */}
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -132,14 +128,12 @@ export default function LoginScreen({ navigation, route }: any) {
           >
             <View style={styles.content}>
 
-              {/* LOGO */}
               <Image
                 source={require("../assets/images/logo.png")}
                 style={[styles.logo, isDark && darkStyles.logoBadge]}
                 resizeMode="contain"
               />
 
-              {/* TITLE */}
               <Text style={[styles.title, isDark && darkStyles.text]}>
                 Welcome back!
               </Text>
@@ -157,7 +151,6 @@ export default function LoginScreen({ navigation, route }: any) {
                 </View>
               ) : null}
 
-              {/* EMAIL */}
               <View style={[styles.inputBox, isDark && darkStyles.card]}>
                 <Ionicons
                   name="mail"
@@ -182,7 +175,6 @@ export default function LoginScreen({ navigation, route }: any) {
                 />
               </View>
 
-              {/* PASSWORD */}
               <View style={[styles.inputBox, isDark && darkStyles.card]}>
                 <Ionicons
                   name="lock-closed-outline"
@@ -227,10 +219,8 @@ export default function LoginScreen({ navigation, route }: any) {
                 </TouchableOpacity>
               </View>
 
-              {/* OPTIONS */}
               <View style={styles.options}>
 
-                {/* REMEMBER ME (only where secure storage exists) */}
                 {rememberMeSupported ? (
                   <TouchableOpacity
                     style={styles.remember}
@@ -264,7 +254,6 @@ export default function LoginScreen({ navigation, route }: any) {
                   <View />
                 )}
 
-                {/* FORGOT PASSWORD */}
                 <TouchableOpacity disabled={submitting}>
                   <Text style={styles.forgot}>
                     Forgot password?
@@ -279,7 +268,6 @@ export default function LoginScreen({ navigation, route }: any) {
                 </Text>
               ) : null}
 
-              {/* LOGIN */}
               <TouchableOpacity
                 style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
                 activeOpacity={0.85}
@@ -321,18 +309,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    // Symmetric, so the form stays centered while clearing the back button.
     paddingVertical: 48,
   },
 
   content: {
-    // Same 12% side margins as before on phones; capped on tablets and web.
     width: "76%",
     maxWidth: Layout.maxFormWidth,
     alignSelf: "center",
   },
-
-  /* BACK BUTTON */
 
   backButton: {
     position: "absolute",
@@ -342,16 +326,12 @@ const styles = StyleSheet.create({
     padding: 5,
   },
 
-  /* LOGO */
-
   logo: {
     width: 150,
     height: 100,
     alignSelf: "center",
     marginBottom: 30,
   },
-
-  /* TITLE */
 
   title: {
     fontSize: 21,
@@ -384,8 +364,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* INPUT */
-
   inputBox: {
     height: 46,
     backgroundColor: "#FFF",
@@ -404,8 +382,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingHorizontal: 8,
   },
-
-  /* OPTIONS */
 
   options: {
     flexDirection: "row",
@@ -452,8 +428,6 @@ const styles = StyleSheet.create({
     marginTop: -9,
     marginBottom: 13,
   },
-
-  /* LOGIN BUTTON */
 
   loginButton: {
     height: 47,

@@ -1,7 +1,3 @@
-{{--
-    Status of a child's current evaluation (ProgressController::currentRoundProgress), shared by the
-    Progress Records list and the progress record page so both show the same status and colour.
---}}
 @props(['status', 'completed' => 0, 'round' => null])
 @php
     $badge = match ($status) {

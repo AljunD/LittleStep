@@ -125,7 +125,6 @@ class GuardianDomainApiTest extends TestCase
         $this->getJson("/api/v1/guardian/children/{$child->id}/domains/not_a_domain")
             ->assertNotFound();
 
-        // No progress record yet: empty results, not an error.
         $this->getJson("/api/v1/guardian/children/{$child->id}/domains/self_help")
             ->assertOk()
             ->assertJsonPath('domain.label', 'Self-Help')
@@ -152,7 +151,6 @@ class GuardianDomainApiTest extends TestCase
             ->assertJsonCount(7, 'progress.recent_activity')
             ->assertJsonPath('progress.recent_activity.0.domain', 'fine_motor')
             ->assertJsonPath('progress.recent_activity.1.domain', 'gross_motor')
-            // Untouched domains follow in the official order.
             ->assertJsonPath('progress.recent_activity.2.domain', 'self_help')
             ->assertJsonPath('progress.recent_activity.2.last_updated_at', null)
             ->assertJsonPath('progress.rounds.1.domains.social_emotional.label', 'Social-Emotional');

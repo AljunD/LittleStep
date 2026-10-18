@@ -35,7 +35,6 @@ export default function ECCDChecklistScreen({
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 
-      {/* FIXED HEADER */}
       <View
         style={[
           styles.header,
@@ -71,7 +70,6 @@ export default function ECCDChecklistScreen({
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* CATEGORY LIST */}
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
@@ -160,7 +158,6 @@ export default function ECCDChecklistScreen({
         </ScrollView>
       </ImageBackground>
 
-      {/* FIXED BOTTOM NAVIGATION */}
       <View
         style={[
           styles.bottomNav,
@@ -303,7 +300,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 11,
     marginBottom: 11,
-    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
     ...Platform.select({
       web: { boxShadow: "0px 3px 8px rgba(49, 87, 79, 0.08)" },
       default: {

@@ -53,7 +53,6 @@ export default function DisplayScreen({ navigation, route }: any) {
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -83,7 +82,6 @@ export default function DisplayScreen({ navigation, route }: any) {
           Choose how LittleStep looks on your device.
         </Text>
 
-        {/* Display Options */}
         <View style={[styles.optionsCard, isDark && darkStyles.optionsCard]}>
           {displayOptions.map((option, index) => {
             const selected = mode === option.mode;
@@ -115,7 +113,6 @@ export default function DisplayScreen({ navigation, route }: any) {
                     </Text>
                   </View>
 
-                  {/* Radio Circle */}
                   <View
                     style={[
                       styles.radioOuter,
@@ -140,7 +137,6 @@ export default function DisplayScreen({ navigation, route }: any) {
 
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View
         style={[
           styles.bottomNav,

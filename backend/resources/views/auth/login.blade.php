@@ -8,12 +8,9 @@
     <p class="text-gray-400 text-lg font-light">Please sign in with your credentials</p>
 </div>
 
-{{-- Status messages (e.g. after a password reset) come from <x-flash-messages /> in the layout. --}}
-
 <form method="POST" action="{{ route('auth.login.submit') }}" class="space-y-6" data-lock-submit>
     @csrf
 
-    {{-- Email --}}
     <div>
         <label for="email" class="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
         <input type="email" id="email" name="email"
@@ -26,7 +23,6 @@
         @enderror
     </div>
 
-    {{-- Password --}}
     <div>
         <label for="password" class="block text-sm font-semibold text-gray-600 mb-2">Password</label>
         <input type="password" id="password" name="password"
@@ -38,7 +34,6 @@
         @enderror
     </div>
 
-    {{-- Remember + Forgot --}}
     <div class="flex items-center justify-between text-sm">
         <label class="flex items-center gap-2 text-gray-500 cursor-pointer">
             <input type="checkbox" name="remember" value="1" class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-0">
@@ -50,7 +45,6 @@
         </a>
     </div>
 
-    {{-- Submit --}}
     <div class="pt-4">
         <x-button type="submit" class="w-full" data-submitting-text="Signing in...">Sign in</x-button>
     </div>

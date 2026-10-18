@@ -58,7 +58,6 @@ export default function DomainScreen({ navigation, route }: any) {
     return getGuardianChildDomain(studentId, domainMeta.key);
   }, [studentId, domainMeta]);
 
-  // Reload whenever the screen comes into view so new teacher entries show up.
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -174,7 +173,6 @@ export default function DomainScreen({ navigation, route }: any) {
 
     return (
       <>
-        {/* ROUND SELECTOR */}
         <View style={[styles.roundTabs, isDark && darkStyles.card]}>
           {ROUNDS.map((roundNumber) => {
             const selected = roundNumber === round;
@@ -211,7 +209,6 @@ export default function DomainScreen({ navigation, route }: any) {
           })}
         </View>
 
-        {/* SCORES */}
         <View style={styles.scoreRow}>
           {[
             { label: "Raw score", value: roundData?.raw_score },
@@ -230,7 +227,6 @@ export default function DomainScreen({ navigation, route }: any) {
           ))}
         </View>
 
-        {/* INTERPRETATION (Technical Manual Table 6) + link to the full explanation */}
         {roundData?.interpretation ? (
           <TouchableOpacity
             style={[styles.interpretationCard, isDark && darkStyles.card]}
@@ -248,7 +244,6 @@ export default function DomainScreen({ navigation, route }: any) {
         ) : null}
 
         {!hasResults ? (
-          /* EMPTY STATE */
           <View style={[styles.emptyCard, isDark && darkStyles.card]}>
             <View style={[styles.emptyIcon, isDark && darkStyles.surfaceMuted]}>
               <Ionicons name="document-text-outline" size={30} color={iconColor} />
@@ -261,7 +256,6 @@ export default function DomainScreen({ navigation, route }: any) {
             </Text>
           </View>
         ) : (
-          /* CHECKLIST ITEMS */
           <View style={[styles.itemsCard, isDark && darkStyles.card]}>
             <View style={styles.legend}>
               <Text style={[styles.legendText, isDark && darkStyles.mutedText]}>✓ Present</Text>
@@ -294,7 +288,6 @@ export default function DomainScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* SKILLS TO PRACTISE: items marked — in the latest evaluation of this area */}
         {detail.skills_to_practice && detail.skills_to_practice.items.length > 0 && (
           <View style={[styles.itemsCard, styles.skillsCard, isDark && darkStyles.card]}>
             <Text style={[styles.skillsTitle, isDark && darkStyles.text]}>Things to try at home</Text>
@@ -322,7 +315,6 @@ export default function DomainScreen({ navigation, route }: any) {
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 
-      {/* FIXED HEADER */}
       <View
         style={[
           styles.header,
@@ -373,7 +365,6 @@ export default function DomainScreen({ navigation, route }: any) {
           />
         }
       >
-        {/* DOMAIN SUMMARY */}
         {domainMeta ? (
           <View style={[styles.summaryCard, { backgroundColor: domainMeta.color }]}>
             <View style={styles.summaryIcon}>
@@ -392,7 +383,6 @@ export default function DomainScreen({ navigation, route }: any) {
         {renderBody()}
       </ScrollView>
 
-      {/* FIXED BOTTOM NAVIGATION */}
       <View
         style={[
           styles.bottomNav,

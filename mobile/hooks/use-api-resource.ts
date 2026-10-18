@@ -7,9 +7,7 @@ import {
 
 export type ApiResource<T> = {
   data: T | null;
-  /** First load (or a retry after an error). */
   loading: boolean;
-  /** Pull-to-refresh in progress. */
   refreshing: boolean;
   error: string | null;
   retry: () => void;
@@ -18,10 +16,6 @@ export type ApiResource<T> = {
 
 const SESSION_ENDED_MESSAGE = "Your session has ended. Please sign in again.";
 
-/**
- * Returns a handler that sends the guardian back to Login when `error` is a 401/403 (guardianApi has
- * already cleared the stored token). It returns true when it redirected, so callers can skip their own message.
- */
 export function useSessionEndedRedirect(): (error: unknown) => boolean {
   const navigation = useNavigation<any>();
 
@@ -38,12 +32,6 @@ export function useSessionEndedRedirect(): (error: unknown) => boolean {
   }, [navigation]);
 }
 
-/**
- * Loads `load()` each time the screen comes into view, with retry and pull-to-refresh.
- * A 401/403 means the session ended, so this returns the guardian to the Login screen.
- *
- * `load` must be stable between renders (wrap it in useCallback).
- */
 export function useApiResource<T>(load: () => Promise<T>): ApiResource<T> {
   const redirectIfSessionEnded = useSessionEndedRedirect();
   const [data, setData] = useState<T | null>(null);

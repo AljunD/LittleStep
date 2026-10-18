@@ -50,7 +50,6 @@ async function storeDisplayMode(mode: DisplayMode): Promise<void> {
       await SecureStore.setItemAsync(DISPLAY_MODE_KEY, mode);
     }
   } catch {
-    // Not critical: the choice still applies for this session.
   }
 }
 
@@ -84,7 +83,6 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
     return { mode: currentMode, setMode, isDark: scheme === "dark" };
   }, [mode, setMode, systemScheme]);
 
-  // Wait for the saved preference so screens don't flash the wrong theme.
   if (mode === null) {
     return null;
   }

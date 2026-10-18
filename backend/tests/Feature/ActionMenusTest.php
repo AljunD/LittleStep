@@ -11,10 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-/**
- * Row and record actions sit behind the shared three-dot <x-action-menu>, and the other buttons use the
- * shared <x-button>, so every button in the teacher portal has the same size and design.
- */
 class ActionMenusTest extends TestCase
 {
     use RefreshDatabase;
@@ -72,7 +68,6 @@ class ActionMenusTest extends TestCase
         ]);
     }
 
-    /** The page has a closed ⋮ menu holding the given action links. */
     private function assertActionMenu(TestResponse $response, array $hrefs): void
     {
         $response->assertOk()
@@ -100,7 +95,6 @@ class ActionMenusTest extends TestCase
             route('guardians.create-child', $this->guardian->id),
             route('guardians.archive-child', $this->guardian->id),
         ]);
-        // Archive stays a confirmed DELETE form, now inside the menu.
         $guardians->assertSee('action="'.route('guardians.destroy', $this->guardian->id).'"', false)
             ->assertSee('data-confirm="Are you sure you want to archive Casey Guardian', false);
 
@@ -155,14 +149,12 @@ class ActionMenusTest extends TestCase
     {
         $page = $this->actingAs($this->teacherUser)->get(route('guardians.index'));
 
-        // <x-button> (Add Guardian) and the ⋮ trigger are both 40px tall (h-10) and use the same radius.
         $page->assertOk()
             ->assertSee('inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl', false)
             ->assertSee('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', false)
             ->assertSee('function openActionMenu', false)
             ->assertDontSee('px-3 py-1.5 bg-blue-100', false);
 
-        // The menu script runs under the page's CSP nonce like every other inline script.
         $nonce = $page->baseResponse->headers->get('Content-Security-Policy');
         $this->assertMatchesRegularExpression("/'nonce-([^']+)'/", $nonce);
         preg_match("/'nonce-([^']+)'/", $nonce, $match);

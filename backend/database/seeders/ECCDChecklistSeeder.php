@@ -11,7 +11,6 @@ class ECCDChecklistSeeder extends Seeder
     {
         $checklist = [
 
-            // ========================== GROSS MOTOR DOMAIN (13) ==========================
             ['domain' => 'gross_motor', 'activity' => 'Climbs on chair or other elevated piece of furniture like a bed without help', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'gross_motor', 'activity' => 'Walks backwards', 'materials_and_procedure' => 'MATERIAL: toy. PROCEDURE: Ask the child to walk backwards by demonstrating this. Credit if the child is able to walk backwards without falling and holding on to anything. Parental report will suffice.'],
             ['domain' => 'gross_motor', 'activity' => 'Runs without tripping or falling', 'materials_and_procedure' => 'MATERIAL: ball. PROCEDURE: Encourage the child to run by rolling a ball across the floor. Credit if the child can run fast and smoothly without tripping or falling.'],
@@ -26,7 +25,6 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'gross_motor', 'activity' => 'Jumps and turns', 'materials_and_procedure' => 'PROCEDURE: Ask the child to jump while making a half-turn.'],
             ['domain' => 'gross_motor', 'activity' => 'Dances patterns/joins group movement activities', 'materials_and_procedure' => 'Parental report will suffice.'],
 
-            // ========================== FINE MOTOR DOMAIN (11) ==========================
             ['domain' => 'fine_motor', 'activity' => 'Uses all five fingers to get food/toys placed on a flat surface', 'materials_and_procedure' => 'MATERIAL: small toy/object. PROCEDURE: Seat the child... Credit if using all five fingers as if raking.'],
             ['domain' => 'fine_motor', 'activity' => 'Picks up objects with thumb and index finger', 'materials_and_procedure' => 'MATERIAL: any small toy or food. PROCEDURE: Place toy/food... Credit if using thumb and index finger.'],
             ['domain' => 'fine_motor', 'activity' => 'Displays a definite hand preference', 'materials_and_procedure' => 'MATERIAL: toy. PROCEDURE: Place toy at midline... Parental report will suffice.'],
@@ -39,7 +37,6 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'fine_motor', 'activity' => 'Draws a human figure (head, eyes, trunk, arms, hands/fingers)', 'materials_and_procedure' => 'MATERIALS: paper, pencil. PROCEDURE: Ask to draw a person. Credit if 3 or more body parts.'],
             ['domain' => 'fine_motor', 'activity' => 'Draws a house using geometric forms', 'materials_and_procedure' => 'MATERIALS: paper, pencil. PROCEDURE: Ask to draw a house. Credit if roof, main frame, and door/window.'],
 
-            // ========================== SELF-HELP DOMAIN (27) ==========================
             ['domain' => 'self_help', 'activity' => 'Feeds self with finger food (e.g. biscuits, bread) using fingers', 'materials_and_procedure' => 'MATERIALS: bread, biscuits. This must be elicited by the interviewer.'],
             ['domain' => 'self_help', 'activity' => 'Feeds self using fingers to eat rice/viands with spillage', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'self_help', 'activity' => 'Feeds self using spoon with spillage', 'materials_and_procedure' => 'Parental report will suffice.'],
@@ -68,14 +65,12 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'self_help', 'activity' => 'Washes face without any help', 'materials_and_procedure' => 'Ask the caregiver if the child can wash and dry face without help...'],
             ['domain' => 'self_help', 'activity' => 'Bathes without any help', 'materials_and_procedure' => 'Parental report will suffice.'],
 
-            // ========================== RECEPTIVE LANGUAGE (5) ==========================
             ['domain' => 'receptive_language', 'activity' => 'Points to a family member when asked to do so', 'materials_and_procedure' => 'PROCEDURE: Ask the child to point to his mother/caregiver.'],
             ['domain' => 'receptive_language', 'activity' => 'Points to five body parts on himself when asked to do so', 'materials_and_procedure' => 'PROCEDURE: Have the child point to eyes, nose, mouth, hands and feet.'],
             ['domain' => 'receptive_language', 'activity' => 'Points to five named pictured objects when asked to do so', 'materials_and_procedure' => 'MATERIAL: picture book 1. PROCEDURE: Show picture book and ask “Where’s the ______?”'],
             ['domain' => 'receptive_language', 'activity' => 'Follows one-step instructions that include simple prepositions', 'materials_and_procedure' => 'MATERIAL: block/toy. PROCEDURE: Ask to put toy under/on/in...'],
             ['domain' => 'receptive_language', 'activity' => 'Follows two-step instructions that include simple prepositions', 'materials_and_procedure' => 'MATERIAL: block/toy. PROCEDURE: Get from under the table and place on the table.'],
 
-            // ========================== EXPRESSIVE LANGUAGE (8) ==========================
             ['domain' => 'expressive_language', 'activity' => 'Uses five to 20 recognizable words', 'materials_and_procedure' => 'PROCEDURE: Ask caregiver if child can say five to six words aside from mama and papa.'],
             ['domain' => 'expressive_language', 'activity' => 'Uses pronouns (e.g. I, me, ako, akin)', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'expressive_language', 'activity' => 'Uses two- to three-word verb-noun combinations', 'materials_and_procedure' => 'Parental report will suffice.'],
@@ -85,7 +80,6 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'expressive_language', 'activity' => 'Asks “who” and “why” questions', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'expressive_language', 'activity' => 'Gives account of recent experiences (with prompting) in order of occurrence using past tense', 'materials_and_procedure' => 'PROCEDURE: Ask caregiver if child can recount recent experiences using past tense.'],
 
-            // ========================== COGNITIVE DOMAIN (21) ==========================
             ['domain' => 'cognitive', 'activity' => 'Looks in the direction of fallen object', 'materials_and_procedure' => 'MATERIAL: spoon/ball. PROCEDURE: Drop object and observe if child looks down.'],
             ['domain' => 'cognitive', 'activity' => 'Looks for a partially hidden object', 'materials_and_procedure' => 'MATERIALS: ball, small towel. PROCEDURE: Partially hide ball...'],
             ['domain' => 'cognitive', 'activity' => 'Imitates behavior just seen a few minutes earlier', 'materials_and_procedure' => 'Parental report will suffice.'],
@@ -108,7 +102,6 @@ class ECCDChecklistSeeder extends Seeder
             ['domain' => 'cognitive', 'activity' => 'Can state what is silly or wrong with pictures', 'materials_and_procedure' => 'MATERIALS: Two silly picture cards.'],
             ['domain' => 'cognitive', 'activity' => 'Matches upper case letters and matches lower case letters', 'materials_and_procedure' => 'MATERIALS: Alphabet cards. Credit if can match 4 pairs.'],
 
-            // ========================== SOCIAL-EMOTIONAL DOMAIN (24) ==========================
             ['domain' => 'social_emotional', 'activity' => 'Enjoys watching activities of nearby people or animals', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'social_emotional', 'activity' => 'Friendly with strangers but initially may show slight anxiety', 'materials_and_procedure' => 'Parental report will suffice.'],
             ['domain' => 'social_emotional', 'activity' => 'Plays alone but likes to be near familiar adults', 'materials_and_procedure' => 'Parental report will suffice.'],

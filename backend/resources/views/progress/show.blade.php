@@ -15,7 +15,6 @@
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-        {{-- Header --}}
         <div class="px-8 py-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">
@@ -34,7 +33,6 @@
             </div>
         </div>
 
-        {{-- Child / Teacher / Date info --}}
         <div class="p-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm text-gray-700">
             <div>
                 <p class="text-xs font-bold text-gray-500 uppercase">Child</p>
@@ -65,7 +63,6 @@
 
         <hr class="border-gray-100">
 
-        {{-- Computation of the Child's Age --}}
         <div class="mt-16 px-4 sm:px-8">
             <div class="text-center mb-6">
                 <p class="text-red-600 font-black italic text-lg uppercase mb-2">It is recommended that the Checklist be administered to the child once a year.</p>
@@ -122,7 +119,6 @@
                         <tr class="h-32">
                             <td class="relative border-r-2 border-[#001f5b] p-0 overflow-hidden">
                                 <div class="absolute inset-0 flex">
-                                    {{-- Official colours; the dark outline keeps the white label readable on the 3rd assessment's yellow. --}}
                                     <div class="w-16 flex flex-col items-center justify-center text-white font-black italic leading-none shrink-0" style="background-color: {{ $asmt['color'] }}; text-shadow: 0 0 2px rgba(0, 31, 91, .55), 0 1px 1px rgba(0, 31, 91, .45);">
                                         <span class="text-3xl">{{ $asmt['label'] }}</span>
                                         <span class="text-[8px] uppercase tracking-tighter mt-1">assessment</span>
@@ -186,7 +182,6 @@
             @endforelse
         </div>
 
-        {{-- Notes Section --}}
         <div class="px-6 py-8 sm:p-10 space-y-8 bg-white border-t border-gray-100">
             @if($progressRecord)
                 <div class="flex justify-end">
@@ -251,7 +246,6 @@
             </div>
         </div>
 
-        {{-- Raw / Scaled Scores + Charts --}}
         <div class="p-2 sm:p-4 md:p-8 space-y-10">
             <p class="text-[11px] text-gray-600 mb-4 leading-relaxed">
                 Transfer the raw score for each domain in the table below. Using the <strong>Scaled Score Equivalent of Raw Scores Table</strong>, convert the raw scores to Scaled Scores appropriate to the age of the child. To arrive at the Sum of Scaled Scores, add the Scaled Scores across all domains. To derive the Standard Score, refer to the <strong>Standard Score Equivalent of Sums of Scaled Scores Table</strong>. Write the Child's age on each evaluation.

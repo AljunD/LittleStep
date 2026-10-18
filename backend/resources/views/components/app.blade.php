@@ -24,7 +24,6 @@
         <h1 class="text-xl font-black tracking-widest text-white uppercase">LITTLESTEP</h1>
       </div>
 
-      {{-- Teacher-only navigation --}}
       @auth
         @if(Auth::user()->role === 'teacher')
         <nav class="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
@@ -120,7 +119,6 @@
         event.preventDefault();
         return;
       }
-      // One submission per click: stops duplicate records from double-clicks (GET filter forms are exempt).
       if (form.method.toLowerCase() !== 'post') return;
       if (form.dataset.submitting === 'true') {
         event.preventDefault();
@@ -129,7 +127,6 @@
       form.dataset.submitting = 'true';
       form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
     });
-    // Re-enable forms restored from the back/forward cache.
     window.addEventListener('pageshow', event => {
       if (!event.persisted) return;
       document.querySelectorAll('form[data-submitting="true"]').forEach(form => {
@@ -137,14 +134,10 @@
         form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = false; });
       });
     });
-    // Dismiss buttons on the shared flash-message banners.
     document.addEventListener('click', event => {
       event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
     });
 
-    // Three-dot action menus (the action-menu component): one open at a time, placed beside the ⋮ button with fixed
-    // positioning so scrolling tables can't clip them. They follow the button on scroll/resize and close on an
-    // outside click, Escape, Tab, or when the button scrolls out of view.
     const menuItems = panel => [...panel.querySelectorAll('[role="menuitem"]:not([disabled])')];
     function placeActionMenu(trigger, panel) {
       const button = trigger.getBoundingClientRect();

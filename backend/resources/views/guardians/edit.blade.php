@@ -15,7 +15,6 @@
             </div>
         </div>
 
-        {{-- Validation errors keep the form (and the entered values) visible; the success banner shows on the guardians list. --}}
         <x-validation-errors class="mx-8 md:mx-12 mt-6" />
 
         <div id="form-container" class="p-8 md:p-12">

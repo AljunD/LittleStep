@@ -5,7 +5,6 @@
 @section('content')
 <div class="flex flex-col items-center justify-center min-h-[70vh] px-6">
 
-    {{-- Success Icon + Message --}}
     <div class="text-center mb-8">
         <div class="flex items-center justify-center mb-4">
             <div class="bg-green-100 text-green-600 rounded-full p-3">
@@ -22,7 +21,6 @@
         </p>
     </div>
 
-    {{-- Action Card --}}
     <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full text-center">
         <a href="{{ route('dashboard') }}"
            class="block w-full bg-gray-900 hover:bg-black text-white font-semibold py-3 rounded-lg transition">
