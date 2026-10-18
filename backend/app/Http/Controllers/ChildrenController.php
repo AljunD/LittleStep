@@ -18,14 +18,6 @@ class ChildrenController extends Controller
         return view('children.index', compact('children'));
     }
 
-    public function create(Request $request)
-    {
-        $teacher = $this->currentTeacher($request);
-        $guardians = $teacher->ownedGuardians()->get();
-
-        return view('children.create', compact('guardians'));
-    }
-
     public function store(Request $request)
     {
         $data = $request->validate([

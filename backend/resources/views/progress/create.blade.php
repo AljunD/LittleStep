@@ -5,12 +5,7 @@
 @section('content')
 <div class="max-w-7xl mx-auto my-10 px-4">
 
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-medium">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg font-medium">{{ session('error') }}</div>
-    @endif
+    <x-validation-errors />
 
     <div class="text-center mb-6">
         <h1 class="text-3xl font-black text-gray-900 uppercase tracking-tighter">{{ $domainName }} Domain</h1>

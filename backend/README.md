@@ -83,7 +83,23 @@ resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
 
 **ECCD scoring.** `EccdExpertSystem` takes the checklist results for a round across 7 domains (gross motor, fine motor, self-help, receptive language, expressive language, cognitive, social-emotional). From the child's age at the test date it computes raw, scaled, and standard scores and an interpretation, then stores them in `domain_scores`.
 
-**Archiving.** Most models use soft deletes. "Archive" in the UI soft-deletes a record, and `/archive` restores it.
+**Archiving.** Most models use soft deletes. "Archive" in the UI soft-deletes a record, and `/archive` restores it. The Archives page has Guardians and Children tabs: `?tab=children` opens the children list. Pagination links and child restores keep the right tab open.
+
+**Success and error messages.** All web pages use the same two Blade components, so messages look and behave the same everywhere:
+
+- `<x-flash-messages />` is rendered once by both layouts (`components.app`, `components.auth`). Controllers flash `success` (or Laravel's `status`) and `error`, e.g. `redirect()->route('children.index')->with('success', 'Child archived successfully.')`. It shows a dismissible green or red banner with the right screen-reader role. Pages must not render these session keys themselves.
+- `<x-validation-errors />` shows a red summary of `$errors` at the top of a form. It can sit next to inline `@error` messages under fields. When validation fails, the form stays visible with the user's input kept.
+- Every create, update, archive and restore on the Guardians and Children pages is a normal form submit. The controller redirects with a flash message, so the banner looks the same on every page. Confirmations use `data-confirm="..."` on the `<form>`; the layouts handle it. There are no per-page result panels, AJAX result screens or browser `alert()` messages.
+
+| Action | Banner shown on |
+|--------|-----------------|
+| Register guardian + child, edit guardian, archive guardian, link child | Guardians list |
+| Archive a linked child (Guardians → Unlink Child) | Unlink Child page, or the Guardians list if that was the guardian's last active child |
+| Edit child | Child profile |
+| Archive child | Children list |
+| Restore guardian / child | Archives (Guardians / Children tab) |
+
+`tests/Feature/FlashMessagesTest.php` follows each main action through its redirects and checks that its message appears exactly once on the page the teacher lands on. Run `npm run build` after changing these components so Tailwind picks up their classes.
 
 **Audit log.** Teacher actions call `recordLog($action, $entityType, $entityId, $details)`. Entries are listed at `/logs`.
 

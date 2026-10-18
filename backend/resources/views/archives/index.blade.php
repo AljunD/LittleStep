@@ -3,62 +3,36 @@
 @section('title', 'Archives')
 
 @section('content')
-<div class="space-y-8" x-data="{ activeTab: 'guardians' }">
+@php
+    $activeTabClass = 'bg-white text-gray-900 shadow-sm';
+    $inactiveTabClass = 'text-gray-500 hover:text-gray-700';
+@endphp
+<div class="space-y-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">System Archives</h1>
             <p class="text-sm text-gray-500">View and restore archived guardians, user accounts, and child records.</p>
         </div>
 
-        <div class="flex space-x-2 bg-gray-100 p-1.5 rounded-xl self-start">
-            <button @click="activeTab = 'guardians'" 
-                    :class="{ 'bg-white text-gray-900 shadow-sm': activeTab === 'guardians', 'text-gray-500 hover:text-gray-700': activeTab !== 'guardians' }"
-                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all">
+        <div class="flex space-x-2 bg-gray-100 p-1.5 rounded-xl self-start" role="tablist" aria-label="Archive lists">
+            <button type="button" role="tab" id="archive-tab-guardians" data-archive-tab="guardians"
+                    aria-controls="archive-panel-guardians" aria-selected="{{ $activeTab === 'guardians' ? 'true' : 'false' }}"
+                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all {{ $activeTab === 'guardians' ? $activeTabClass : $inactiveTabClass }}">
                 Archived Guardians ({{ $archivedGuardians->total() }})
             </button>
-            <button @click="activeTab = 'children'" 
-                    :class="{ 'bg-white text-gray-900 shadow-sm': activeTab === 'children', 'text-gray-500 hover:text-gray-700': activeTab !== 'children' }"
-                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all">
+            <button type="button" role="tab" id="archive-tab-children" data-archive-tab="children"
+                    aria-controls="archive-panel-children" aria-selected="{{ $activeTab === 'children' ? 'true' : 'false' }}"
+                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all {{ $activeTab === 'children' ? $activeTabClass : $inactiveTabClass }}">
                 Archived Children ({{ $archivedChildren->total() }})
             </button>
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div class="max-w-md mx-auto">
-                <div class="mb-4 bg-green-100 text-green-700 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
-                    ✓
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-1">Restore Complete</h3>
-                <p class="text-gray-600 mb-6 text-sm">
-                    {{ session('success') }}
-                </p>
-                <a href="{{ route('archives.index') }}" 
-                   class="inline-block px-6 py-2.5 bg-gray-900 text-white font-semibold text-sm rounded-xl hover:bg-gray-800 transition">
-                    Return to Archives
-                </a>
-            </div>
-        </div>
-    @elseif(session('error'))
-        <div class="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div class="max-w-md mx-auto">
-                <div class="mb-4 bg-red-100 text-red-700 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
-                    ✕
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-1">Restore Failed</h3>
-                <p class="text-gray-600 mb-6 text-sm">
-                    {{ session('error') }}
-                </p>
-                <a href="{{ route('archives.index') }}" 
-                   class="inline-block px-6 py-2.5 bg-gray-900 text-white font-semibold text-sm rounded-xl hover:bg-gray-800 transition">
-                    Back to Archives
-                </a>
-            </div>
-        </div>
-    @else
+    {{-- Restore results are shown by the shared flash-messages banner in the layout, above the updated lists. --}}
 
-        <div x-show="activeTab === 'guardians'" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div id="archive-panel-guardians" role="tabpanel" aria-labelledby="archive-tab-guardians" data-archive-panel="guardians"
+             @if ($activeTab !== 'guardians') hidden @endif
+             class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50">
@@ -116,7 +90,9 @@
             </div>
         </div>
 
-        <div x-show="activeTab === 'children'" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" x-cloak>
+        <div id="archive-panel-children" role="tabpanel" aria-labelledby="archive-tab-children" data-archive-panel="children"
+             @if ($activeTab !== 'children') hidden @endif
+             class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50">
@@ -177,7 +153,32 @@
                 {{ $archivedChildren->links() }}
             </div>
         </div>
-
-    @endif
 </div>
+
+<script nonce="{{ request()->attributes->get('cspNonce') }}">
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('[data-archive-tab]');
+    const activeClasses = @json(explode(' ', $activeTabClass));
+    const inactiveClasses = @json(explode(' ', $inactiveTabClass));
+
+    const showTab = (name) => {
+        tabs.forEach((tab) => {
+            const selected = tab.dataset.archiveTab === name;
+            tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+            tab.classList.remove(...(selected ? inactiveClasses : activeClasses));
+            tab.classList.add(...(selected ? activeClasses : inactiveClasses));
+        });
+        document.querySelectorAll('[data-archive-panel]').forEach((panel) => {
+            panel.hidden = panel.dataset.archivePanel !== name;
+        });
+
+        // Keep the open tab on reload and when navigating back.
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', name);
+        history.replaceState(null, '', url);
+    };
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => showTab(tab.dataset.archiveTab)));
+});
+</script>
 @endsection

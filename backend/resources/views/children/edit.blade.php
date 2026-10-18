@@ -23,37 +23,10 @@
             </div>
         </div>
 
-        <div id="success-message" class="{{ session('success') ? '' : 'hidden' }} p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Profile Updated Successfully</h3>
-                <p class="text-gray-600 mb-8">{{ session('success') ?? "The child's information has been updated and saved to the database." }}</p>
-                <a href="{{ route('children.index') }}" 
-                class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                    Back to Children
-                </a>
-            </div>
-        </div>
+        {{-- Validation errors keep the form (and the entered values) visible; the success banner shows on the profile page. --}}
+        <x-validation-errors class="mx-8 md:mx-12 mt-6" />
 
-        <div id="failed-message" class="{{ session('error') || $errors->any() ? '' : 'hidden' }} p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Update Failed</h3>
-                <p class="text-gray-600 mb-8">
-                    @if($errors->any())
-                        {{ $errors->first() }}
-                    @else
-                        {{ session('error') ?? 'Something went wrong while updating the child profile. Please try again.' }}
-                    @endif
-                </p>
-                <a href="{{ route('children.edit', $child->id) }}" 
-                class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95">
-                    Try Again
-                </a>
-            </div>
-        </div>
-
-        <div id="form-container" class="{{ session('success') || session('error') || $errors->any() ? 'hidden' : '' }} p-8 md:p-12 max-h-[calc(100vh-240px)] overflow-y-auto custom-scroll">
+        <div id="form-container" class="p-8 md:p-12 max-h-[calc(100vh-240px)] overflow-y-auto custom-scroll">
             <form id="editChildForm" action="{{ route('children.update', $child->id) }}" method="POST" enctype="multipart/form-data" class="space-y-10">
                 @csrf
                 @method('PUT')
@@ -220,12 +193,9 @@
     const editChildForm = document.getElementById('editChildForm');
 
     saveBtn.addEventListener('click', () => {
-        const userConfirmed = confirm("Are you sure you want to update your profile?");
-        if (!userConfirmed) {
-            alert("Update action was cancelled.");
-            return;
+        if (confirm("Are you sure you want to update your profile?")) {
+            editChildForm.submit();
         }
-        editChildForm.submit();
     });
 
     document.getElementById('photoInput').addEventListener('change', function(e) {

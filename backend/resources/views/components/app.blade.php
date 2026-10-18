@@ -96,6 +96,7 @@
       </div>
 
       <main class="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
+        <x-flash-messages />
         @yield('content')
       </main>
     </div>
@@ -116,6 +117,10 @@
     document.addEventListener('submit', event => {
       const form = event.target.closest('form[data-confirm]');
       if (form && !confirm(form.dataset.confirm)) event.preventDefault();
+    });
+    // Dismiss buttons on the shared flash-message banners.
+    document.addEventListener('click', event => {
+      event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
     });
   </script>
 </body>

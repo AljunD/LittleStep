@@ -194,7 +194,8 @@ class GuardianController extends Controller
             }
         });
 
-        return redirect()->route('guardians.create')->with('registration_success', true);
+        return redirect()->route('guardians.index')
+            ->with('success', 'Guardian and child registered successfully.');
     }
 
     public function show(Request $request, $id)
@@ -285,13 +286,6 @@ class GuardianController extends Controller
             recordLog('updated', 'Guardian', $guardian->id, 'Guardian updated');
         }
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Guardian records updated successfully.',
-            ]);
-        }
-
         return redirect()->route('guardians.index')
             ->with('success', 'Guardian updated successfully.');
     }
@@ -326,15 +320,6 @@ class GuardianController extends Controller
 
         if ($guardianArchived && function_exists('recordLog')) {
             recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: '.$guardian->first_name.' '.$guardian->last_name);
-        }
-
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => $guardianArchived
-                    ? 'Guardian and assigned children archived successfully.'
-                    : 'Assigned children archived successfully; the guardian still has other active linked children.',
-            ]);
         }
 
         return redirect()->route('guardians.index')
@@ -433,10 +418,13 @@ class GuardianController extends Controller
             recordLog('deleted', 'Child', $child->id, 'Child archived: '.$child->first_name.' '.$child->last_name);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Child profile archived successfully.',
-        ]);
+        // Once the last active child is archived the guardian leaves ownedGuardians(), so return to the list instead.
+        $hasActiveChildren = $teacher->ownedChildren()->where('guardian_id', $guardian->id)->exists();
+        $redirect = $hasActiveChildren
+            ? redirect()->route('guardians.archive-child', $guardian->id)
+            : redirect()->route('guardians.index');
+
+        return $redirect->with('success', 'Child profile archived successfully.');
     }
 
     public function archiveChild(Request $request, $id)

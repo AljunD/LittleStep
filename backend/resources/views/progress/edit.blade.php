@@ -18,16 +18,7 @@
         </a>
     </div>
 
-    @if ($errors->any())
-        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
-            <p class="font-bold">Please correct the following errors:</p>
-            <ul class="mt-2 list-inside list-disc">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-validation-errors />
 
     <form action="{{ route('progress.update', $progressRecord->id) }}" method="POST" class="space-y-8">
         @csrf

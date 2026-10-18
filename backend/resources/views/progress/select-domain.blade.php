@@ -28,16 +28,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="p-4 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="p-4 bg-red-100 text-red-800 rounded-lg text-sm font-medium">
-            {{ session('error') }}
-        </div>
-    @endif
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">

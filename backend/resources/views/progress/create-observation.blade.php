@@ -5,22 +5,7 @@
 @section('content')
 <div class="max-w-4xl mx-auto my-10 bg-white shadow-sm border border-gray-200 text-gray-900 font-serif overflow-hidden">
     
-    @if (session('success'))
-        <div class="mx-10 mt-8 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="mx-10 mt-8 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            <p class="font-semibold">Please correct the following errors:</p>
-            <ul class="mt-1 list-inside list-disc">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-validation-errors class="mx-10 mt-8 font-sans" />
 
     <div id="observation-form-container" class="p-10 space-y-10">
         <form id="observation-form" class="space-y-10" method="POST" action="{{ route('progress.observation.store') }}">

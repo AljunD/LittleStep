@@ -37,36 +37,12 @@
             </div>
         </div>
 
-        @if ($errors->any())
-            <div class="p-6 mx-6 md:mx-8 mt-6 bg-red-50 border border-red-200 rounded-xl">
-                <div class="flex items-center space-x-2 text-red-800 font-bold mb-2">
-                    <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Please correct the errors in the form before submitting:</span>
-                </div>
-                <ul class="list-disc list-inside text-xs md:text-sm text-red-600 space-y-1 pl-2">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-validation-errors class="mx-6 md:mx-8 mt-6" />
 
-        <div id="success-message" class="{{ session('registration_success') ? '' : 'hidden' }} p-8 md:p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Registration Complete</h3>
-                <p class="text-gray-600 mb-8 text-sm md:text-base">The guardian account, guardian profile, and child profile have been successfully created.</p>
-                <a href="{{ route('guardians.index') }}" class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95 shadow-md">
-                    Done
-                </a>
-            </div>
-        </div>
         <form id="guardianRegistrationForm" action="{{ route('guardians.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
-            <div id="form-container" class="{{ session('registration_success') ? 'hidden' : '' }} p-6 md:p-12 max-h-[calc(100vh-220px)] overflow-y-auto custom-scroll">
+            <div id="form-container" class="p-6 md:p-12 max-h-[calc(100vh-220px)] overflow-y-auto custom-scroll">
                 <div id="step1" class="space-y-8">
                     <div>
                         <h2 class="text-xl md:text-2xl font-bold text-gray-900">Guardian Account & Information</h2>

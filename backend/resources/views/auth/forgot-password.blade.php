@@ -13,17 +13,8 @@
         </p>
     </div>
 
-    {{-- Success / Error Alerts --}}
-    @if (session('success'))
-        <div class="bg-green-100 text-green-700 px-6 py-4 rounded-lg mb-6 shadow max-w-md w-full text-center">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-700 px-6 py-4 rounded-lg mb-6 shadow max-w-md w-full text-center">
-            {{ $errors->first() }}
-        </div>
-    @endif
+    {{-- Success messages come from <x-flash-messages /> in the layout. --}}
+    <x-validation-errors class="max-w-md w-full" />
 
     {{-- Reset Form --}}
     <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full">

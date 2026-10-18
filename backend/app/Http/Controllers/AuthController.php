@@ -121,8 +121,11 @@ class AuthController extends Controller
                 $request->session()->regenerateToken();
                 recordLog('login_denied', 'User', $user->id, 'Unverified email attempted web login.', $user->id);
 
-                return redirect()->route('verification.notice')
-                    ->withErrors(['email' => 'You must verify your email before logging in.']);
+                // Back to the login form: the verification notice requires a session,
+                // so redirecting there would bounce to login and drop this message.
+                return back()->withErrors([
+                    'email' => 'You must verify your email before logging in. Check your inbox for the verification link.',
+                ])->onlyInput('email');
             }
 
             recordLog('login', 'User', $user->id, 'Teacher logged in.', $user->id);

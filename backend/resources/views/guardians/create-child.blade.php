@@ -16,16 +16,7 @@
             </div>
         </div>
 
-        @if ($errors->any())
-            <div class="p-6 bg-red-50 border-b border-red-100">
-                <p class="text-red-700 font-bold mb-2">Please correct the following errors:</p>
-                <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-validation-errors class="mx-6 md:mx-8 mt-6" />
 
         <div id="form-container" class="p-8 md:p-12 max-h-[calc(100vh-240px)] overflow-y-auto custom-scroll">
             <form id="createChildForm" 
