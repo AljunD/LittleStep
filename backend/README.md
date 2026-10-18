@@ -104,5 +104,6 @@ All endpoints are under `/api/v1`. Everything except login requires `Authorizati
 | GET    | `/guardian/views`                         | Guardian with children, progress records, domains and scores |
 | GET    | `/guardian/children`                      | Guardian's children                      |
 | GET    | `/guardian/children/{id}`                 | Child details                            |
-| GET    | `/guardian/children/{id}/dashboard`       | Progress summary and scores per round    |
+| GET    | `/guardian/children/{id}/dashboard`       | Progress summary, raw/scaled scores for all 7 domains per round, and `recent_activity` (domains ordered by when the teacher last updated them, newest first) |
+| GET    | `/guardian/children/{id}/domains/{domain}`| One domain's checklist: each item's ✓/— result and teacher comment per round, plus raw/scaled score and assessed-item count per round. `{domain}` is one of the 7 domain keys (`gross_motor`, `fine_motor`, `self_help`, `receptive_language`, `expressive_language`, `cognitive`, `social_emotional`); anything else returns 404 |
 | GET    | `/guardian/children/{id}/photo`           | Child photo (authenticated image)        |

@@ -6,13 +6,16 @@ import {
   StyleSheet,
   ImageBackground,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   TextInput,
   TouchableOpacity,
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
@@ -104,165 +107,177 @@ export default function LoginScreen({ navigation, route }: any) {
           />
         </TouchableOpacity>
 
-        <View style={styles.content}>
-
-          {/* LOGO */}
-          <Image
-            source={require("../assets/images/logo.png")}
-            style={[styles.logo, isDark && darkStyles.logoBadge]}
-            resizeMode="contain"
-          />
-
-          {/* TITLE */}
-          <Text style={[styles.title, isDark && darkStyles.text]}>
-            Welcome back!
-          </Text>
-
-          <Text style={[styles.subtitle, isDark && darkStyles.mutedText]}>
-            Log in to your Account
-          </Text>
-
-          {/* EMAIL */}
-          <View style={[styles.inputBox, isDark && darkStyles.card]}>
-            <Ionicons
-              name="mail"
-              size={12}
-              color="#A5A5A5"
-            />
-
-            <TextInput
-              style={[styles.input, isDark && darkStyles.inputText]}
-              placeholder="Enter your email"
-              placeholderTextColor="#A5A5A5"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              textContentType="emailAddress"
-              maxLength={255}
-              value={email}
-              onChangeText={setEmail}
-              editable={!submitting}
-              returnKeyType="next"
-            />
-          </View>
-
-          {/* PASSWORD */}
-          <View style={[styles.inputBox, isDark && darkStyles.card]}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={13}
-              color="#A5A5A5"
-            />
-
-            <TextInput
-              style={[styles.input, isDark && darkStyles.inputText]}
-              placeholder="Enter your password"
-              placeholderTextColor="#A5A5A5"
-              secureTextEntry={!passwordVisible}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="current-password"
-              textContentType="password"
-              maxLength={1024}
-              value={password}
-              onChangeText={setPassword}
-              editable={!submitting}
-              returnKeyType="go"
-              onSubmitEditing={handleLogin}
-            />
-
-            <TouchableOpacity
-              disabled={submitting}
-              accessibilityRole="button"
-              accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
-              onPress={() =>
-                setPasswordVisible(!passwordVisible)
-              }
-            >
-              <Ionicons
-                name={
-                  passwordVisible
-                    ? "eye-outline"
-                    : "eye-off-outline"
-                }
-                size={13}
-                color="#A5A5A5"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* OPTIONS */}
-          <View style={styles.options}>
-
-            {/* REMEMBER ME (only where secure storage exists) */}
-            {rememberMeSupported ? (
-              <TouchableOpacity
-                style={styles.remember}
-                disabled={submitting}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: rememberMe, disabled: submitting }}
-                onPress={() =>
-                  setRememberMe(!rememberMe)
-                }
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    rememberMe && styles.checked,
-                  ]}
-                >
-                  {rememberMe && (
-                    <Ionicons
-                      name="checkmark"
-                      size={8}
-                      color="#FFFFFF"
-                    />
-                  )}
-                </View>
-
-                <Text style={styles.smallText}>
-                  Remember me
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View />
-            )}
-
-            {/* FORGOT PASSWORD */}
-            <TouchableOpacity disabled={submitting}>
-              <Text style={styles.forgot}>
-                Forgot password?
-              </Text>
-            </TouchableOpacity>
-
-          </View>
-
-          {errorMessage ? (
-            <Text accessibilityRole="alert" style={[styles.errorMessage, isDark && darkStyles.danger]}>
-              {errorMessage}
-            </Text>
-          ) : null}
-
-          {/* LOGIN */}
-          <TouchableOpacity
-            style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
-            activeOpacity={0.85}
-            disabled={submitting}
-            accessibilityRole="button"
-            onPress={handleLogin}
+        {/* Keeps the form above the keyboard and scrollable on short screens */}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoider}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {submitting ? (
-              <View style={styles.loadingContent}>
-                <ActivityIndicator color="#FFFFFF" size="small" />
-                <Text style={styles.loginText}>Signing in...</Text>
-              </View>
-            ) : (
-              <Text style={styles.loginText}>Login</Text>
-            )}
-          </TouchableOpacity>
+            <View style={styles.content}>
 
-        </View>
+              {/* LOGO */}
+              <Image
+                source={require("../assets/images/logo.png")}
+                style={[styles.logo, isDark && darkStyles.logoBadge]}
+                resizeMode="contain"
+              />
+
+              {/* TITLE */}
+              <Text style={[styles.title, isDark && darkStyles.text]}>
+                Welcome back!
+              </Text>
+
+              <Text style={[styles.subtitle, isDark && darkStyles.mutedText]}>
+                Log in to your Account
+              </Text>
+
+              {/* EMAIL */}
+              <View style={[styles.inputBox, isDark && darkStyles.card]}>
+                <Ionicons
+                  name="mail"
+                  size={12}
+                  color="#A5A5A5"
+                />
+
+                <TextInput
+                  style={[styles.input, isDark && darkStyles.inputText]}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#A5A5A5"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  maxLength={255}
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={!submitting}
+                  returnKeyType="next"
+                />
+              </View>
+
+              {/* PASSWORD */}
+              <View style={[styles.inputBox, isDark && darkStyles.card]}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={13}
+                  color="#A5A5A5"
+                />
+
+                <TextInput
+                  style={[styles.input, isDark && darkStyles.inputText]}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#A5A5A5"
+                  secureTextEntry={!passwordVisible}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="current-password"
+                  textContentType="password"
+                  maxLength={1024}
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!submitting}
+                  returnKeyType="go"
+                  onSubmitEditing={handleLogin}
+                />
+
+                <TouchableOpacity
+                  disabled={submitting}
+                  accessibilityRole="button"
+                  accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
+                  onPress={() =>
+                    setPasswordVisible(!passwordVisible)
+                  }
+                >
+                  <Ionicons
+                    name={
+                      passwordVisible
+                        ? "eye-outline"
+                        : "eye-off-outline"
+                    }
+                    size={13}
+                    color="#A5A5A5"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* OPTIONS */}
+              <View style={styles.options}>
+
+                {/* REMEMBER ME (only where secure storage exists) */}
+                {rememberMeSupported ? (
+                  <TouchableOpacity
+                    style={styles.remember}
+                    disabled={submitting}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: rememberMe, disabled: submitting }}
+                    onPress={() =>
+                      setRememberMe(!rememberMe)
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        rememberMe && styles.checked,
+                      ]}
+                    >
+                      {rememberMe && (
+                        <Ionicons
+                          name="checkmark"
+                          size={8}
+                          color="#FFFFFF"
+                        />
+                      )}
+                    </View>
+
+                    <Text style={styles.smallText}>
+                      Remember me
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View />
+                )}
+
+                {/* FORGOT PASSWORD */}
+                <TouchableOpacity disabled={submitting}>
+                  <Text style={styles.forgot}>
+                    Forgot password?
+                  </Text>
+                </TouchableOpacity>
+
+              </View>
+
+              {errorMessage ? (
+                <Text accessibilityRole="alert" style={[styles.errorMessage, isDark && darkStyles.danger]}>
+                  {errorMessage}
+                </Text>
+              ) : null}
+
+              {/* LOGIN */}
+              <TouchableOpacity
+                style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
+                activeOpacity={0.85}
+                disabled={submitting}
+                accessibilityRole="button"
+                onPress={handleLogin}
+              >
+                {submitting ? (
+                  <View style={styles.loadingContent}>
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <Text style={styles.loginText}>Signing in...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.loginText}>Login</Text>
+                )}
+              </TouchableOpacity>
+
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -277,10 +292,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  keyboardAvoider: {
     flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
-    marginHorizontal: "12%",
+    // Symmetric, so the form stays centered while clearing the back button.
+    paddingVertical: 48,
+  },
+
+  content: {
+    // Same 12% side margins as before on phones; capped on tablets and web.
+    width: "76%",
+    maxWidth: Layout.maxFormWidth,
+    alignSelf: "center",
   },
 
   /* BACK BUTTON */

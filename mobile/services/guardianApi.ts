@@ -43,7 +43,55 @@ export type GuardianDashboard = {
         scaled_score: number | null;
       }>;
     }>;
+    /** All 7 domains, most recently updated by the teacher first. */
+    recent_activity?: GuardianRecentActivity[];
   };
+};
+
+export type GuardianRecentActivity = {
+  domain: string;
+  label: string;
+  last_updated_at: string | null;
+};
+
+export type GuardianItemResult = {
+  present: "check" | "hyphen" | null;
+  comments: string | null;
+} | null;
+
+export type GuardianDomainItem = {
+  id: number;
+  item_number: number | null;
+  activity: string;
+  /** Keyed by evaluation round (1–3); null when that round has no entry yet. */
+  results: Record<number, GuardianItemResult>;
+};
+
+export type GuardianDomainRound = {
+  date: string | null;
+  raw_score: number | null;
+  scaled_score: number | null;
+  assessed_items: number;
+};
+
+export type GuardianDomainDetail = {
+  child: {
+    id: number;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+  };
+  domain: {
+    key: string;
+    label: string;
+  };
+  progress: {
+    status: string;
+    latest_round: number | null;
+    last_updated_at: string | null;
+    rounds: Record<number, GuardianDomainRound>;
+  };
+  items: GuardianDomainItem[];
 };
 
 export type GuardianPhotoSource = {
@@ -369,7 +417,53 @@ export async function getGuardianDashboard(childId: number): Promise<GuardianDas
     throw new GuardianApiError("The server returned invalid dashboard data.");
   }
 
+  const recentActivity = dashboard.progress.recent_activity;
+  if (
+    recentActivity !== undefined
+    && (!Array.isArray(recentActivity) || !recentActivity.every(isGuardianRecentActivity))
+  ) {
+    throw new GuardianApiError("The server returned invalid dashboard data.");
+  }
+
   return dashboard as GuardianDashboard;
+}
+
+function isGuardianRecentActivity(value: unknown): value is GuardianRecentActivity {
+  return isRecord(value)
+    && typeof value.domain === "string"
+    && typeof value.label === "string"
+    && (typeof value.last_updated_at === "string" || value.last_updated_at === null);
+}
+
+function isGuardianDomainItem(value: unknown): value is GuardianDomainItem {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && typeof value.activity === "string"
+    && isRecord(value.results);
+}
+
+export async function getGuardianChildDomain(
+  childId: number,
+  domainKey: string,
+): Promise<GuardianDomainDetail> {
+  const detail = await requestJson<unknown>(
+    `/api/v1/guardian/children/${childId}/domains/${encodeURIComponent(domainKey)}`,
+  );
+  if (
+    !isRecord(detail)
+    || !isRecord(detail.domain)
+    || typeof detail.domain.key !== "string"
+    || typeof detail.domain.label !== "string"
+    || !isRecord(detail.progress)
+    || typeof detail.progress.status !== "string"
+    || !isRecord(detail.progress.rounds)
+    || !Array.isArray(detail.items)
+    || !detail.items.every(isGuardianDomainItem)
+  ) {
+    throw new GuardianApiError("The server returned invalid domain data.");
+  }
+
+  return detail as GuardianDomainDetail;
 }
 
 export async function getGuardianChildPhotoSource(

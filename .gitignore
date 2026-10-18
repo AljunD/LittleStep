@@ -67,7 +67,11 @@ Thumbs.db
 desktop.ini
 ehthumbs.db
 
-# ---- AI assistant local files (CLAUDE.md itself is shared and committed) ----
-.claude/settings.local.json
+# ---- AI assistant files (kept locally, not published) ----
+CLAUDE.md
 CLAUDE.local.md
+.claude/settings.local.json
 prompts.txt
+
+# ---- Internal reference documents (kept locally, not published) ----
+/docs/

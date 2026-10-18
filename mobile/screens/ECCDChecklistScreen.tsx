@@ -6,52 +6,15 @@ import {
   ImageBackground,
   TouchableOpacity,
   StatusBar,
+  Platform,
   ScrollView,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
+import { ECCD_DOMAINS } from "../constants/eccd-domains";
 import { useAppTheme } from "../hooks/use-app-theme";
-
-const categories = [
-  {
-    title: "Physical Movement",
-    subtitle: "Gross Motor",
-    icon: "body-outline" as const,
-    color: "#F9C96B",
-  },
-  {
-    title: "Hand & Finger Skills",
-    subtitle: "Fine Motor",
-    icon: "hand-left-outline" as const,
-    color: "#A8D8B9",
-  },
-  {
-    title: "Understanding & Listening",
-    subtitle: "Receptive Language",
-    icon: "ear-outline" as const,
-    color: "#B9C9F8",
-  },
-  {
-    title: "Speaking & Communication",
-    subtitle: "Expressive Language",
-    icon: "chatbubble-ellipses-outline" as const,
-    color: "#F3B9C7",
-  },
-  {
-    title: "Social & Emotional Skills",
-    subtitle: "Social Emotional",
-    icon: "people-outline" as const,
-    color: "#DCEBFF",
-  },
-  {
-    title: "Thinking & Learning",
-    subtitle: "Cognitive",
-    icon: "bulb-outline" as const,
-    color: "#FFC09F",
-  },
-];
 
 export default function ECCDChecklistScreen({
   navigation,
@@ -61,8 +24,8 @@ export default function ECCDChecklistScreen({
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
 
-  const compact = height < 760;
-  const small = width < 360;
+  const compact = height < Layout.compactHeight;
+  const small = width < Layout.smallWidth;
   const student = route?.params?.student;
 
   return (
@@ -141,9 +104,9 @@ export default function ECCDChecklistScreen({
             Choose an area to view developmental skills.
           </Text>
 
-          {categories.map((category) => (
+          {ECCD_DOMAINS.map((category) => (
             <TouchableOpacity
-              key={category.title}
+              key={category.key}
               style={[
                 styles.categoryCard,
                 {
@@ -152,10 +115,10 @@ export default function ECCDChecklistScreen({
                 compact && styles.compactCategoryCard,
               ]}
               activeOpacity={0.8}
-              onPress={() => {
-                // Connect category detail screens here later.
-                console.log("Selected category:", category.title);
-              }}
+              accessibilityRole="button"
+              onPress={() =>
+                navigation.navigate("Domain", { student, domainKey: category.key })
+              }
             >
               <View
                 style={[
@@ -183,7 +146,7 @@ export default function ECCDChecklistScreen({
                 </Text>
 
                 <Text style={styles.categorySubtitle}>
-                  {category.subtitle}
+                  {category.label}
                 </Text>
               </View>
 
@@ -308,6 +271,9 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
+    width: "100%",
+    maxWidth: Layout.maxContentWidth,
+    alignSelf: "center",
     flexGrow: 1,
   },
 
@@ -337,11 +303,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 11,
     marginBottom: 11,
-    shadowColor: "#31574F",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
+    ...Platform.select({
+      web: { boxShadow: "0px 3px 8px rgba(49, 87, 79, 0.08)" },
+      default: {
+        shadowColor: "#31574F",
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      },
+    }),
   },
 
   compactCategoryCard: {

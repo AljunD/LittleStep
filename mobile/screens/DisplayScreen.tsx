@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
 import { DisplayMode, useAppTheme } from "../hooks/use-app-theme";
 
 const displayOptions: {
@@ -287,6 +287,9 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
+    width: "100%",
+    maxWidth: Layout.maxContentWidth,
+    alignSelf: "center",
     paddingHorizontal: 22,
     paddingTop: 20,
     paddingBottom: 30,
