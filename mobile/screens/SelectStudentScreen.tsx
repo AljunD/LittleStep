@@ -12,14 +12,41 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
   getGuardianChildren,
+  getGuardianChildPhotoSource,
   GuardianChild,
+  GuardianPhotoSource,
 } from "../services/guardianApi";
 
+async function fetchStudentData(): Promise<{
+  children: GuardianChild[];
+  photoSources: Record<number, GuardianPhotoSource>;
+}> {
+  const children = await getGuardianChildren();
+  const photoEntries = await Promise.all(children.map(async (child) => {
+    if (!child.photo_url) {
+      return null;
+    }
+
+    // A photo that fails to load falls back to the placeholder instead of failing the list.
+    const photoSource = await getGuardianChildPhotoSource(child.photo_url).catch(() => null);
+    return photoSource ? [child.id, photoSource] as const : null;
+  }));
+
+  return {
+    children,
+    photoSources: Object.fromEntries(photoEntries.filter((entry) => entry !== null)),
+  };
+}
+
 export default function SelectStudentScreen({ navigation }: any) {
+  const { isDark } = useAppTheme();
   const [students, setStudents] = useState<GuardianChild[]>([]);
+  const [photoSources, setPhotoSources] = useState<Record<number, GuardianPhotoSource>>({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -28,7 +55,9 @@ export default function SelectStudentScreen({ navigation }: any) {
     setErrorMessage(null);
 
     try {
-      setStudents(await getGuardianChildren());
+      const studentData = await fetchStudentData();
+      setStudents(studentData.children);
+      setPhotoSources(studentData.photoSources);
     } catch (error) {
       setErrorMessage(getGuardianApiErrorMessage(error));
     } finally {
@@ -39,10 +68,11 @@ export default function SelectStudentScreen({ navigation }: any) {
   useEffect(() => {
     let isMounted = true;
 
-    getGuardianChildren()
-      .then((children) => {
+    fetchStudentData()
+      .then((studentData) => {
         if (isMounted) {
-          setStudents(children);
+          setStudents(studentData.children);
+          setPhotoSources(studentData.photoSources);
         }
       })
       .catch((error: unknown) => {
@@ -62,16 +92,17 @@ export default function SelectStudentScreen({ navigation }: any) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle="dark-content"
+        barStyle={isDark ? "light-content" : "dark-content"}
       />
 
       <ImageBackground
         source={require("../assets/images/back.jpg")}
-        style={styles.background}
+        style={[styles.background, isDark && darkStyles.container]}
+        imageStyle={isDark ? darkStyles.backgroundImage : undefined}
         resizeMode="cover"
       >
         <SafeAreaView style={styles.safeArea}>
@@ -88,11 +119,11 @@ export default function SelectStudentScreen({ navigation }: any) {
             {loading ? (
               <View style={styles.stateMessage}>
                 <ActivityIndicator color="#0BA8BD" />
-                <Text style={styles.stateText}>Loading your children...</Text>
+                <Text style={[styles.stateText, isDark && darkStyles.text]}>Loading your children...</Text>
               </View>
             ) : errorMessage ? (
               <View style={styles.stateMessage}>
-                <Text accessibilityRole="alert" style={styles.errorText}>
+                <Text accessibilityRole="alert" style={[styles.errorText, isDark && darkStyles.danger]}>
                   {errorMessage}
                 </Text>
                 <TouchableOpacity
@@ -105,24 +136,22 @@ export default function SelectStudentScreen({ navigation }: any) {
               </View>
             ) : students.length === 0 ? (
               <View style={styles.stateMessage}>
-                <Text style={styles.stateText}>
+                <Text style={[styles.stateText, isDark && darkStyles.text]}>
                   No children are currently linked to your guardian account.
                 </Text>
               </View>
-            ) : students.map((student, index) => {
+            ) : students.map((student) => {
                 const fullName = [
                   student.first_name,
                   student.middle_name,
                   student.last_name,
                 ].filter(Boolean).join(" ");
-                const image = index % 2 === 0
-                  ? require("../assets/images/juan.jpg")
-                  : require("../assets/images/maria.jpg");
+                const photoSource = photoSources[student.id];
 
                 return (
                   <TouchableOpacity
                     key={student.id}
-                    style={styles.studentCard}
+                    style={[styles.studentCard, isDark && darkStyles.surface]}
                     activeOpacity={0.85}
                     onPress={() =>
                       navigation.navigate("Dashboard", {
@@ -131,26 +160,32 @@ export default function SelectStudentScreen({ navigation }: any) {
                           name: fullName,
                           firstName: student.first_name,
                           lastName: student.last_name,
-                          image,
+                          photo_url: student.photo_url,
                         },
                       })
                     }
                   >
-                    <Image
-                      source={image}
-                      style={styles.profile}
-                      resizeMode="cover"
-                    />
+                    {photoSource ? (
+                      <Image
+                        source={photoSource}
+                        style={styles.profile}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.profilePlaceholder, isDark && darkStyles.surfaceMuted]}>
+                        <Ionicons name="person" size={25} color={isDark ? DarkColors.icon : "#6C9B91"} />
+                      </View>
+                    )}
 
                     <View style={styles.studentInfo}>
-                      <Text style={styles.studentName}>{fullName}</Text>
-                      <Text style={styles.progress}>View Progress Records</Text>
+                      <Text style={[styles.studentName, isDark && darkStyles.text]}>{fullName}</Text>
+                      <Text style={[styles.progress, isDark && darkStyles.mutedText]}>View Progress Records</Text>
                     </View>
 
                     <Ionicons
                       name="chevron-forward"
                       size={22}
-                      color="#C7C7C7"
+                      color={isDark ? DarkColors.textMuted : "#C7C7C7"}
                     />
                   </TouchableOpacity>
                 );
@@ -222,6 +257,15 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     marginRight: 15,
   },
+  profilePlaceholder: {
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    marginRight: 15,
+    backgroundColor: "#E7EFEB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   studentInfo: {
     flex: 1,
   },
@@ -263,5 +307,35 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  backgroundImage: {
+    opacity: 0.15,
+  },
+
+  surface: {
+    backgroundColor: DarkColors.surface,
+  },
+
+  surfaceMuted: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  danger: {
+    color: DarkColors.danger,
   },
 });

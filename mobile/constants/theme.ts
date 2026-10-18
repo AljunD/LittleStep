@@ -27,6 +27,23 @@ export const Colors = {
   },
 };
 
+/**
+ * LittleStep dark palette. Light mode keeps each screen's original colors,
+ * so screens apply these only when the dark theme is active.
+ */
+export const DarkColors = {
+  background: '#101816',
+  surface: '#18231F',
+  surfaceMuted: '#22302B',
+  selected: '#1F3D37',
+  border: '#27352F',
+  text: '#E4EFEB',
+  textMuted: '#93A69F',
+  icon: '#A9C7BE',
+  accent: '#6CC7B8',
+  danger: '#F97066',
+};
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   View,
@@ -12,14 +12,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
+  isRememberMeSupported,
   loginGuardian,
 } from "../services/guardianApi";
 
 export default function LoginScreen({ navigation, route }: any) {
+  const { isDark } = useAppTheme();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMeSupported, setRememberMeSupported] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +32,20 @@ export default function LoginScreen({ navigation, route }: any) {
     route?.params?.initialError ?? null,
   );
   const submittingRef = useRef(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void isRememberMeSupported().then((supported) => {
+      if (isMounted) {
+        setRememberMeSupported(supported);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (submittingRef.current) {
@@ -44,7 +63,11 @@ export default function LoginScreen({ navigation, route }: any) {
     setErrorMessage(null);
 
     try {
-      const guardian = await loginGuardian(normalizedEmail, password, rememberMe);
+      const guardian = await loginGuardian(
+        normalizedEmail,
+        password,
+        rememberMe && rememberMeSupported,
+      );
       navigation.replace("SelectStudent", { guardian });
     } catch (error) {
       setErrorMessage(getGuardianApiErrorMessage(error));
@@ -57,13 +80,14 @@ export default function LoginScreen({ navigation, route }: any) {
   return (
     <ImageBackground
       source={require("../assets/images/loginback.png")}
-      style={styles.background}
+      style={[styles.background, isDark && darkStyles.container]}
+      imageStyle={isDark ? darkStyles.backgroundImage : undefined}
       resizeMode="cover"
     >
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle="dark-content"
+        barStyle={isDark ? "light-content" : "dark-content"}
       />
 
       <SafeAreaView style={styles.safeArea}>
@@ -76,7 +100,7 @@ export default function LoginScreen({ navigation, route }: any) {
           <Ionicons
             name="chevron-back"
             size={21}
-            color="#111"
+            color={isDark ? DarkColors.text : "#111"}
           />
         </TouchableOpacity>
 
@@ -85,21 +109,21 @@ export default function LoginScreen({ navigation, route }: any) {
           {/* LOGO */}
           <Image
             source={require("../assets/images/logo.png")}
-            style={styles.logo}
+            style={[styles.logo, isDark && darkStyles.logoBadge]}
             resizeMode="contain"
           />
 
           {/* TITLE */}
-          <Text style={styles.title}>
+          <Text style={[styles.title, isDark && darkStyles.text]}>
             Welcome back!
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, isDark && darkStyles.mutedText]}>
             Log in to your Account
           </Text>
 
           {/* EMAIL */}
-          <View style={styles.inputBox}>
+          <View style={[styles.inputBox, isDark && darkStyles.card]}>
             <Ionicons
               name="mail"
               size={12}
@@ -107,7 +131,7 @@ export default function LoginScreen({ navigation, route }: any) {
             />
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDark && darkStyles.inputText]}
               placeholder="Enter your email"
               placeholderTextColor="#A5A5A5"
               keyboardType="email-address"
@@ -124,7 +148,7 @@ export default function LoginScreen({ navigation, route }: any) {
           </View>
 
           {/* PASSWORD */}
-          <View style={styles.inputBox}>
+          <View style={[styles.inputBox, isDark && darkStyles.card]}>
             <Ionicons
               name="lock-closed-outline"
               size={13}
@@ -132,7 +156,7 @@ export default function LoginScreen({ navigation, route }: any) {
             />
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDark && darkStyles.inputText]}
               placeholder="Enter your password"
               placeholderTextColor="#A5A5A5"
               secureTextEntry={!passwordVisible}
@@ -171,33 +195,39 @@ export default function LoginScreen({ navigation, route }: any) {
           {/* OPTIONS */}
           <View style={styles.options}>
 
-            {/* REMEMBER ME */}
-            <TouchableOpacity
-              style={styles.remember}
-              disabled={submitting}
-              onPress={() =>
-                setRememberMe(!rememberMe)
-              }
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  rememberMe && styles.checked,
-                ]}
+            {/* REMEMBER ME (only where secure storage exists) */}
+            {rememberMeSupported ? (
+              <TouchableOpacity
+                style={styles.remember}
+                disabled={submitting}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: rememberMe, disabled: submitting }}
+                onPress={() =>
+                  setRememberMe(!rememberMe)
+                }
               >
-                {rememberMe && (
-                  <Ionicons
-                    name="checkmark"
-                    size={8}
-                    color="#FFFFFF"
-                  />
-                )}
-              </View>
+                <View
+                  style={[
+                    styles.checkbox,
+                    rememberMe && styles.checked,
+                  ]}
+                >
+                  {rememberMe && (
+                    <Ionicons
+                      name="checkmark"
+                      size={8}
+                      color="#FFFFFF"
+                    />
+                  )}
+                </View>
 
-              <Text style={styles.smallText}>
-                Remember me
-              </Text>
-            </TouchableOpacity>
+                <Text style={styles.smallText}>
+                  Remember me
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )}
 
             {/* FORGOT PASSWORD */}
             <TouchableOpacity disabled={submitting}>
@@ -209,7 +239,7 @@ export default function LoginScreen({ navigation, route }: any) {
           </View>
 
           {errorMessage ? (
-            <Text accessibilityRole="alert" style={styles.errorMessage}>
+            <Text accessibilityRole="alert" style={[styles.errorMessage, isDark && darkStyles.danger]}>
               {errorMessage}
             </Text>
           ) : null}
@@ -380,5 +410,41 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 15,
     fontWeight: "800",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  backgroundImage: {
+    opacity: 0.15,
+  },
+
+  logoBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 20,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  card: {
+    backgroundColor: DarkColors.surface,
+    borderColor: DarkColors.border,
+  },
+
+  inputText: {
+    color: DarkColors.text,
+  },
+
+  danger: {
+    color: DarkColors.danger,
   },
 });

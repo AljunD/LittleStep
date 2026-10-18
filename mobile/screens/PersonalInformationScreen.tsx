@@ -10,12 +10,15 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 export default function PersonalInformationScreen({
   navigation,
   route,
 }: any) {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
   const student = route?.params?.student;
 
   const openDetails = (type: "GuardianDetails" | "ChildDetails") => {
@@ -23,16 +26,17 @@ export default function PersonalInformationScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFFFFF"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
       {/* Header */}
       <View
         style={[
           styles.header,
+          isDark && darkStyles.container,
           { paddingTop: insets.top + 10 },
         ]}
       >
@@ -44,11 +48,11 @@ export default function PersonalInformationScreen({
           <Ionicons
             name="chevron-back"
             size={26}
-            color="#263447"
+            color={isDark ? DarkColors.text : "#263447"}
           />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>
           Personal Information
         </Text>
 
@@ -61,35 +65,35 @@ export default function PersonalInformationScreen({
         showsVerticalScrollIndicator={false}
       >
         {/* Page Heading */}
-        <Text style={styles.pageTitle}>
+        <Text style={[styles.pageTitle, isDark && darkStyles.text]}>
           Personal Information
         </Text>
 
-        <Text style={styles.pageDescription}>
+        <Text style={[styles.pageDescription, isDark && darkStyles.mutedText]}>
           View your child's and guardian's information.
         </Text>
 
         {/* Information Options */}
-        <View style={styles.optionsCard}>
+        <View style={[styles.optionsCard, isDark && darkStyles.card]}>
           <TouchableOpacity
             style={styles.optionRow}
             activeOpacity={0.7}
             onPress={() => openDetails("GuardianDetails")}
           >
-            <View style={styles.optionIcon}>
+            <View style={[styles.optionIcon, isDark && darkStyles.surfaceMuted]}>
               <Ionicons
                 name="people-outline"
                 size={22}
-                color="#365C55"
+                color={isDark ? DarkColors.icon : "#365C55"}
               />
             </View>
 
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>
+              <Text style={[styles.optionTitle, isDark && darkStyles.text]}>
                 Guardian Details
               </Text>
 
-              <Text style={styles.optionDescription}>
+              <Text style={[styles.optionDescription, isDark && darkStyles.mutedText]}>
                 View guardian information and contact details
               </Text>
             </View>
@@ -97,31 +101,31 @@ export default function PersonalInformationScreen({
             <Ionicons
               name="chevron-forward"
               size={21}
-              color="#89918F"
+              color={isDark ? DarkColors.textMuted : "#89918F"}
             />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, isDark && darkStyles.divider]} />
 
           <TouchableOpacity
             style={styles.optionRow}
             activeOpacity={0.7}
             onPress={() => openDetails("ChildDetails")}
           >
-            <View style={styles.optionIcon}>
+            <View style={[styles.optionIcon, isDark && darkStyles.surfaceMuted]}>
               <Ionicons
                 name="person-outline"
                 size={22}
-                color="#365C55"
+                color={isDark ? DarkColors.icon : "#365C55"}
               />
             </View>
 
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>
+              <Text style={[styles.optionTitle, isDark && darkStyles.text]}>
                 Child Details
               </Text>
 
-              <Text style={styles.optionDescription}>
+              <Text style={[styles.optionDescription, isDark && darkStyles.mutedText]}>
                 View your child's personal and school information
               </Text>
             </View>
@@ -129,7 +133,7 @@ export default function PersonalInformationScreen({
             <Ionicons
               name="chevron-forward"
               size={21}
-              color="#89918F"
+              color={isDark ? DarkColors.textMuted : "#89918F"}
             />
           </TouchableOpacity>
         </View>
@@ -139,6 +143,7 @@ export default function PersonalInformationScreen({
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           { paddingBottom: Math.max(insets.bottom, 10) },
         ]}
       >
@@ -152,9 +157,9 @@ export default function PersonalInformationScreen({
           <Ionicons
             name="home-outline"
             size={23}
-            color="#89918F"
+            color={isDark ? DarkColors.textMuted : "#89918F"}
           />
-          <Text style={styles.navText}>Home</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -167,9 +172,9 @@ export default function PersonalInformationScreen({
           <Ionicons
             name="clipboard-outline"
             size={23}
-            color="#89918F"
+            color={isDark ? DarkColors.textMuted : "#89918F"}
           />
-          <Text style={styles.navText}>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>
             ECCD Checklist
           </Text>
         </TouchableOpacity>
@@ -184,9 +189,9 @@ export default function PersonalInformationScreen({
           <Ionicons
             name="person"
             size={23}
-            color="#365C55"
+            color={isDark ? DarkColors.accent : "#365C55"}
           />
-          <Text style={[styles.navText, styles.activeNavText]}>
+          <Text style={[styles.navText, styles.activeNavText, isDark && darkStyles.activeNavText]}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -332,5 +337,41 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: "#365C55",
     fontWeight: "600",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  card: {
+    backgroundColor: DarkColors.surface,
+    borderColor: DarkColors.border,
+  },
+
+  surfaceMuted: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  divider: {
+    backgroundColor: DarkColors.border,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  activeNavText: {
+    color: DarkColors.accent,
   },
 });

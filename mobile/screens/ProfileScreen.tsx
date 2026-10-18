@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 const COLORS = {
   background: "#FFFFFF",
@@ -28,6 +30,7 @@ export default function ProfileScreen({
   route,
 }: any) {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
 
   const student = route?.params?.student ?? {
     name: "Juan Dela Cruz",
@@ -86,33 +89,34 @@ export default function ProfileScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={COLORS.background}
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.background : COLORS.background}
       />
 
       {/* Header */}
       <View
         style={[
           styles.header,
+          isDark && darkStyles.container,
           { paddingTop: insets.top + 10 },
         ]}
       >
-        <Text style={styles.headerTitle}>Profile</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>Profile</Text>
+        <Text style={[styles.headerSubtitle, isDark && darkStyles.mutedText]}>
           Manage your account
         </Text>
       </View>
 
       <ScrollView
-        style={styles.content}
+        style={[styles.content, isDark && darkStyles.container]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         {/* Student profile card */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
+        <View style={[styles.profileCard, isDark && darkStyles.iconContainer]}>
+          <View style={[styles.avatarContainer, isDark && darkStyles.avatarContainer]}>
             <Image
               source={
                 typeof student.image === "string"
@@ -125,10 +129,10 @@ export default function ProfileScreen({
           </View>
 
           <View style={styles.profileDetails}>
-            <Text style={styles.studentName}>
+            <Text style={[styles.studentName, isDark && darkStyles.text]}>
               {student.name ?? "Juan Dela Cruz"}
             </Text>
-            <Text style={styles.studentEmail}>
+            <Text style={[styles.studentEmail, isDark && darkStyles.mutedText]}>
               {student.email ?? "juan.delacruz@gmail.com"}
             </Text>
 
@@ -137,19 +141,19 @@ export default function ProfileScreen({
           <Ionicons
             name="person-circle-outline"
             size={24}
-            color={COLORS.green}
+            color={isDark ? DarkColors.icon : COLORS.green}
           />
         </View>
 
         {/* Section heading */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>
             Account Settings
           </Text>
         </View>
 
         {/* Settings menu */}
-        <View style={styles.menuCard}>
+        <View style={[styles.menuCard, isDark && darkStyles.card]}>
           {profileItems.map((item, index) => (
             <React.Fragment key={item.title}>
               <TouchableOpacity
@@ -158,19 +162,19 @@ export default function ProfileScreen({
                 onPress={() => handleMenuPress(item.title)}
               >
                 <View style={styles.menuItemLeft}>
-                  <View style={styles.menuIconContainer}>
+                  <View style={[styles.menuIconContainer, isDark && darkStyles.surfaceMuted]}>
                     <Ionicons
                       name={item.icon as any}
                       size={21}
-                      color={COLORS.green}
+                      color={isDark ? DarkColors.icon : COLORS.green}
                     />
                   </View>
 
                   <View style={styles.menuTextContainer}>
-                    <Text style={styles.menuTitle}>
+                    <Text style={[styles.menuTitle, isDark && darkStyles.text]}>
                       {item.title}
                     </Text>
-                    <Text style={styles.menuSubtitle}>
+                    <Text style={[styles.menuSubtitle, isDark && darkStyles.mutedText]}>
                       {item.subtitle}
                     </Text>
                   </View>
@@ -179,12 +183,12 @@ export default function ProfileScreen({
                 <Ionicons
                   name="chevron-forward"
                   size={19}
-                  color={COLORS.gray}
+                  color={isDark ? DarkColors.textMuted : COLORS.gray}
                 />
               </TouchableOpacity>
 
               {index < profileItems.length - 1 && (
-                <View style={styles.divider} />
+                <View style={[styles.divider, isDark && darkStyles.divider]} />
               )}
             </React.Fragment>
           ))}
@@ -195,6 +199,7 @@ export default function ProfileScreen({
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           { paddingBottom: Math.max(insets.bottom, 8) },
         ]}
       >
@@ -206,9 +211,9 @@ export default function ProfileScreen({
           <Ionicons
             name="home-outline"
             size={23}
-            color={COLORS.inactive}
+            color={isDark ? DarkColors.textMuted : COLORS.inactive}
           />
-          <Text style={styles.navText}>Home</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -219,9 +224,9 @@ export default function ProfileScreen({
           <Ionicons
             name="clipboard-outline"
             size={23}
-            color={COLORS.inactive}
+            color={isDark ? DarkColors.textMuted : COLORS.inactive}
           />
-          <Text style={styles.navText}>ECCD Checklist</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>ECCD Checklist</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -232,9 +237,9 @@ export default function ProfileScreen({
           <Ionicons
             name="person"
             size={23}
-            color="#337D73"
+            color={isDark ? DarkColors.accent : "#337D73"}
           />
-          <Text style={[styles.navText, styles.activeNavText]}>
+          <Text style={[styles.navText, styles.activeNavText, isDark && darkStyles.activeNavText]}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -434,5 +439,49 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: "#337D73",
     fontWeight: "800",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  card: {
+    backgroundColor: DarkColors.surface,
+    borderColor: DarkColors.border,
+  },
+
+  surfaceMuted: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  iconContainer: {
+    backgroundColor: DarkColors.surface,
+  },
+
+  avatarContainer: {
+    borderColor: DarkColors.surface,
+  },
+
+  divider: {
+    backgroundColor: DarkColors.border,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  activeNavText: {
+    color: DarkColors.accent,
   },
 });

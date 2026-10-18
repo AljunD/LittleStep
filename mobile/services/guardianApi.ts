@@ -4,6 +4,8 @@ import * as SecureStore from "expo-secure-store";
 
 const TOKEN_KEY = "littlestep.guardian.access-token";
 const REQUEST_TIMEOUT_MS = 15000;
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/gif"];
 
 let sessionToken: string | null = null;
 
@@ -21,6 +23,31 @@ export type GuardianChild = {
   last_name: string;
   sex: string;
   date_of_birth: string;
+  photo_url: string | null;
+};
+
+export type GuardianDashboard = {
+  child: GuardianChild;
+  progress: {
+    status: string;
+    evaluation_number: number | null;
+    latest_round: number | null;
+    rounds: Record<number, {
+      date: string | null;
+      completed_domains: number;
+      standard_score: number | null;
+      interpretation: string | null;
+      domains: Record<string, {
+        label: string;
+        raw_score: number | null;
+        scaled_score: number | null;
+      }>;
+    }>;
+  };
+};
+
+export type GuardianPhotoSource = {
+  uri: string;
 };
 
 type ApiErrorPayload = {
@@ -57,7 +84,8 @@ function isGuardianChild(value: unknown): value is GuardianChild {
     && (typeof value.middle_name === "string" || value.middle_name === null)
     && typeof value.last_name === "string"
     && typeof value.sex === "string"
-    && typeof value.date_of_birth === "string";
+    && typeof value.date_of_birth === "string"
+    && (typeof value.photo_url === "string" || value.photo_url === null);
 }
 
 function getApiBaseUrl(): URL {
@@ -116,34 +144,54 @@ async function readAccessToken(): Promise<string | null> {
     return null;
   }
 
-  sessionToken = await SecureStore.getItemAsync(TOKEN_KEY);
+  try {
+    sessionToken = await SecureStore.getItemAsync(TOKEN_KEY);
+  } catch {
+    // The stored entry can become unreadable (e.g. after a reinstall or backup restore).
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    sessionToken = null;
+  }
 
   return sessionToken;
 }
 
-async function saveAccessToken(token: string, rememberMe: boolean): Promise<void> {
-  if (Platform.OS !== "web") {
-    const secureStorageAvailable = await SecureStore.isAvailableAsync();
+export async function isRememberMeSupported(): Promise<boolean> {
+  if (Platform.OS === "web") {
+    return false;
+  }
 
-    if (rememberMe && !secureStorageAvailable) {
+  try {
+    return await SecureStore.isAvailableAsync();
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredToken(token: string): Promise<void> {
+  return SecureStore.setItemAsync(TOKEN_KEY, token, {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  });
+}
+
+async function saveAccessToken(token: string, rememberMe: boolean): Promise<void> {
+  if (rememberMe) {
+    if (! await isRememberMeSupported()) {
       throw new GuardianApiError(
-        "Secure storage is unavailable, so this device cannot safely remember your sign-in.",
+        Platform.OS === "web"
+          ? "Remember me is available only in the iOS and Android apps."
+          : "Secure storage is unavailable, so this device cannot safely remember your sign-in.",
       );
     }
 
-    if (secureStorageAvailable) {
-      if (rememberMe) {
-        await SecureStore.setItemAsync(TOKEN_KEY, token, {
-          keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        });
-      } else {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-      }
+    try {
+      await writeStoredToken(token);
+    } catch {
+      // A stale or corrupted entry can block the write; remove it and retry once.
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await writeStoredToken(token);
     }
-  } else if (rememberMe) {
-    throw new GuardianApiError(
-      "Remember me is available only in the iOS and Android apps.",
-    );
+  } else if (Platform.OS !== "web" && await SecureStore.isAvailableAsync()) {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
   }
 
   sessionToken = token;
@@ -268,7 +316,7 @@ export async function loginGuardian(
 
   try {
     await saveAccessToken(response.token, rememberMe);
-  } catch {
+  } catch (saveError) {
     try {
       await requestJson<{ message: string }>("/api/v1/guardian/logout", {
         method: "POST",
@@ -280,7 +328,11 @@ export async function loginGuardian(
       );
     }
 
-    throw new GuardianApiError("Sign-in could not be saved securely. Please try again.");
+    throw new GuardianApiError(
+      saveError instanceof GuardianApiError
+        ? saveError.message
+        : "This device could not save your sign-in securely. Try again, or sign in without Remember me.",
+    );
   }
 
   return response.guardian;
@@ -302,6 +354,119 @@ export async function getGuardianChildren(): Promise<GuardianChild[]> {
   }
 
   return children;
+}
+
+export async function getGuardianDashboard(childId: number): Promise<GuardianDashboard> {
+  const dashboard = await requestJson<unknown>(
+    `/api/v1/guardian/children/${childId}/dashboard`,
+  );
+  if (
+    !isRecord(dashboard)
+    || !isGuardianChild(dashboard.child)
+    || !isRecord(dashboard.progress)
+    || typeof dashboard.progress.status !== "string"
+  ) {
+    throw new GuardianApiError("The server returned invalid dashboard data.");
+  }
+
+  return dashboard as GuardianDashboard;
+}
+
+export async function getGuardianChildPhotoSource(
+  photoUrl: string,
+): Promise<GuardianPhotoSource | null> {
+  const token = await readAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  const baseUrl = getApiBaseUrl();
+  let imageUrl: URL;
+  try {
+    imageUrl = new URL(photoUrl, baseUrl);
+  } catch {
+    throw new GuardianApiError("The server returned an invalid child photo URL.");
+  }
+
+  if (
+    imageUrl.origin !== baseUrl.origin
+    || !imageUrl.pathname.startsWith(`${baseUrl.pathname}api/v1/guardian/children/`)
+    || !imageUrl.pathname.endsWith("/photo")
+  ) {
+    throw new GuardianApiError("The child photo URL is outside the trusted server.");
+  }
+
+  // Fetch the bytes here so the bearer token never reaches the image component or its
+  // cache, and so it works on web, where <img> cannot send an Authorization header.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(imageUrl, {
+      headers: {
+        // JSON first so auth failures return 401 JSON instead of a login redirect.
+        Accept: "application/json, image/jpeg, image/png, image/gif",
+        Authorization: `Bearer ${token}`,
+      },
+      signal: controller.signal,
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      await clearAccessToken();
+      throw new GuardianApiError("Your session has ended. Please sign in again.", response.status);
+    }
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new GuardianApiError("The child photo could not be loaded.", response.status);
+    }
+
+    const mimeType = (response.headers.get("Content-Type") ?? "").split(";")[0].trim().toLowerCase();
+    if (!PHOTO_MIME_TYPES.includes(mimeType)) {
+      throw new GuardianApiError("The server returned an invalid child photo.");
+    }
+
+    const blob = await response.blob();
+    if (blob.size === 0 || blob.size > PHOTO_MAX_BYTES) {
+      throw new GuardianApiError("The server returned an invalid child photo.");
+    }
+
+    const dataUri = await readBlobAsDataUri(blob);
+
+    return {
+      uri: `data:${mimeType};base64,${dataUri.slice(dataUri.indexOf(",") + 1)}`,
+    };
+  } catch (error) {
+    if (error instanceof GuardianApiError) {
+      throw error;
+    }
+
+    if (controller.signal.aborted) {
+      throw new GuardianApiError("The server took too long to send the child photo.");
+    }
+
+    throw new GuardianApiError("The child photo could not be loaded.");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function readBlobAsDataUri(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("The child photo could not be read."));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("The child photo could not be read."));
+    reader.readAsDataURL(blob);
+  });
 }
 
 export async function restoreGuardianSession(): Promise<GuardianProfile | null> {

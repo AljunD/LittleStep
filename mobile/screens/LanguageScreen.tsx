@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 
 const COLORS = {
@@ -28,6 +30,7 @@ export default function LanguageScreen({
   route,
 }: any) {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
   const student = route?.params?.student;
 
   const [selectedLanguage, setSelectedLanguage] =
@@ -43,16 +46,17 @@ export default function LanguageScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={COLORS.background}
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.background : COLORS.background}
       />
 
       {/* Header */}
       <View
         style={[
           styles.header,
+          isDark && darkStyles.container,
           { paddingTop: insets.top + 10 },
         ]}
       >
@@ -64,31 +68,31 @@ export default function LanguageScreen({
           <Ionicons
             name="chevron-back"
             size={25}
-            color={COLORS.navy}
+            color={isDark ? DarkColors.text : COLORS.navy}
           />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Language</Text>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>Language</Text>
 
         <View style={styles.headerSpacer} />
       </View>
 
       {/* Language options */}
       <ScrollView
-        style={styles.content}
+        style={[styles.content, isDark && darkStyles.container]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>
             Language Preferences
           </Text>
-          <Text style={styles.sectionDescription}>
+          <Text style={[styles.sectionDescription, isDark && darkStyles.mutedText]}>
             Choose your preferred app language.
           </Text>
         </View>
 
-        <View style={styles.languageCard}>
+        <View style={[styles.languageCard, isDark && darkStyles.card]}>
           {languages.map((language, index) => {
             const selected = selectedLanguage === language;
 
@@ -104,6 +108,8 @@ export default function LanguageScreen({
                       style={[
                         styles.languageIcon,
                         selected && styles.selectedLanguageIcon,
+                      isDark && darkStyles.surfaceMuted,
+                      selected && isDark && darkStyles.selectedIcon,
                       ]}
                     >
                       <Ionicons
@@ -111,14 +117,14 @@ export default function LanguageScreen({
                         size={20}
                         color={
                           selected
-                            ? COLORS.green
-                            : COLORS.gray
+                            ? (isDark ? DarkColors.accent : COLORS.green)
+                            : (isDark ? DarkColors.textMuted : COLORS.gray)
                         }
                       />
                     </View>
 
                     <View style={styles.languageTextContainer}>
-                      <Text style={styles.languageText}>
+                      <Text style={[styles.languageText, isDark && darkStyles.text]}>
                         {language}
                       </Text>
                     </View>
@@ -128,16 +134,18 @@ export default function LanguageScreen({
                     style={[
                       styles.radioOuter,
                       selected && styles.radioOuterSelected,
+                    isDark && darkStyles.radioOuter,
+                    selected && isDark && darkStyles.radioOuterSelected,
                     ]}
                   >
                     {selected && (
-                      <View style={styles.radioInner} />
+                      <View style={[styles.radioInner, isDark && darkStyles.radioInner]} />
                     )}
                   </View>
                 </TouchableOpacity>
 
                 {index < languages.length - 1 && (
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, isDark && darkStyles.divider]} />
                 )}
               </React.Fragment>
             );
@@ -149,6 +157,7 @@ export default function LanguageScreen({
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           { paddingBottom: Math.max(insets.bottom, 8) },
         ]}
       >
@@ -160,9 +169,9 @@ export default function LanguageScreen({
           <Ionicons
             name="home-outline"
             size={23}
-            color={COLORS.inactive}
+            color={isDark ? DarkColors.textMuted : COLORS.inactive}
           />
-          <Text style={styles.navText}>Home</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -173,9 +182,9 @@ export default function LanguageScreen({
           <Ionicons
             name="clipboard-outline"
             size={23}
-            color={COLORS.inactive}
+            color={isDark ? DarkColors.textMuted : COLORS.inactive}
           />
-          <Text style={styles.navText}>ECCD Checklist</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>ECCD Checklist</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -186,9 +195,9 @@ export default function LanguageScreen({
           <Ionicons
             name="person"
             size={23}
-            color="#337D73"
+            color={isDark ? DarkColors.accent : "#337D73"}
           />
-          <Text style={[styles.navText, styles.activeNavText]}>
+          <Text style={[styles.navText, styles.activeNavText, isDark && darkStyles.activeNavText]}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -361,5 +370,57 @@ const styles = StyleSheet.create({
 activeNavText: {
     color: "#337D73",
     fontWeight: "800",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  card: {
+    backgroundColor: DarkColors.surface,
+    borderColor: DarkColors.border,
+  },
+
+  surfaceMuted: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  selectedIcon: {
+    backgroundColor: DarkColors.selected,
+  },
+
+  radioOuter: {
+    borderColor: DarkColors.textMuted,
+  },
+
+  radioOuterSelected: {
+    borderColor: DarkColors.accent,
+  },
+
+  radioInner: {
+    backgroundColor: DarkColors.accent,
+  },
+
+  divider: {
+    backgroundColor: DarkColors.border,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  activeNavText: {
+    color: DarkColors.accent,
   },
 });
