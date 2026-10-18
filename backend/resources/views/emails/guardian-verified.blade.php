@@ -56,7 +56,6 @@
                 </div>
 
                 @if ($appLoginUrl)
-                    {{-- Opens the app's Login screen. The link has no token or personal data; the guardian signs in themselves. --}}
                     <div class="mt-7 text-center">
                         <a id="open-guardian-app" href="{{ $appLoginUrl }}" rel="noopener"
                            class="inline-flex h-12 w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 text-base font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
@@ -84,8 +83,6 @@
 
     @if ($appLoginUrl && $openAppAutomatically)
         <script nonce="{{ request()->attributes->get('cspNonce') }}">
-            // Right after verifying on a phone, hand over to the app. Desktop browsers have no app to open, so they
-            // keep this page. The link is read from the button, so it is never written into the script.
             (() => {
                 const link = document.getElementById('open-guardian-app');
                 if (link && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {

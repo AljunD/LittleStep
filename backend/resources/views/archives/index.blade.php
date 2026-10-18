@@ -28,8 +28,6 @@
         </div>
     </div>
 
-    {{-- Restore results are shown by the shared flash-messages banner in the layout, above the updated lists. --}}
-
         <div id="archive-panel-guardians" role="tabpanel" aria-labelledby="archive-tab-guardians" data-archive-panel="guardians"
              @if ($activeTab !== 'guardians') hidden @endif
              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -163,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
             panel.hidden = panel.dataset.archivePanel !== name;
         });
 
-        // Keep the open tab on reload and when navigating back.
         const url = new URL(window.location.href);
         url.searchParams.set('tab', name);
         history.replaceState(null, '', url);

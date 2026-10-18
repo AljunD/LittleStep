@@ -11,10 +11,6 @@ type PasswordReminderProps = {
   onRemindLater: () => void;
 };
 
-/**
- * Shown after signing in with the default password the teacher gave the account.
- * "Change Password" opens the Change Password screen; "Remind me later" hides it until the next sign-in.
- */
 export function PasswordReminder({ visible, onChangePassword, onRemindLater }: PasswordReminderProps) {
   const { isDark } = useAppTheme();
 

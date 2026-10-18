@@ -1,7 +1,3 @@
-{{--
-    Educational attainment dropdown for the father/mother fields (options from App\Support\FormRules::EDUCATION_LEVELS).
-    A value saved before the dropdown existed stays selectable, so editing a child never erases it.
---}}
 @props(['name', 'value' => null])
 @php
     $levels = \App\Support\FormRules::EDUCATION_LEVELS;

@@ -14,10 +14,6 @@ use App\Services\ChildsRecord2Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * The PDF download reproduces the official ECCD Checklist, Child's Record 2 (20 pages, US Letter) with the
- * child's data placed on the form.
- */
 class ChildsRecord2ReportTest extends TestCase
 {
     use RefreshDatabase;
@@ -87,7 +83,6 @@ class ChildsRecord2ReportTest extends TestCase
         }
     }
 
-    /** @return list<string> texts on one page */
     private function texts(array $pages, int $page): array
     {
         return array_column($pages[$page - 1]['items'], 'text');
@@ -102,7 +97,6 @@ class ChildsRecord2ReportTest extends TestCase
             $this->assertFileExists($page['template'], 'Missing official form page '.($index + 1));
         }
 
-        // Page 1: Sociodemographic Profile, with the handedness box (left) and "No" for studying ticked.
         $profile = $this->texts($pages, 1);
         $this->assertContains('Carlos Perez', $profile);
         $this->assertContains('March', $profile);
@@ -113,19 +107,15 @@ class ChildsRecord2ReportTest extends TestCase
         $this->assertEqualsWithDelta(374.3, $checks[0]['left'] + $checks[0]['width'] / 2, 0.1, 'Handedness "left" box');
         $this->assertEqualsWithDelta(428.5, $checks[1]['left'] + $checks[1]['width'] / 2, 0.1, 'Studying "No" box');
 
-        // Page 2: age by 30-day months, and the examiner.
         $this->assertContains('Maria Santos', $this->texts($pages, 2));
 
-        // Page 4: ✔ and — in the 1st Eval column of items 1 and 2, with the comment.
         $marks = array_values(array_filter($pages[3]['items'], fn (array $item) => in_array($item['text'], ['✔', '—'], true)));
         $this->assertSame(['✔', '—'], array_column($marks, 'text'));
         $this->assertEqualsWithDelta(415.7, $marks[0]['left'] + $marks[0]['width'] / 2, 0.1);
         $this->assertContains('1st: Needs a hand on the rail', $this->texts($pages, 4));
 
-        // Page 5: Gross Motor TOTAL SCORE for the 1st evaluation (all items answered: 1 ✔).
         $this->assertContains('1', $this->texts($pages, 5));
 
-        // Page 18: raw score; pages 19/20 only get chart marks when there are scaled/standard scores.
         $this->assertContains('10/01/25', $this->texts($pages, 18));
         $this->assertNotNull($pages[18]['svg']);
         $this->assertNull($pages[19]['svg']);

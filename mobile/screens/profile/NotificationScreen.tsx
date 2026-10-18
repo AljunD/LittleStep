@@ -119,7 +119,6 @@ export default function NotificationScreen({ navigation, route }: any) {
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -157,7 +156,6 @@ export default function NotificationScreen({ navigation, route }: any) {
         {renderBody()}
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View
         style={[
           styles.bottomNav,

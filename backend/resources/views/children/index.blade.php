@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="space-y-8">
-    <!-- Header -->
     <div>
         <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Children</h1>
         <p class="text-sm text-gray-500">Manage and view all registered child profiles.</p>

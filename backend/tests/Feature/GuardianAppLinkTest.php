@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
-/**
- * After a guardian verifies their email, the confirmation page opens the mobile app's Login screen
- * through a deep link that carries no token or personal data.
- */
 class GuardianAppLinkTest extends TestCase
 {
     use RefreshDatabase;
@@ -50,15 +46,12 @@ class GuardianAppLinkTest extends TestCase
         $page->assertOk()
             ->assertSee('href="littlestep://login?verified=1"', false)
             ->assertSee('Open LittleStep App')
-            // Opened automatically right after verifying, by a script allowed by the page's CSP nonce.
             ->assertSee('window.location.href = link.href', false);
         $this->assertMatchesRegularExpression('/<script nonce="[^"]+">/', $page->getContent());
 
-        // Nothing that could sign someone in, or identify them, goes into the link.
         $this->assertStringNotContainsString('guardian@example.com', $page->getContent());
         $this->assertStringNotContainsString('token=', $page->getContent());
 
-        // Reloading or revisiting the page keeps the button but doesn't reopen the app by itself.
         $this->get(route('guardian.verification.confirmation'))
             ->assertOk()
             ->assertSee('href="littlestep://login?verified=1"', false)
@@ -101,13 +94,12 @@ class GuardianAppLinkTest extends TestCase
     public function test_verification_emails_link_to_app_url_even_when_the_teacher_uses_localhost(): void
     {
         config(['app.url' => 'http://192.168.100.19/LittleStep/backend/public']);
-        URL::forceRootUrl('http://localhost:8000'); // the address the teacher's browser happens to use
+        URL::forceRootUrl('http://localhost:8000');
 
         $mail = (new CustomVerifyEmail)->toMail($this->user);
         URL::forceRootUrl(null);
         $link = $mail->viewData['verificationUrl'];
 
-        // A phone can open it, the signature is valid at that address, and URL generation is back to normal.
         $this->assertStringStartsWith('http://192.168.100.19/LittleStep/backend/public/email/verify/'.$this->user->id.'/', $link);
         $this->assertTrue(URL::hasValidSignature(Request::create($link)));
         $this->assertStringStartsWith('http://localhost/', route('login'));

@@ -1,7 +1,3 @@
-{{--
-    One entry of <x-action-menu>. A link when `href` is given; otherwise a submit button, so put it inside the
-    action's <form> (with data-confirm for archive/restore). Variants: default, danger (archive), success (restore).
---}}
 @props(['href' => null, 'icon' => null, 'variant' => 'default'])
 @php
     $variants = [

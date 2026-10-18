@@ -1,7 +1,3 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
 
 import { Platform } from 'react-native';
 
@@ -27,10 +23,6 @@ export const Colors = {
   },
 };
 
-/**
- * LittleStep dark palette. Light mode keeps each screen's original colors,
- * so screens apply these only when the dark theme is active.
- */
 export const DarkColors = {
   background: '#101816',
   surface: '#18231F',
@@ -44,28 +36,18 @@ export const DarkColors = {
   danger: '#F97066',
 };
 
-/**
- * Responsive layout limits. On phones content fills the width as before;
- * on tablets and wide web windows it is centered and capped at these widths.
- */
 export const Layout = {
   maxContentWidth: 640,
   maxFormWidth: 380,
-  /** Screens shorter than this use the compact spacing variants. */
   compactHeight: 760,
-  /** Screens narrower than this use the small spacing variants. */
   smallWidth: 360,
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

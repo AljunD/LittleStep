@@ -1,7 +1,3 @@
-{{--
-    ECCD Checklist, Child's Record 2 (20 pages). Each page is the official form (resources/pdf/childs-record-2)
-    with the child's data positioned on top by App\Services\ChildsRecord2Report, in points on a 612 × 792 page.
---}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +11,6 @@
         .page:last-child { page-break-after: auto; }
         .template, .overlay { position: absolute; left: 0; top: 0; width: 612pt; height: 792pt; }
         .field { position: absolute; overflow: hidden; }
-        /* Single-line values are sized to their cell; clipping them would cut descenders (y, g, p). */
         .nowrap { white-space: nowrap; overflow: visible; }
         .bold { font-weight: bold; }
     </style>

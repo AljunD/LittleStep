@@ -1,8 +1,3 @@
-{{--
-    Three-dot (⋮) menu that keeps a row's or a record's actions out of sight until it is clicked.
-    Fill it with <x-action-menu.item>. The layout script (components.app) opens/closes it, positions it next
-    to the button (so table scrolling can't clip it) and supports Escape and the arrow keys.
---}}
 @props(['label' => 'Actions'])
 <div {{ $attributes->class('relative inline-flex') }} data-action-menu>
     <button type="button" data-action-menu-trigger aria-haspopup="menu" aria-expanded="false" aria-label="{{ $label }}" title="{{ $label }}"

@@ -17,10 +17,6 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
-/**
- * Teacher web forms: shared validation rules (App\Support\FormRules), the default guardian
- * password, and the bugs fixed during the form review.
- */
 class FormValidationTest extends TestCase
 {
     use RefreshDatabase;
@@ -124,7 +120,6 @@ class FormValidationTest extends TestCase
         $this->assertSame('guardian', $user->role);
         Notification::assertSentTo($user, CustomVerifyEmail::class);
 
-        // Names with ñ, accents, apostrophes and hyphens are accepted.
         $this->assertDatabaseHas('guardians', ['user_id' => $user->id, 'first_name' => 'María', 'last_name' => "O'Neil-Cruz"]);
         $this->assertDatabaseHas('children', ['first_name' => 'Niño']);
     }

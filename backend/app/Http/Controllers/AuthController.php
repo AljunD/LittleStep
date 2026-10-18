@@ -18,17 +18,11 @@ use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
-    /**
-     * Show registration form
-     */
     public function showRegisterForm()
     {
         return view('auth.register');
     }
 
-    /**
-     * Handle registration securely
-     */
     public function register(Request $request)
     {
         $request->merge([
@@ -114,8 +108,6 @@ class AuthController extends Controller
                 $request->session()->regenerateToken();
                 recordLog('login_denied', 'User', $user->id, 'Unverified email attempted web login.', $user->id);
 
-                // Back to the login form: the verification notice requires a session,
-                // so redirecting there would bounce to login and drop this message.
                 return back()->withErrors([
                     'email' => 'You must verify your email before logging in. Check your inbox for the verification link.',
                 ])->onlyInput('email');
@@ -160,7 +152,6 @@ class AuthController extends Controller
 
         $email = Str::lower(trim($request->email));
 
-        // The reply stays the same whether or not the email went out, so it never reveals which addresses have accounts.
         SafeMail::attempt(fn () => Password::sendResetLink(['email' => $email]));
 
         return back()->with(['success' => 'If an account exists for that email, a password reset link will be sent.']);
@@ -212,11 +203,9 @@ class AuthController extends Controller
             abort(403, 'Invalid verification link.');
         }
 
-        // Re-opening an old link must not send the "verified" email again.
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
 
-            // A courtesy email; the account is verified even if it can't be sent.
             SafeMail::attempt(fn () => Mail::send('emails.account-details', [
                 'user' => $user,
             ], function ($message) use ($user) {

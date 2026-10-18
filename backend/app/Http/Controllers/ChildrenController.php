@@ -40,7 +40,6 @@ class ChildrenController extends Controller
     {
         $child = $this->currentTeacher($request)->ownedChildren()->findOrFail($id);
 
-        // Education values saved before the dropdown existed stay valid until they are changed.
         $data = $request->validate(
             FormRules::childProfile('', [$child->fathers_education, $child->mothers_education]),
             FormRules::messages()

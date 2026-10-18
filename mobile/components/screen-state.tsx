@@ -10,8 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { DarkColors } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 
-/** Shared loading / error / empty placeholders for screens that load API data. */
-
 export function LoadingState({ message = "Loading..." }: { message?: string }) {
   const { isDark } = useAppTheme();
 

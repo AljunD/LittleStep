@@ -17,7 +17,6 @@ use Illuminate\Validation\Rule;
 
 class ProgressController extends Controller
 {
-    /** ECCD Checklist, Child's Record 2: the official 20-page form filled in with this record. */
     public function downloadPdf(ProgressRecord $progressRecord, ChildsRecord2Report $report)
     {
         $teacher = request()->user()?->teacher;
@@ -109,7 +108,6 @@ class ProgressController extends Controller
         return $max;
     }
 
-    /** The round the evaluation form fills: the first unfinished one, capped by what all 7 domains allow. */
     private function resolveCurrentRound(array $statuses, int $maxAllowedRound): int
     {
         $completed = count(array_filter($statuses, fn (string $status) => $status === 'Completed'));
@@ -153,13 +151,6 @@ class ProgressController extends Controller
         return view('progress.index', compact('children'));
     }
 
-    /**
-     * The evaluation a child is on (the highest round with any answers, else 1), its status
-     * (completed / in_progress / pending across the 7 domains), how many domains are complete, and its date.
-     * The Progress Records list and the record page both show this, so they always agree.
-     *
-     * @return array{round: int, status: string, completed: int, date: ?string}
-     */
     private function currentRoundProgress(int $childId, ?ProgressRecord $progressRecord): array
     {
         $roundStats = [
@@ -370,7 +361,6 @@ class ProgressController extends Controller
             return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
         }
 
-        // Same rule as the edit form: a comment needs a ✓ / — answer, otherwise it would be saved as "not present".
         $responseErrors = [];
         foreach ($comments as $itemId => $comment) {
             $answer = $results[$itemId][$currentRound] ?? null;
@@ -387,7 +377,6 @@ class ProgressController extends Controller
         try {
             $progressRecord = $this->getOrCreateProgressRecord($childId, $teacher->id, $assessmentDate);
 
-            // Existing domain rows for this domain + this round
             $existingDomains = Domain::where('progress_record_id', $progressRecord->id)
                 ->where('evaluation_round', $currentRound)
                 ->whereHas('checklistItem', fn ($q) => $q->where('domain', $domainKey))
@@ -503,10 +492,6 @@ class ProgressController extends Controller
         }
     }
 
-    /**
-     * Live score preview for the evaluation form: scores what is on screen for this domain, together with the
-     * round's saved answers for the other domains, without saving anything.
-     */
     public function preview(Request $request, EccdExpertSystem $expert)
     {
         $validated = $request->validate([
@@ -532,7 +517,6 @@ class ProgressController extends Controller
         $progressRecord = $teacher->progressRecords()->where('child_id', $child->id)->first();
         $answers = $progressRecord ? $expert->roundAnswers($progressRecord, $round) : [];
 
-        // This domain's answers come from the form, replacing what was saved.
         foreach (EccdChecklistItem::ofType($domainKey)->pluck('id') as $itemId) {
             $answer = $validated['results'][$itemId][$round] ?? null;
             if ($answer === null || $answer === '') {
@@ -885,7 +869,7 @@ class ProgressController extends Controller
                 $items = [];
 
                 foreach ($masterItems as $master) {
-                    $vals = [null, null, null]; // round 1, 2, 3
+                    $vals = [null, null, null];
                     $commentsByRound = [1 => null, 2 => null, 3 => null];
 
                     for ($r = 1; $r <= 3; $r++) {
@@ -937,7 +921,6 @@ class ProgressController extends Controller
             }
         }
 
-        // "How was this computed?" for every round with an assessment date, plus focus items for the next round.
         $explanations = [];
         foreach ([1, 2, 3] as $round) {
             if (! empty($assessmentDates[$round])) {

@@ -1,8 +1,3 @@
-{{--
-    Page-level success / error banners, rendered once by the layouts (components.app and components.auth).
-    Controllers flash `success` (or Laravel's `status`) and `error`; pages must not render these keys themselves.
-    Validation errors are shown by the validation-errors component instead.
---}}
 @php
     $flashMessages = array_filter([
         'success' => session('success') ?? session('status'),

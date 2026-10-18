@@ -5,7 +5,6 @@
 @section('content')
 <div class="flex flex-col items-center justify-center min-h-[70vh] px-6">
 
-    {{-- Header --}}
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Forgot Password</h1>
         <p class="text-gray-600 text-lg max-w-md mx-auto">
@@ -13,10 +12,8 @@
         </p>
     </div>
 
-    {{-- Success messages come from <x-flash-messages /> in the layout. --}}
     <x-validation-errors class="max-w-md w-full" />
 
-    {{-- Reset Form --}}
     <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full">
         <form method="POST" action="{{ route('auth.password.email') }}" class="space-y-5">
             @csrf

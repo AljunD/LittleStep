@@ -38,7 +38,6 @@ export default function PersonalInformationScreen({
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -70,7 +69,6 @@ export default function PersonalInformationScreen({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Page Heading */}
         <Text style={[styles.pageTitle, isDark && darkStyles.text]}>
           Personal Information
         </Text>
@@ -79,7 +77,6 @@ export default function PersonalInformationScreen({
           View your child's and guardian's information.
         </Text>
 
-        {/* Information Options */}
         <View style={[styles.optionsCard, isDark && darkStyles.card]}>
           <TouchableOpacity
             style={styles.optionRow}
@@ -145,7 +142,6 @@ export default function PersonalInformationScreen({
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View
         style={[
           styles.bottomNav,

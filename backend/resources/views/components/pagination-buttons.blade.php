@@ -1,4 +1,3 @@
-{{-- Previous / Next buttons for a paginator, drawn with <x-button> like every other button. --}}
 @props(['paginator'])
 <div {{ $attributes->class('flex gap-2') }}>
     @if ($paginator->onFirstPage())

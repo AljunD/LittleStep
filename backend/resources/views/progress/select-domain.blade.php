@@ -14,7 +14,6 @@
         </p>
     </div>
 
-    {{-- Reminder --}}
     <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
         <strong>Reminder:</strong>
         You must complete the <strong>1st Evaluation</strong> of all 7 domains before the 2nd Evaluation columns become available.

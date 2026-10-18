@@ -4,7 +4,6 @@ import { DarkColors } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import { displayValue } from "../services/format";
 
-/** A labelled, read-only value box used on the guardian/child detail screens. */
 export function ReadOnlyField({
   label,
   value,

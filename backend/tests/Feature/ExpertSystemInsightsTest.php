@@ -15,10 +15,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
-/**
- * Interactive expert system: explanation ("How was this computed?"), live preview and skills to practise,
- * on the teacher web pages and the guardian API.
- */
 class ExpertSystemInsightsTest extends TestCase
 {
     use RefreshDatabase;
@@ -33,7 +29,6 @@ class ExpertSystemInsightsTest extends TestCase
 
     private ProgressRecord $record;
 
-    /** @var array<string, list<EccdChecklistItem>> two checklist items per domain */
     private array $items = [];
 
     protected function setUp(): void
@@ -276,7 +271,6 @@ class ExpertSystemInsightsTest extends TestCase
             $record->assertSee('href="'.$edit.'#domain-'.$domainKey.'"', false);
         }
 
-        // Every section link lands on a matching anchor of the edit form.
         $form = $this->actingAs($this->teacherUser)->get($edit)->assertOk();
         $form->assertSee('id="assessment-dates"', false)->assertSee('id="observation-notes"', false);
         foreach (array_keys(EccdExpertSystem::DOMAIN_LABELS) as $domainKey) {
@@ -286,7 +280,6 @@ class ExpertSystemInsightsTest extends TestCase
 
     public function test_the_record_page_and_the_list_show_the_same_evaluation_status(): void
     {
-        // Gross Motor fully answered in round 1: 1 of 7 domains complete, so the evaluation is in progress.
         foreach ($this->items['gross_motor'] as $item) {
             $this->answer($item, 'check');
         }

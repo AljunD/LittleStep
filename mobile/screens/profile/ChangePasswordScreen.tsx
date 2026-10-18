@@ -24,14 +24,12 @@ import {
   isUsingDefaultPassword,
 } from "../../services/guardianApi";
 
-/** Same limits as the server (App\Support\FormRules::password()). */
 const MIN_PASSWORD_LENGTH = 12;
 const MAX_PASSWORD_BYTES = 72;
 
 type FieldName = "current_password" | "password" | "password_confirmation";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
-/** Checks the form before it is sent; the server checks again and has the final say. */
 function validatePasswordChange(input: ChangePasswordInput): FieldErrors {
   const errors: FieldErrors = {};
 
@@ -115,7 +113,6 @@ export default function ChangePasswordScreen({ navigation }: any) {
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -250,7 +247,6 @@ type PasswordFieldProps = {
   onSubmitEditing?: () => void;
 };
 
-/** Labelled password input with a show/hide toggle and its validation message. */
 function PasswordField({
   label,
   value,

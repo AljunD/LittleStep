@@ -1,4 +1,3 @@
-/** Formats "YYYY-MM-DD" as a local calendar date (no timezone shift) and full ISO timestamps as-is. */
 export function formatDate(value: string | null | undefined): string | null {
   if (!value) {
     return null;
@@ -26,7 +25,6 @@ export function fullName(person: NamedPerson | null | undefined): string {
     : "";
 }
 
-/** Shows "—" for empty values so every field row has visible content. */
 export function displayValue(value: string | number | null | undefined): string {
   return value === null || value === undefined || String(value).trim() === ""
     ? "—"

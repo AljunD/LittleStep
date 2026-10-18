@@ -1,7 +1,3 @@
-{{--
-    Summary of form validation errors, styled like the error banner of the flash-messages component.
-    Field-level @error messages under inputs can be shown alongside it.
---}}
 @props(['title' => 'Please correct the following errors:'])
 
 @if ($errors->any())

@@ -10,9 +10,7 @@ const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/gif"];
 const PASSWORD_CHANGE_KEY = "littlestep.guardian.must-change-password";
 
 let sessionToken: string | null = null;
-/** The guardian signed in with the default password and has not changed it yet. */
 let mustChangePassword = false;
-/** "Remind me later" was chosen; the reminder stays hidden until the next sign-in. */
 let passwordReminderDismissed = false;
 
 export type GuardianProfile = {
@@ -49,12 +47,10 @@ export type GuardianDashboard = {
         scaled_score: number | null;
       }>;
     }>;
-    /** All 7 domains, most recently updated by the teacher first. */
     recent_activity?: GuardianRecentActivity[];
   };
 };
 
-/** Values the API returns for free-form profile fields (some numeric columns may be null). */
 export type DisplayValue = string | number | null;
 
 export type GuardianAccount = GuardianProfile & {
@@ -99,7 +95,6 @@ export type GuardianContact = {
   } | null;
 };
 
-/** A teacher update to one domain of one child, for the notifications feed. */
 export type GuardianProgressUpdate = {
   child: GuardianChild;
   domain: string;
@@ -122,7 +117,6 @@ export type GuardianDomainItem = {
   id: number;
   item_number: number | null;
   activity: string;
-  /** Keyed by evaluation round (1–3); null when that round has no entry yet. */
   results: Record<number, GuardianItemResult>;
 };
 
@@ -130,7 +124,6 @@ export type GuardianDomainRound = {
   date: string | null;
   raw_score: number | null;
   scaled_score: number | null;
-  /** Technical Manual Table 6 wording for the scaled score, e.g. "Average development". */
   interpretation?: string | null;
   assessed_items: number;
 };
@@ -141,7 +134,6 @@ export type GuardianSkillItem = {
   activity: string;
 };
 
-/** Checklist items marked — (not yet present) in the latest round a domain was assessed. */
 export type GuardianSkillsGroup = {
   label: string;
   round: number;
@@ -158,7 +150,6 @@ export type GuardianExplanationDomain = {
   interpretation: string | null;
 };
 
-/** The expert system's step-by-step account of one evaluation round ("Why this result?"). */
 export type GuardianExplanation = {
   round: number;
   evaluation_date: string | null;
@@ -227,7 +218,6 @@ export class GuardianApiError extends Error {
   constructor(
     message: string,
     public readonly status?: number,
-    /** First validation message per field, from a 422 response (e.g. `{ current_password: "..." }`). */
     public readonly fieldErrors: Record<string, string> = {},
   ) {
     super(message);
@@ -323,7 +313,6 @@ async function readAccessToken(): Promise<string | null> {
   try {
     sessionToken = await SecureStore.getItemAsync(TOKEN_KEY);
   } catch {
-    // The stored entry can become unreadable (e.g. after a reinstall or backup restore).
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     sessionToken = null;
   }
@@ -362,7 +351,6 @@ async function saveAccessToken(token: string, rememberMe: boolean): Promise<void
     try {
       await writeStoredToken(token);
     } catch {
-      // A stale or corrupted entry can block the write; remove it and retry once.
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await writeStoredToken(token);
     }
@@ -384,10 +372,6 @@ export async function clearAccessToken(): Promise<void> {
   }
 }
 
-/**
- * Records whether the guardian still uses the default password. It is kept in secure storage next to the
- * token only when the token itself is remembered, so the reminder survives an app restart.
- */
 async function setMustChangePassword(value: boolean, persist: boolean): Promise<void> {
   mustChangePassword = value;
   passwordReminderDismissed = false;
@@ -405,21 +389,17 @@ async function setMustChangePassword(value: boolean, persist: boolean): Promise<
       await SecureStore.deleteItemAsync(PASSWORD_CHANGE_KEY);
     }
   } catch {
-    // Losing the reminder flag is harmless; the in-memory value still applies to this session.
   }
 }
 
-/** True while this app holds a sign-in token (loaded by restoreGuardianSession() or set by loginGuardian()). */
 export function hasGuardianSession(): boolean {
   return sessionToken !== null;
 }
 
-/** True while the guardian is signed in with the default password. */
 export function isUsingDefaultPassword(): boolean {
   return mustChangePassword;
 }
 
-/** Show the "change your password" reminder (signed in with the default password, not dismissed). */
 export function shouldShowPasswordReminder(): boolean {
   return mustChangePassword && !passwordReminderDismissed;
 }
@@ -571,7 +551,6 @@ export async function loginGuardian(
   return response.guardian;
 }
 
-/** Changes the signed-in guardian's password. The server keeps this session and signs out other devices. */
 export async function changeGuardianPassword(input: ChangePasswordInput): Promise<string> {
   const response = await requestJson<unknown>("/api/v1/guardian/password", {
     method: "PUT",
@@ -615,7 +594,6 @@ const CHILD_DETAIL_FIELDS = [
   "number_of_siblings", "birth_order",
 ] as const;
 
-/** Full guardian profile (contact details and account email) for the Profile screens. */
 export async function getGuardianAccount(): Promise<GuardianAccount> {
   const account = await requestJson<unknown>("/api/v1/guardian/profile");
   if (
@@ -662,7 +640,6 @@ function isGuardianContact(value: unknown): value is GuardianContact {
   );
 }
 
-/** Each of the guardian's children with the teacher handling them (null until assigned). */
 export async function getGuardianContacts(): Promise<GuardianContact[]> {
   const contacts = await requestJson<unknown>("/api/v1/guardian/contacts");
   if (!Array.isArray(contacts) || !contacts.every(isGuardianContact)) {
@@ -672,10 +649,6 @@ export async function getGuardianContacts(): Promise<GuardianContact[]> {
   return contacts;
 }
 
-/**
- * Teacher updates across all of the guardian's children, newest first.
- * Built from each child's dashboard `recent_activity` (there is no separate notifications table).
- */
 export async function getGuardianProgressUpdates(): Promise<GuardianProgressUpdate[]> {
   const children = await getGuardianChildren();
   const dashboards = await Promise.all(children.map((child) => getGuardianDashboard(child.id)));
@@ -692,7 +665,6 @@ export async function getGuardianProgressUpdates(): Promise<GuardianProgressUpda
     .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
-/** True when the server rejected the session (token expired, revoked, or account no longer allowed). */
 export function isSessionEndedError(error: unknown): boolean {
   return error instanceof GuardianApiError && (error.status === 401 || error.status === 403);
 }
@@ -814,7 +786,6 @@ function isGuardianExplanation(value: unknown): value is GuardianExplanation {
     && isStringArray(value.warnings);
 }
 
-/** "Why this result?": how each evaluation round was scored, plus skills to practise at home. */
 export async function getGuardianChildInsights(childId: number): Promise<GuardianInsights> {
   const insights = await requestJson<unknown>(`/api/v1/guardian/children/${childId}/insights`);
   if (
@@ -857,15 +828,12 @@ export async function getGuardianChildPhotoSource(
     throw new GuardianApiError("The child photo URL is outside the trusted server.");
   }
 
-  // Fetch the bytes here so the bearer token never reaches the image component or its
-  // cache, and so it works on web, where <img> cannot send an Authorization header.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(imageUrl, {
       headers: {
-        // JSON first so auth failures return 401 JSON instead of a login redirect.
         Accept: "application/json, image/jpeg, image/png, image/gif",
         Authorization: `Bearer ${token}`,
       },

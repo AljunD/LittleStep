@@ -39,7 +39,6 @@ async function fetchStudentData(): Promise<{
       return null;
     }
 
-    // A photo that fails to load falls back to the placeholder instead of failing the list.
     const photoSource = await getGuardianChildPhotoSource(child.photo_url).catch(() => null);
     return photoSource ? [child.id, photoSource] as const : null;
   }));
@@ -60,7 +59,6 @@ export default function SelectStudentScreen({ navigation }: any) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPasswordReminder, setShowPasswordReminder] = useState(false);
 
-  // Signed in with the default password: remind the guardian to change it (re-checked when returning here).
   useFocusEffect(
     useCallback(() => {
       setShowPasswordReminder(shouldShowPasswordReminder());
@@ -133,13 +131,11 @@ export default function SelectStudentScreen({ navigation }: any) {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.skySpace} />
 
-          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.portalLabel}>WELCOME!</Text>
             <Text style={styles.title}>Who’s learning today?</Text>
           </View>
 
-          {/* STUDENT CARDS */}
           <ScrollView
             style={styles.studentList}
             contentContainerStyle={[
@@ -291,7 +287,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 18,
     marginBottom: 24,
-    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
     ...Platform.select({
       web: { boxShadow: "0px 5px 8px rgba(0, 0, 0, 0.16)" },
       default: {

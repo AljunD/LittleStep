@@ -1,4 +1,3 @@
-{{-- resources/views/progress/partials/domain-table.blade.php --}}
 <div class="bg-white border-2 border-black overflow-hidden rounded-sm">
     <div class="overflow-x-auto">
         <table class="min-w-full border-collapse">

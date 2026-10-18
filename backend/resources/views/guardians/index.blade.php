@@ -12,8 +12,6 @@
         <x-button :href="route('guardians.create')" icon="plus">Add Guardian</x-button>
     </div>
 
-    {{-- Success / error banners come from <x-flash-messages /> in the layout. --}}
-
     <div id="search-container" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div class="relative flex-1 max-w-md">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">🔍</span>

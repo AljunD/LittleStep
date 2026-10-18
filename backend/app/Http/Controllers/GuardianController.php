@@ -41,7 +41,6 @@ class GuardianController extends Controller
         ], FormRules::messages());
     }
 
-    /** Guardian profile fields shared by registration (all required) and editing (blank keeps the current value). */
     private function guardianRules(bool $required): array
     {
         return [
@@ -87,7 +86,6 @@ class GuardianController extends Controller
         $validated = $request->validate(array_merge(
             [
                 'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-                // Optional: leaving it empty gives the account the configured default password.
                 'password' => FormRules::password(false),
             ],
             $this->guardianRules(true),
@@ -159,7 +157,6 @@ class GuardianController extends Controller
             return $user;
         });
 
-        // Sent after the commit so a rolled-back registration never emails a verification link.
         $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
 
         $message = 'Guardian and child registered successfully.';
@@ -219,7 +216,6 @@ class GuardianController extends Controller
             'password' => FormRules::password(false),
         ]), $this->validationMessages());
 
-        // Blank profile fields keep their current value; the address is replaced by what was entered.
         $profile = [];
         foreach (['first_name', 'middle_name', 'last_name', 'sex', 'contact_number', 'relationship_to_child'] as $field) {
             $profile[$field] = ($data[$field] ?? null) ?? $guardian->{$field};
@@ -237,7 +233,6 @@ class GuardianController extends Controller
             }
 
             if ($emailChanged) {
-                // A new address must be confirmed before the guardian can sign in with it again.
                 $user->forceFill(['email' => $data['email'], 'email_verified_at' => null])->save();
             }
 
@@ -268,7 +263,6 @@ class GuardianController extends Controller
             ->with('error', $emailChanged && ! $verificationSent ? SafeMail::VERIFICATION_FAILED : null);
     }
 
-    /** Sends a new verification link to a guardian who has not verified their email yet. */
     public function resendVerification(Request $request, $id)
     {
         $guardian = $this->currentTeacher($request)->ownedGuardians()->with('user')->findOrFail($id);
@@ -390,7 +384,6 @@ class GuardianController extends Controller
             recordLog('deleted', 'Child', $child->id, 'Child archived: '.$child->first_name.' '.$child->last_name);
         }
 
-        // Once the last active child is archived the guardian leaves ownedGuardians(), so return to the list instead.
         $hasActiveChildren = $teacher->ownedChildren()->where('guardian_id', $guardian->id)->exists();
         $redirect = $hasActiveChildren
             ? redirect()->route('guardians.archive-child', $guardian->id)

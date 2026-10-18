@@ -9,12 +9,6 @@ use Illuminate\Support\Facades\URL;
 
 class CustomVerifyEmail extends BaseVerifyEmail
 {
-    /**
-     * Build the custom verification email message.
-     *
-     * @param  string  $url
-     * @return MailMessage
-     */
     protected function buildMailMessage($url)
     {
         return (new MailMessage)
@@ -24,16 +18,8 @@ class CustomVerifyEmail extends BaseVerifyEmail
             ]);
     }
 
-    /**
-     * Generate the verification URL using the correct route.
-     *
-     * @param  mixed  $notifiable
-     * @return string
-     */
     protected function verificationUrl($notifiable)
     {
-        // The link is opened on another device (usually the guardian's phone), so it is built from APP_URL
-        // instead of whatever address the teacher's browser used (e.g. localhost, which a phone can't reach).
         URL::forceRootUrl(rtrim((string) config('app.url'), '/'));
 
         try {

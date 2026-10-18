@@ -25,10 +25,6 @@ const ROUND_LABELS: Record<number, string> = {
   3: "3rd Eval",
 };
 
-/**
- * "Why this result?": the expert system's step-by-step scoring for each evaluation round,
- * plus checklist skills to practise at home. Read-only.
- */
 export default function InsightsScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -84,7 +80,6 @@ export default function InsightsScreen({ navigation, route }: any) {
 
     return (
       <>
-        {/* ROUND SELECTOR */}
         {rounds.length > 1 && (
           <View style={[styles.roundTabs, isDark && darkStyles.card]} accessibilityRole="tablist">
             {rounds.map((entry) => {
@@ -111,7 +106,6 @@ export default function InsightsScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* SUMMARY */}
         <View style={[styles.summaryCard, isDark && darkStyles.card]}>
           <Text style={[styles.summaryLabel, isDark && darkStyles.mutedText]}>
             {ROUND_LABELS[explanation.round].replace(" Eval", " evaluation")}
@@ -130,7 +124,6 @@ export default function InsightsScreen({ navigation, route }: any) {
           )}
         </View>
 
-        {/* NOTES */}
         {explanation.warnings.length > 0 && (
           <View style={[styles.noteCard, isDark && darkStyles.noteCard]}>
             <Ionicons name="information-circle-outline" size={20} color={isDark ? DarkColors.accent : "#8A6D1F"} />
@@ -142,7 +135,6 @@ export default function InsightsScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* STEPS */}
         <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>How it was computed</Text>
         <View style={[styles.card, isDark && darkStyles.card]}>
           {explanation.steps.map((step, index) => (
@@ -155,7 +147,6 @@ export default function InsightsScreen({ navigation, route }: any) {
           ))}
         </View>
 
-        {/* AREAS */}
         <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Development areas</Text>
         <View style={[styles.card, styles.cardFlush, isDark && darkStyles.card]}>
           {ECCD_DOMAINS.map((domain, index) => {
@@ -193,7 +184,6 @@ export default function InsightsScreen({ navigation, route }: any) {
           })}
         </View>
 
-        {/* SKILLS TO PRACTISE */}
         <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Things to try at home</Text>
         {skillGroups.length === 0 ? (
           <View style={[styles.card, isDark && darkStyles.card]}>
@@ -244,7 +234,6 @@ export default function InsightsScreen({ navigation, route }: any) {
         backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
-      {/* Header */}
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -282,7 +271,6 @@ export default function InsightsScreen({ navigation, route }: any) {
         {renderBody()}
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <View style={[styles.bottomNav, isDark && darkStyles.bottomNav, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TouchableOpacity style={styles.navItem} activeOpacity={0.7} onPress={() => navigation.navigate("Dashboard", { student })}>
           <Ionicons name="home" size={23} color={isDark ? DarkColors.accent : "#365C55"} />

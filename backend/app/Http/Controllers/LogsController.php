@@ -29,7 +29,6 @@ class LogsController extends Controller
             $query->where('entity_type', $filters['entity_type']);
         }
 
-        // Either date works on its own (previously both were required for any date filtering).
         if (! empty($filters['from_date'])) {
             $query->whereDate('created_at', '>=', $filters['from_date']);
         }
@@ -39,8 +38,6 @@ class LogsController extends Controller
         }
 
         if (! empty($filters['search'])) {
-            // Treat % and _ typed by the user as literal characters, not LIKE wildcards.
-            // "!" is the escape character because MySQL and SQLite both accept it in ESCAPE.
             $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $filters['search']);
             $query->whereRaw("details LIKE ? ESCAPE '!'", ['%'.$search.'%']);
         }

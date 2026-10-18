@@ -66,7 +66,6 @@ Route::get('/email/confirmation', function () {
 Route::get('/guardian/email/confirmation', function () {
     return view('emails.guardian-verified', [
         'appLoginUrl' => GuardianAppLink::verifiedLoginUrl(),
-        // Open the app automatically only right after verifying (not on reloads or later visits).
         'openAppAutomatically' => session()->has('status'),
     ]);
 })->name('guardian.verification.confirmation');
@@ -98,8 +97,6 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
 
 Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
 
-    // Children are registered through a guardian (guardians.create-child / guardians.store-child),
-    // so there is no standalone create form or store endpoint.
     Route::resource('children', ChildrenController::class)->except(['create', 'store']);
     Route::get('/children/{id}/photo', [ChildrenController::class, 'photo'])->name('children.photo');
 });
@@ -145,7 +142,6 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
     Route::post('/store', [ProgressController::class, 'store'])
         ->name('progress.store');
 
-    // Live score preview on the evaluation form (read-only; nothing is saved).
     Route::post('/preview', [ProgressController::class, 'preview'])
         ->middleware('throttle:120,1')
         ->name('progress.preview');

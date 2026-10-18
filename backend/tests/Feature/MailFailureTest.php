@@ -17,10 +17,6 @@ use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Tests\TestCase;
 
-/**
- * An unreachable mail server (no internet, wrong SMTP settings) must not turn a saved change into a 500 error:
- * the change is kept, the teacher sees a warning, and the email can be sent again later.
- */
 class MailFailureTest extends TestCase
 {
     use RefreshDatabase;
@@ -74,7 +70,6 @@ class MailFailureTest extends TestCase
         ]);
     }
 
-    /** Every email fails the way it does when smtp.gmail.com cannot be resolved. */
     private function breakTheMailServer(): void
     {
         Mail::extend('unreachable', fn () => new class extends AbstractTransport
@@ -131,17 +126,14 @@ class MailFailureTest extends TestCase
         $this->breakTheMailServer();
         $this->updateGuardian('new@example.com');
 
-        // The ⋮ menu offers "Resend Verification Email" while the address is unverified.
         $this->actingAs($this->teacherUser)->get(route('guardians.index'))
             ->assertSee(route('guardians.resend-verification', $this->guardian->id), false);
 
-        // Still down: a warning, not a 500.
         $this->actingAs($this->teacherUser)->followingRedirects()
             ->post(route('guardians.resend-verification', $this->guardian->id))
             ->assertOk()
             ->assertSee('The verification email could not be sent');
 
-        // Back up: the link is sent.
         Notification::fake();
         $this->actingAs($this->teacherUser)->followingRedirects()
             ->post(route('guardians.resend-verification', $this->guardian->id))
@@ -150,7 +142,6 @@ class MailFailureTest extends TestCase
         Notification::assertSentTo($this->guardian->user, CustomVerifyEmail::class);
         $this->assertDatabaseHas('logs', ['action' => 'verification_resent', 'entity_id' => $this->guardian->id]);
 
-        // Verified guardians don't get the option.
         $this->guardian->user->markEmailAsVerified();
         $this->actingAs($this->teacherUser)->get(route('guardians.index'))
             ->assertDontSee(route('guardians.resend-verification', $this->guardian->id), false);

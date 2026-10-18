@@ -6,16 +6,10 @@ use Closure;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-/**
- * Validation rules shared by the teacher web forms, so the same field is
- * accepted or rejected the same way on every page.
- */
 final class FormRules
 {
-    /** Letters (including ñ and accents), spaces, periods, apostrophes and hyphens, e.g. "Ma. Peña-O'Neil". */
     public const NAME_PATTERN = "/^[\pL\pM\s.'-]+$/u";
 
-    /** Philippine mobile number: 11 digits starting with 09. */
     public const CONTACT_NUMBER_PATTERN = '/^09\d{9}$/';
 
     public const SEXES = ['Male', 'Female'];
@@ -34,7 +28,6 @@ final class FormRules
         return [$required ? 'required' : 'nullable', 'string', 'regex:'.self::CONTACT_NUMBER_PATTERN];
     }
 
-    /** 12–72 characters; bcrypt silently ignores anything past 72 bytes, so longer input is rejected. */
     public static function password(bool $required = true): array
     {
         return [
@@ -50,12 +43,6 @@ final class FormRules
         ];
     }
 
-    /**
-     * Child profile fields. Guardian registration prefixes the identity, address and
-     * handedness fields with "child_"; the family background fields are never prefixed.
-     *
-     * @param  array<int, string|null>  $currentEducation  values already stored on the child, kept valid when editing
-     */
     public static function childProfile(string $prefix = '', array $currentEducation = []): array
     {
         $educationLevels = array_values(array_unique(array_filter(
@@ -90,7 +77,6 @@ final class FormRules
         ];
     }
 
-    /** Joins the address fields the forms split into barangay / municipality / province / region. */
     public static function joinAddress(array $data, string $prefix = ''): string
     {
         return implode(', ', array_filter([
@@ -105,7 +91,6 @@ final class FormRules
     {
         $nameMessage = 'The :attribute may only contain letters, spaces, periods, apostrophes and hyphens.';
 
-        // Laravel uses the first matching key, so the "*.regex" fallback (names) stays last.
         return [
             'contact_number.regex' => 'The contact number must be exactly 11 digits starting with 09 (e.g., 09171234567).',
             'date_of_birth.before_or_equal' => 'The date of birth cannot be in the future.',

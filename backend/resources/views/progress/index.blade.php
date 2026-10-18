@@ -4,13 +4,11 @@
 
 @section('content')
 <div class="space-y-8">
-    <!-- Header -->
     <div>
         <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Progress Records</h1>
         <p class="text-sm text-gray-500">View all child progress evaluations from the database.</p>
     </div>
 
-    <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -45,7 +43,6 @@
                                 @endif
                             </td>
 
-                            {{-- Just the number 1, 2 or 3 --}}
                             <td class="px-6 py-5 text-sm font-semibold text-gray-800">
                                 {{ $child->current_evaluation_round ?? '—' }}
                             </td>
@@ -54,7 +51,6 @@
                                 {{ $child->current_round_date ?? '—' }}
                             </td>
 
-                            {{-- Same status and colours as the progress record page --}}
                             <td class="px-6 py-5 text-sm">
                                 <x-progress-status :status="$child->current_round_status" :completed="$child->completed_domains_count" />
                             </td>
@@ -81,7 +77,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         @if($children->hasPages())
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm">
                 <p class="text-gray-500">

@@ -14,12 +14,10 @@ use Illuminate\Support\Facades\Storage;
 
 class GuardianController extends Controller
 {
-    /** The 7 official ECCD domains, in Child's Record 2 order (defined once in the expert system). */
     public const DOMAIN_LABELS = EccdExpertSystem::DOMAIN_LABELS;
 
     private const ROUNDS = [1, 2, 3];
 
-    // GET /guardian/profile
     public function profile(Request $request)
     {
         $guardian = $request->user()->guardian;
@@ -33,13 +31,10 @@ class GuardianController extends Controller
             'sex' => $guardian->sex,
             'contact_number' => $guardian->contact_number,
             'relationship_to_child' => $guardian->relationship_to_child,
-            // Barangay, municipality, province and region are stored joined in `address`.
             'address' => $guardian->address,
         ], 200);
     }
 
-    // GET /guardian/contacts
-    // The teacher handling each of the guardian's children: name and contact number only.
     public function contacts(Request $request)
     {
         $children = $request->user()->guardian->children()
@@ -66,7 +61,6 @@ class GuardianController extends Controller
         })->values(), 200);
     }
 
-    // GET /guardian/children
     public function children(Request $request)
     {
         $children = $request->user()->guardian->children()
@@ -86,7 +80,6 @@ class GuardianController extends Controller
         return response()->json($children, 200);
     }
 
-    // GET /guardian/children/{id}/dashboard
     public function dashboard(Request $request, int $id, EccdExpertSystem $expert)
     {
         $guardian = $request->user()->guardian;
@@ -123,7 +116,6 @@ class GuardianController extends Controller
         $domainRows = $progressRecord ? $this->domainRows($progressRecord) : collect();
         $lastUpdated = $this->lastUpdatedByDomain($domainRows);
 
-        // Most recently updated domain first; domains with no entries keep the official order.
         $recentActivity = array_map(
             fn (string $domainKey) => [
                 'domain' => $domainKey,
@@ -157,7 +149,6 @@ class GuardianController extends Controller
         ]);
     }
 
-    // GET /guardian/children/{id}/domains/{domain}
     public function domain(Request $request, int $id, string $domain, EccdExpertSystem $expert)
     {
         abort_unless(array_key_exists($domain, self::DOMAIN_LABELS), 404);
@@ -172,7 +163,6 @@ class GuardianController extends Controller
             ? $this->domainRows($progressRecord)->filter(fn ($row) => $row->checklistItem?->domain === $domain)
             : collect();
 
-        // [checklist item id][round] => recorded result
         $results = [];
         foreach ($domainRows as $row) {
             $result = $row->results->first();
@@ -230,15 +220,10 @@ class GuardianController extends Controller
                 'rounds' => $rounds,
             ],
             'items' => $items,
-            // Items marked — in the latest round this domain was assessed ("Things to try at home").
             'skills_to_practice' => $progressRecord ? ($expert->skillsToPractice($progressRecord)[$domain] ?? null) : null,
         ]);
     }
 
-    /**
-     * "Why this result?": the expert system's step-by-step explanation for every round with an
-     * assessment date, plus the skills to practise at home. Read-only and scoped to the guardian's child.
-     */
     public function insights(Request $request, int $id, EccdExpertSystem $expert)
     {
         $guardian = $request->user()->guardian;
@@ -293,7 +278,6 @@ class GuardianController extends Controller
         return $latestRound;
     }
 
-    /** Checklist entries (all rounds) of a progress record, with their item and result. */
     private function domainRows(ProgressRecord $progressRecord): Collection
     {
         return $progressRecord->domains()
@@ -301,11 +285,6 @@ class GuardianController extends Controller
             ->get();
     }
 
-    /**
-     * Latest time the teacher created or changed an entry in each domain.
-     *
-     * @return array<string, Carbon|null>
-     */
     private function lastUpdatedByDomain(Collection $domainRows): array
     {
         $lastUpdated = array_fill_keys(array_keys(self::DOMAIN_LABELS), null);
@@ -326,13 +305,11 @@ class GuardianController extends Controller
         return $lastUpdated;
     }
 
-    // GET /guardian/children/{id}
     public function showChild(Request $request, $id)
     {
         $child = Child::where('guardian_id', $request->user()->guardian->id)
             ->findOrFail($id);
 
-        // Explicit fields only: never expose storage paths or internal columns.
         return response()->json([
             'id' => $child->id,
             'first_name' => $child->first_name,
@@ -380,7 +357,6 @@ class GuardianController extends Controller
         ], 'inline');
     }
 
-    // GET /guardian/views
     public function views(Request $request)
     {
         $guardian = $request->user()->guardian;
@@ -389,7 +365,6 @@ class GuardianController extends Controller
             return response()->json(['error' => 'Guardian profile not found'], 404);
         }
 
-        // Load guardian with related children and their progress records/domains/scores
         $guardian->load([
             'children.progressRecords.teacher',
             'children.progressRecords.domains.results',
