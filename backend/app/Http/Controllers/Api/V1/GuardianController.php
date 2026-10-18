@@ -14,16 +14,8 @@ use Illuminate\Support\Facades\Storage;
 
 class GuardianController extends Controller
 {
-    /** The 7 official ECCD domains, in Child's Record 2 order. */
-    public const DOMAIN_LABELS = [
-        'gross_motor' => 'Gross Motor',
-        'fine_motor' => 'Fine Motor',
-        'self_help' => 'Self-Help',
-        'receptive_language' => 'Receptive Language',
-        'expressive_language' => 'Expressive Language',
-        'cognitive' => 'Cognitive',
-        'social_emotional' => 'Social-Emotional',
-    ];
+    /** The 7 official ECCD domains, in Child's Record 2 order (defined once in the expert system). */
+    public const DOMAIN_LABELS = EccdExpertSystem::DOMAIN_LABELS;
 
     private const ROUNDS = [1, 2, 3];
 
@@ -73,7 +65,6 @@ class GuardianController extends Controller
             ];
         })->values(), 200);
     }
-
 
     // GET /guardian/children
     public function children(Request $request)
@@ -211,10 +202,12 @@ class GuardianController extends Controller
         foreach (self::ROUNDS as $round) {
             $computed = $progressRecord ? $expert->compute($progressRecord, $round) : null;
 
+            $scaledScore = $computed['scaled_scores'][$domain] ?? null;
             $rounds[$round] = [
                 'date' => $this->roundDate($progressRecord, $round),
                 'raw_score' => $computed['raw_scores'][$domain] ?? null,
-                'scaled_score' => $computed['scaled_scores'][$domain] ?? null,
+                'scaled_score' => $scaledScore,
+                'interpretation' => $scaledScore === null ? null : $expert->interpretScaledScore($scaledScore),
                 'assessed_items' => $items->filter(fn (array $item) => $item['results'][$round] !== null)->count(),
             ];
         }
@@ -237,6 +230,40 @@ class GuardianController extends Controller
                 'rounds' => $rounds,
             ],
             'items' => $items,
+            // Items marked — in the latest round this domain was assessed ("Things to try at home").
+            'skills_to_practice' => $progressRecord ? ($expert->skillsToPractice($progressRecord)[$domain] ?? null) : null,
+        ]);
+    }
+
+    /**
+     * "Why this result?": the expert system's step-by-step explanation for every round with an
+     * assessment date, plus the skills to practise at home. Read-only and scoped to the guardian's child.
+     */
+    public function insights(Request $request, int $id, EccdExpertSystem $expert)
+    {
+        $guardian = $request->user()->guardian;
+        abort_unless($guardian, 404);
+
+        $child = $guardian->children()->findOrFail($id);
+        $progressRecord = $this->latestProgressRecord($child);
+
+        $rounds = [];
+        foreach (self::ROUNDS as $round) {
+            if ($progressRecord && $this->roundDate($progressRecord, $round) !== null) {
+                $rounds[] = ['round' => $round] + $expert->explainRound($progressRecord, $round);
+            }
+        }
+
+        return response()->json([
+            'child' => [
+                'id' => $child->id,
+                'first_name' => $child->first_name,
+                'middle_name' => $child->middle_name,
+                'last_name' => $child->last_name,
+            ],
+            'latest_round' => $this->latestRound($progressRecord),
+            'rounds' => $rounds,
+            'skills_to_practice' => $progressRecord ? (object) $expert->skillsToPractice($progressRecord) : (object) [],
         ]);
     }
 

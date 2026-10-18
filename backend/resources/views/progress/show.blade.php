@@ -384,6 +384,8 @@
                 </table>
             </div>
 
+            @include('progress.partials.expert-explanation')
+
             <div class="mt-16">
                 <h2 class="text-4xl font-black text-[#001f5b] text-center italic mb-2">Scaled Scores</h2>
                 <p class="text-xs text-gray-700 mb-6 text-center">Mark an <strong>x</strong> on the dot corresponding to the Scaled Score for each domain and connect the <strong>x's</strong>. Write the child's age on each evaluation.</p>

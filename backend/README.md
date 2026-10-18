@@ -73,6 +73,7 @@ app/
   helpers.php                recordLog() audit helper (autoloaded)
 database/migrations/         Single migration defining all tables
 resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
+resources/pdf/childs-record-2/  Official Child's Record 2 pages used as the PDF background
 ```
 
 ## Key concepts
@@ -82,6 +83,27 @@ resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
 **Ownership.** A teacher owns a child through that child's progress record (`progress_records.teacher_id`). Scope teacher queries with `Teacher::ownedChildren()` / `ownedGuardians()`. Scope guardian API queries with `$user->guardian->children()`.
 
 **ECCD scoring.** `EccdExpertSystem` takes the checklist results for a round across 7 domains (gross motor, fine motor, self-help, receptive language, expressive language, cognitive, social-emotional). From the child's age at the test date it computes raw, scaled, and standard scores and an interpretation, then stores them in `domain_scores`.
+
+**Interactive expert system.** The same engine also explains and previews its results for both teachers and guardians. The scoring rules, age bands and interpretation codes are unchanged.
+
+- **The explanation:** `explain()` / `explainRound()` give a step-by-step account of a round:
+  - age in 30-day months, then the age band
+  - each domain's answered items, raw score, scaled score and Table 6 interpretation
+  - the sum of scaled scores and the standard score
+  - warnings, e.g. unanswered items, or an age outside 3y1m–5y11m (which leaves the scaled scores blank)
+- **Where it shows:**
+  - **Teachers:** the progress record page has a **How Was This Computed?** section for every round with a date.
+  - **Guardians:** `GET /guardian/children/{id}/insights`, shown on the mobile **Why This Result?** screen.
+- **Skills to practise:** `skillsToPractice()` lists the official checklist items marked — in the latest round of each domain.
+  - **Teachers:** shown as **Focus Items for the Next Round**.
+  - **Guardians:** shown as "Things to try at home".
+- **Live preview:** while a teacher marks ✓/— on the evaluation form, `POST /progress/preview` re-scores the page without saving anything.
+  - The page shows the domain's answered items, raw score, scaled score and interpretation, the standard score once all 7 domains are scored, and the warnings.
+  - The preview goes through `computeFromAnswers()`, the same code that scores saved results, so it always matches what saving produces.
+  - The route is teacher-only, scoped to the teacher's own children, and limited to 120 requests per minute.
+  - New Tailwind classes need `npm run build`.
+
+Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Suggest slight delay" or "Average development".
 
 **Archiving.** Most models use soft deletes. "Archive" in the UI soft-deletes a record, and `/archive` restores it. The Archives page has Guardians and Children tabs: `?tab=children` opens the children list. Pagination links and child restores keep the right tab open.
 
@@ -120,6 +142,23 @@ resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
 
 **Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
 
+**PDF download (Child's Record 2).** On a progress record, **Download PDF Report** (`/progress/{id}/download-pdf`) produces the official ECCD Checklist, Child's Record 2: 20 US Letter pages, filled in.
+
+- **How it's built:**
+  - Every page uses the official form as its background (`resources/pdf/childs-record-2/page-01.jpg` … `page-20.jpg`, rendered at 150 dpi from the official Child's Record 2 PDF).
+  - `App\Services\ChildsRecord2Report` places the record's data at positions measured on that form, in PDF points.
+  - The view `progress/pdf/report` only paints what the service returns.
+- **What gets filled in, page by page:**
+  - **Page 1:** the Sociodemographic Profile, with the handedness and studying boxes ticked.
+  - **Page 2:** date tested, date of birth and the age in 30-day months for each assessment, plus the examiner.
+  - **Pages 4–16:** ✔ / — in the 1st/2nd/3rd Eval columns of every checklist item, the teacher's comments, and each domain's TOTAL SCORE.
+  - **Page 17:** the examiner's notes, written on the ruled lines.
+  - **Page 18:** raw and scaled scores, sum, standard score and interpretation.
+  - **Pages 19–20:** the scaled-score and standard-score charts, with each score marked × and the marks connected.
+- **Changing the layout:** the measured positions are constants at the top of the service. If the template images are ever replaced, re-measure them.
+- **File size:** a download is about 4 MB.
+- **Ownership:** only the record's teacher can download it.
+
 **Audit log.** Teacher actions call `recordLog($action, $entityType, $entityId, $details)`. Entries are listed at `/logs`.
 
 **Security.**
@@ -141,5 +180,6 @@ All endpoints are under `/api/v1`. Everything except login requires `Authorizati
 | GET    | `/guardian/children`                      | Guardian's children                      |
 | GET    | `/guardian/children/{id}`                 | Child details: name, sex, birthday, address, handedness, schooling, parents' name/age/occupation/education, siblings and birth order, and `photo_url` (explicit fields only, no storage paths) |
 | GET    | `/guardian/children/{id}/dashboard`       | Progress summary, raw/scaled scores for all 7 domains per round, and `recent_activity` (domains ordered by when the teacher last updated them, newest first) |
-| GET    | `/guardian/children/{id}/domains/{domain}`| One domain's checklist: each item's ✓/— result and teacher comment per round, plus raw/scaled score and assessed-item count per round. `{domain}` is one of the 7 domain keys (`gross_motor`, `fine_motor`, `self_help`, `receptive_language`, `expressive_language`, `cognitive`, `social_emotional`); anything else returns 404 |
+| GET    | `/guardian/children/{id}/domains/{domain}`| One domain's checklist: each item's ✓/— result and teacher comment per round, plus raw/scaled score, scaled-score `interpretation` and assessed-item count per round, and `skills_to_practice` (items marked — in the latest round, or `null`). `{domain}` is one of the 7 domain keys (`gross_motor`, `fine_motor`, `self_help`, `receptive_language`, `expressive_language`, `cognitive`, `social_emotional`); anything else returns 404 |
 | GET    | `/guardian/children/{id}/photo`           | Child photo (authenticated image)        |
+| GET    | `/guardian/children/{id}/insights`        | "Why this result?": for every round with an assessment date, the expert system's explanation (age and band, per-domain answered/raw/scaled/interpretation, sum, standard score, steps, warnings), plus `skills_to_practice` per domain. Empty `rounds` until a progress record exists |

@@ -74,11 +74,22 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 - **Development areas (Domain screen):** tapping a Recent Activity card on the Dashboard, or any of the 7 development areas on the ECCD Checklist screen, opens `screens/DomainScreen.tsx`. It shows:
   - a round selector (1st/2nd/3rd evaluation, with dates)
   - the raw score, scaled score, and how many skills were assessed
+  - the interpretation of the scaled score (e.g. "Average development"), with a "Why this result?" link
   - every checklist item with ✓ (present), — (not present), or a clock icon (not yet assessed), plus the teacher's comment
+  - **Things to try at home:** the items marked — in the latest evaluation of this area
   - a "No results yet" panel when the teacher hasn't recorded that round
   - loading and error-with-retry states, and pull-to-refresh
 
   Data comes from `getGuardianChildDomain()` (`GET /guardian/children/{id}/domains/{domain}`). Domain names, icons and colors live in `constants/eccd-domains.ts` (official Child's Record 2 order).
+- **Why this result? (Insights screen):** the Dashboard's **Latest result** card and the Domain screen's "Why this result?" link open `screens/InsightsScreen.tsx`. For each evaluation round with a date, it shows:
+  - the standard score and overall interpretation, or how many of the 7 areas are scored so far
+  - notes, e.g. items not answered yet, or an age outside the 3y1m–5y11m range
+  - the numbered scoring steps: age in 30-day months, age band, raw score, scaled score, sum, standard score
+  - each area's ✓ count, scaled score and interpretation (tap an area to open it)
+  - "Things to try at home" for every area
+  - a note that results suggest development and are not a diagnosis
+
+  Data comes from `getGuardianChildInsights()` (`GET /guardian/children/{id}/insights`). The text is produced by the backend expert system, so it always matches what the teacher sees. The screen is read-only.
 - **Recent Activities:** the Dashboard shows the 3 domains the teacher updated most recently, newest first, using `recent_activity` from the dashboard API. Until the teacher records anything, it shows the first three official domains. The Dashboard reloads whenever it comes back into view and supports pull-to-refresh, so a new teacher entry moves that domain to the front.
 - **Profile screens** (`screens/profile/`):
   - **Profile:** shows the signed-in guardian's name, email and relationship.

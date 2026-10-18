@@ -63,6 +63,43 @@
             @enderror
         </div>
 
+        @if ($child)
+            {{-- Live score preview: EccdExpertSystem scores the marks on screen (nothing is saved until "Save"). --}}
+            <div id="live-preview" data-preview-url="{{ route('progress.preview') }}" aria-live="polite"
+                 class="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-blue-900">Live score preview · {{ $domainName }}</h2>
+                    <span id="preview-status" class="text-xs font-medium text-blue-700">Loading preview...</span>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+                    @foreach ([
+                        'preview-answered' => 'Items answered',
+                        'preview-raw' => 'Raw score (✓)',
+                        'preview-scaled' => 'Scaled score',
+                        'preview-standard' => 'Standard score',
+                    ] as $previewId => $previewLabel)
+                        <div class="rounded-lg bg-white p-3 shadow-sm">
+                            <p id="{{ $previewId }}" class="text-2xl font-black text-gray-900">—</p>
+                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ $previewLabel }}</p>
+                        </div>
+                    @endforeach
+                    <div class="col-span-2 md:col-span-1 rounded-lg bg-white p-3 shadow-sm flex flex-col justify-center">
+                        <p id="preview-interpretation" class="text-sm font-bold text-[#001f5b]">—</p>
+                        <p class="text-[11px] font-semibold uppercase text-gray-500">Domain interpretation</p>
+                    </div>
+                </div>
+
+                <p id="preview-overall" class="mt-4 text-sm text-blue-900"></p>
+                <ul id="preview-warnings" class="hidden mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 space-y-1"></ul>
+
+                <details class="mt-3">
+                    <summary class="cursor-pointer text-sm font-semibold text-blue-800">How is this computed?</summary>
+                    <ol id="preview-steps" class="mt-2 space-y-1 text-sm text-gray-700 list-decimal list-inside"></ol>
+                </details>
+            </div>
+        @endif
+
         <div class="bg-white shadow-md border border-gray-300 overflow-hidden rounded-md">
             <div class="overflow-x-auto">
                 <table class="min-w-full border-collapse">
@@ -239,5 +276,77 @@
     });
 
     document.addEventListener('DOMContentLoaded', updateScores);
+
+    // Live score preview: re-scores the marks on screen through progress.preview (read-only).
+    (() => {
+        const panel = document.getElementById('live-preview');
+        const form = document.getElementById('evaluation-form');
+        if (!panel || !form) return;
+
+        const savedHint = 'Not saved yet — updates as you mark items.';
+        const setText = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value ?? '—';
+        };
+        const renderList = (id, lines) => {
+            const list = document.getElementById(id);
+            if (!list) return;
+            list.replaceChildren(...lines.map((line) => {
+                const item = document.createElement('li');
+                item.textContent = line;
+                return item;
+            }));
+            if (id === 'preview-warnings') list.classList.toggle('hidden', lines.length === 0);
+        };
+
+        let timer = null;
+        let controller = null;
+
+        const refreshPreview = () => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                controller?.abort();
+                controller = new AbortController();
+                setText('preview-status', 'Updating...');
+
+                try {
+                    const response = await fetch(panel.dataset.previewUrl, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin',
+                        signal: controller.signal,
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        setText('preview-status', data.message ?? 'Preview unavailable.');
+                        return;
+                    }
+
+                    const domain = data.domain;
+                    const explanation = data.explanation;
+                    setText('preview-answered', `${domain.items_answered}/${domain.items_total}`);
+                    setText('preview-raw', domain.raw_score);
+                    setText('preview-scaled', domain.scaled_score);
+                    setText('preview-interpretation', domain.interpretation ?? 'Answer every item to score this domain');
+                    setText('preview-standard', explanation.standard_score);
+                    setText('preview-overall', explanation.standard_score !== null
+                        ? `Overall (round ${data.round}): ${explanation.overall}`
+                        : `${explanation.scored_domains} of 7 domains scored in round ${data.round}. The standard score appears once all 7 are scored.`);
+                    renderList('preview-warnings', explanation.warnings);
+                    renderList('preview-steps', explanation.steps);
+                    setText('preview-status', savedHint);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        setText('preview-status', 'Preview unavailable right now. Saving still works.');
+                    }
+                }
+            }, 250);
+        };
+
+        form.addEventListener('change', refreshPreview);
+        refreshPreview();
+    })();
 </script>
 @endsection

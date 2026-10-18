@@ -133,6 +133,11 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
 
     Route::post('/store', [ProgressController::class, 'store'])
         ->name('progress.store');
+
+    // Live score preview on the evaluation form (read-only; nothing is saved).
+    Route::post('/preview', [ProgressController::class, 'preview'])
+        ->middleware('throttle:120,1')
+        ->name('progress.preview');
 });
 
 Route::get('/logs', [LogsController::class, 'index'])

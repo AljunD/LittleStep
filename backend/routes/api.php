@@ -18,6 +18,8 @@ Route::prefix('/v1')->group(function () {
             ->whereNumber('id');
         Route::get('/guardian/children/{id}/photo', [GuardianController::class, 'photo'])
             ->whereNumber('id');
+        Route::get('/guardian/children/{id}/insights', [GuardianController::class, 'insights'])
+            ->whereNumber('id');
         Route::get('/guardian/children/{id}/domains/{domain}', [GuardianController::class, 'domain'])
             ->whereNumber('id')
             ->whereIn('domain', array_keys(GuardianController::DOMAIN_LABELS));
