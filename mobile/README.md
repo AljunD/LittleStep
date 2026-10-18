@@ -97,9 +97,22 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   - **Contact Us:** lists the teacher handling each child, with Call / Text buttons.
   - **Notifications:** a feed of teacher updates across all children, newest first. It's built from each child's dashboard `recent_activity`, since there are no push notifications. Tapping an update opens that domain.
   - **Language:** saves English/Filipino on the device only (there is no language field on the server, and the app is English-only for now).
+  - **Change Password** (`ChangePasswordScreen`):
+    - The form takes the current password, a new password and its confirmation, each with a show/hide toggle.
+    - It checks the server's rules before sending: at least 12 characters, at most 72 bytes, different from the current password, and the two new entries must match.
+    - The server's own field errors appear under the matching input. The button shows "Saving..." while the request runs.
+    - On success it shows a confirmation. The server keeps this session and signs out the guardian's other devices.
+    - It calls `changeGuardianPassword()` (`PUT /guardian/password`).
+- **Default password reminder:** a teacher who leaves the password empty gives the guardian a shared default password.
+  - **When it shows:** the login response's `must_change_password` is true, so **Select Student** shows a pop-up asking the guardian to change it (`components/password-reminder.tsx`).
+  - **Its buttons:** **Change Password** opens the Change Password screen. **Remind me later** hides it until the next sign-in.
+  - **Profile hint:** while the default password is still in use, Profile → Change Password says so.
+  - **Where the state lives:** `guardianApi.ts` (`shouldShowPasswordReminder()`, `dismissPasswordReminder()`, `isUsingDefaultPassword()`).
+  - **Storage:** with Remember me, the flag sits in secure storage next to the token, so the reminder returns after an app restart. Otherwise it is kept in memory. It is cleared on sign-out, on a 401/403, and once the password is changed.
+  - **No hardcoded password:** the app never stores or compares the default password itself. The server decides.
 - **Loading data on a screen:** use `useApiResource(loader)` (`hooks/use-api-resource.ts`).
   - It loads when the screen comes into view and provides `retry` and pull-to-refresh.
-  - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token).
+  - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token). Screens that send data (like Change Password) get the same behavior from `useSessionEndedRedirect()`.
   - Pair it with `LoadingState` / `ErrorState` / `EmptyState` from `components/screen-state.tsx`, and with `ReadOnlyField` for detail rows.
   - `services/format.ts` has the shared date and name formatting.
 - **Display mode:** Profile → Display lets the guardian choose **Light** (default), **Dark**, or **System** (follows the device setting and updates live). The choice is held in `hooks/use-app-theme.tsx` (`AppThemeProvider` wraps the app in `App.tsx`) and saved on the device (SecureStore on iOS/Android, `localStorage` on web). Screens call `useAppTheme()` and apply `DarkColors` from `constants/theme.ts` when `isDark` is true. Light mode keeps each screen's original colors. Dark mode applies to every screen and the navigation background. On the illustrated screens (Welcome, Login, Select Student, Dashboard, ECCD Checklist), the artwork is dimmed and the logo sits on a light badge so it stays readable. Category and activity cards keep their pastel colors in both modes. New screens should follow the same pattern: import `useAppTheme()` and add `isDark && darkStyles.*` overrides.

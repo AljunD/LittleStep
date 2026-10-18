@@ -26,6 +26,7 @@ import DisplayScreen from "./screens/DisplayScreen";
 import LanguageScreen from "./screens/profile/LanguageScreen";
 import ContactUsScreen from "./screens/profile/ContactUsScreen";
 import NotificationScreen from "./screens/profile/NotificationScreen";
+import ChangePasswordScreen from "./screens/profile/ChangePasswordScreen";
 
 const Stack = createStackNavigator();
 
@@ -174,6 +175,10 @@ function AppNavigator() {
         <Stack.Screen
           name="Notifications"
           component={NotificationScreen}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

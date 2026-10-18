@@ -150,7 +150,7 @@ Form actions (Save/Cancel, wizard steps, Filter, Add Guardian) stay visible. Run
 - **Double submits:** the teacher layout blocks double submits of POST forms, so a double-click can't create duplicates.
 - **Progress comments:** a progress comment needs a ✓/— response before it can be saved. This applies on both the create and edit forms.
 
-**Default guardian password.** On Guardians → Add Guardian the password is optional. If both password fields are left empty, the account gets the default password from `GUARDIAN_DEFAULT_PASSWORD` (`Password123@` when unset, see `config/littlestep.php`). The form shows the default, and the success banner says when it was used. Everyone who gets the default shares the same known password. The guardian should change it from "Forgot password" after the first sign-in. For real deployments, set your own value in `.env`.
+**Default guardian password.** On Guardians → Add Guardian the password is optional. If both password fields are left empty, the account gets the default password from `GUARDIAN_DEFAULT_PASSWORD` (`Password123@` when unset, see `config/littlestep.php`). The form shows the default, and the success banner says when it was used. Everyone who gets the default shares the same known password. When a guardian signs in to the mobile app with it, the login response sets `must_change_password`. The app then reminds them to change it in Profile → Change Password (`PUT /api/v1/guardian/password`). For real deployments, set your own value in `.env`.
 
 **Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
 
@@ -198,8 +198,9 @@ All endpoints are under `/api/v1`. Everything except login requires `Authorizati
 
 | Method | Path                                      | Description                              |
 |--------|-------------------------------------------|------------------------------------------|
-| POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at }` |
+| POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at, must_change_password }`. `must_change_password` is true when the guardian signed in with the default password (`GUARDIAN_DEFAULT_PASSWORD`) |
 | POST   | `/guardian/logout`                        | Revokes the current token                |
+| PUT    | `/guardian/password`                      | Change password. Body: `current_password`, `password`, `password_confirmation`. Same rules as the web forms (12–72 characters), and the new password must differ from the current one and from the default. Wrong current password → 422 on `current_password`. On success, signs out the guardian's other devices (this token stays valid) and logs `password_changed`. Throttled to 5 per minute |
 | GET    | `/guardian/profile`                       | Guardian's name, account email, sex, contact number, relationship to child and address (barangay/municipality/province/region are stored joined in `address`) |
 | GET    | `/guardian/contacts`                      | Each of the guardian's children with the teacher handling them (name and contact number only; `null` until a teacher starts a progress record) |
 | GET    | `/guardian/views`                         | Guardian with children, progress records, domains and scores |

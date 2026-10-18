@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { DarkColors, Layout } from "../../constants/theme";
 import { useAppTheme } from "../../hooks/use-app-theme";
 import { useApiResource } from "../../hooks/use-api-resource";
-import { getGuardianAccount } from "../../services/guardianApi";
+import { getGuardianAccount, isUsingDefaultPassword } from "../../services/guardianApi";
 import { fullName } from "../../services/format";
 
 const COLORS = {
@@ -38,6 +39,14 @@ export default function ProfileScreen({
   const student = route?.params?.student;
   const account = useApiResource(getGuardianAccount);
   const guardianName = fullName(account.data);
+  const [usingDefaultPassword, setUsingDefaultPassword] = useState(isUsingDefaultPassword);
+
+  // Re-read when returning from Change Password, so the hint disappears once the password is changed.
+  useFocusEffect(
+    useCallback(() => {
+      setUsingDefaultPassword(isUsingDefaultPassword());
+    }, []),
+  );
   const initials = account.data
     ? `${account.data.first_name.charAt(0)}${account.data.last_name.charAt(0)}`.toUpperCase()
     : "";
@@ -47,6 +56,14 @@ export default function ProfileScreen({
       title: "Personal Information",
       subtitle: "View personal details",
       icon: "person-outline",
+    },
+    {
+      title: "Change Password",
+      subtitle: usingDefaultPassword
+        ? "Recommended: you are using the default password"
+        : "Update your account password",
+      icon: "key-outline",
+      warning: usingDefaultPassword,
     },
     {
       title: "Notification",
@@ -80,6 +97,8 @@ export default function ProfileScreen({
   const handleMenuPress = (title: string) => {
     if (title === "Personal Information") {
       openScreen("PersonalInformation");
+    } else if (title === "Change Password") {
+      openScreen("ChangePassword");
     } else if (title === "Display") {
       openScreen("Display");
     } else if (title === "Language") {
@@ -202,7 +221,14 @@ export default function ProfileScreen({
                     <Text style={[styles.menuTitle, isDark && darkStyles.text]}>
                       {item.title}
                     </Text>
-                    <Text style={[styles.menuSubtitle, isDark && darkStyles.mutedText]}>
+                    <Text
+                      style={[
+                        styles.menuSubtitle,
+                        isDark && darkStyles.mutedText,
+                        item.warning && styles.menuSubtitleWarning,
+                        item.warning && isDark && darkStyles.warning,
+                      ]}
+                    >
                       {item.subtitle}
                     </Text>
                   </View>
@@ -434,6 +460,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  menuSubtitleWarning: {
+    color: "#B54708",
+    fontWeight: "600",
+  },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
@@ -522,6 +552,10 @@ const darkStyles = StyleSheet.create({
 
   danger: {
     color: DarkColors.danger,
+  },
+
+  warning: {
+    color: "#F5C76B",
   },
 
   divider: {

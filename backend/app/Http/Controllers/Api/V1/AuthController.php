@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\FormRules;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -42,7 +45,45 @@ class AuthController extends Controller
                 'last_name' => $guardian->last_name,
             ],
             'expires_at' => $expiresAt->toIso8601String(),
+            // The password just verified is the default one teachers give new accounts, so the app asks for a new one.
+            'must_change_password' => self::isDefaultPassword($credentials['password']),
         ], 200);
+    }
+
+    // PUT /guardian/password
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string', 'max:1024', 'current_password:sanctum'],
+            'password' => [...FormRules::password(), 'different:current_password', static function (string $attribute, mixed $value, Closure $fail): void {
+                if (is_string($value) && self::isDefaultPassword($value)) {
+                    $fail('Choose a password other than the default password.');
+                }
+            }],
+        ], [
+            'current_password.current_password' => 'Your current password is incorrect.',
+            'password.different' => 'The new password must be different from your current password.',
+        ]);
+
+        $user = $request->user();
+        $user->forceFill(['password' => Hash::make($validated['password'])])->save();
+
+        // Sign out every other device; this app keeps its current session.
+        $currentToken = $user->currentAccessToken();
+        $user->tokens()
+            ->when($currentToken instanceof PersonalAccessToken, fn ($tokens) => $tokens->whereKeyNot($currentToken->getKey()))
+            ->delete();
+
+        recordLog('password_changed', 'Guardian', $user->guardian->id, 'Guardian changed their password in the mobile app.');
+
+        return response()->json(['message' => 'Your password has been changed.'], 200);
+    }
+
+    private static function isDefaultPassword(string $password): bool
+    {
+        $default = (string) config('littlestep.guardian_default_password');
+
+        return $default !== '' && hash_equals($default, $password);
     }
 
     // POST /guardian/logout
