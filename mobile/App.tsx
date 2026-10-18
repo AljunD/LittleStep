@@ -16,6 +16,7 @@ import LoginScreen from "./screens/LoginScreen";
 import SelectStudentScreen from "./screens/SelectStudentScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import ECCDChecklistScreen from "./screens/ECCDChecklistScreen";
+import DomainScreen from "./screens/DomainScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import PersonalInformationScreen from "./screens/PersonalInformationScreen";
 import ChildDetailsScreen from "./screens/ChildDetailsScreen";
@@ -120,6 +121,11 @@ function AppNavigator() {
         <Stack.Screen
           name="ECCDChecklist"
           component={ECCDChecklistScreen}
+        />
+
+        <Stack.Screen
+          name="Domain"
+          component={DomainScreen}
         />
 
         <Stack.Screen

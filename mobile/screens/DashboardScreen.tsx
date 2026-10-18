@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
   View,
   Text,
   Image,
@@ -9,9 +10,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Platform,
+  ScrollView,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getGuardianApiErrorMessage,
@@ -21,8 +25,11 @@ import {
   GuardianPhotoSource,
   logoutGuardian,
 } from "../services/guardianApi";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
+import { ECCD_DOMAINS, EccdDomain, getEccdDomain } from "../constants/eccd-domains";
 import { useAppTheme } from "../hooks/use-app-theme";
+
+const RECENT_ACTIVITY_COUNT = 3;
 
 export default function DashboardScreen({
   navigation,
@@ -33,8 +40,8 @@ export default function DashboardScreen({
   const { isDark } = useAppTheme();
 
   // Automatically reduce spacing on shorter phones
-  const compact = height < 760;
-  const small = width < 360;
+  const compact = height < Layout.compactHeight;
+  const small = width < Layout.smallWidth;
 
   const student = route?.params?.student;
   const studentId = student?.id;
@@ -44,54 +51,88 @@ export default function DashboardScreen({
     source: GuardianPhotoSource;
   } | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const loadedChildIdRef = useRef<number | null>(null);
   const photoSource = photo && photo.childId === studentId ? photo.source : null;
 
-  useEffect(() => {
-    let isMounted = true;
+  // Reload every time the dashboard comes into view (e.g. back from a domain),
+  // so a new teacher entry moves that domain to the front of Recent Activities.
+  useFocusEffect(
+    useCallback(() => {
+      if (typeof studentId !== "number") {
+        return undefined;
+      }
 
-    if (typeof studentId === "number") {
-      const requestedStudentId = studentId;
+      let isActive = true;
       getGuardianDashboard(studentId)
         .then((data) => {
-          if (!isMounted) {
-            return;
+          if (isActive) {
+            loadedChildIdRef.current = data.child.id;
+            setDashboard(data);
           }
-
-          setDashboard(data);
-
-          if (!data.child.photo_url) {
-            return;
-          }
-
-          setPhotoLoading(true);
-          getGuardianChildPhotoSource(data.child.photo_url)
-            .then((source) => {
-              if (isMounted && source) {
-                setPhoto({ childId: requestedStudentId, source });
-              }
-            })
-            .catch(() => {
-              // Keep the placeholder; the rest of the dashboard is still usable.
-            })
-            .finally(() => {
-              if (isMounted) {
-                setPhotoLoading(false);
-              }
-            });
         })
         .catch((error: unknown) => {
-          if (isMounted) {
+          // On a background reload keep showing the last data; only alert when there is nothing to show.
+          if (isActive && loadedChildIdRef.current !== studentId) {
             Alert.alert("Unable to load dashboard", getGuardianApiErrorMessage(error));
           }
         });
+
+      return () => {
+        isActive = false;
+      };
+    }, [studentId]),
+  );
+
+  const handleRefresh = async () => {
+    if (typeof studentId !== "number") {
+      return;
     }
+
+    setRefreshing(true);
+    try {
+      const data = await getGuardianDashboard(studentId);
+      loadedChildIdRef.current = data.child.id;
+      setDashboard(data);
+    } catch (error) {
+      Alert.alert("Unable to refresh dashboard", getGuardianApiErrorMessage(error));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const currentDashboard = dashboard?.child.id === studentId ? dashboard : null;
+  const photoUrl = currentDashboard?.child.photo_url ?? null;
+
+  // Load the photo once per child, not on every dashboard reload.
+  useEffect(() => {
+    if (!photoUrl || typeof studentId !== "number") {
+      return undefined;
+    }
+
+    let isMounted = true;
+    const requestedStudentId = studentId;
+
+    setPhotoLoading(true);
+    getGuardianChildPhotoSource(photoUrl)
+      .then((source) => {
+        if (isMounted && source) {
+          setPhoto({ childId: requestedStudentId, source });
+        }
+      })
+      .catch(() => {
+        // Keep the placeholder; the rest of the dashboard is still usable.
+      })
+      .finally(() => {
+        if (isMounted) {
+          setPhotoLoading(false);
+        }
+      });
 
     return () => {
       isMounted = false;
     };
-  }, [studentId]);
-
-  const currentDashboard = dashboard?.child.id === studentId ? dashboard : null;
+  }, [photoUrl, studentId]);
   const studentName = currentDashboard?.child
     ? [
         currentDashboard.child.first_name,
@@ -122,34 +163,27 @@ export default function DashboardScreen({
     }
   };
 
+  // The server lists domains most recently updated by the teacher first.
+  const recentDomains = (currentDashboard?.progress.recent_activity ?? [])
+    .map((entry) => getEccdDomain(entry.domain))
+    .filter((domain): domain is EccdDomain => domain !== undefined);
+
   const activities = [
-    {
-      title: "Physical Movement",
-      subtitle: "Gross Motor",
-      domainKey: "gross_motor",
-      icon: "body-outline",
-      color: "#F9C96B",
-    },
-    {
-      title: "Hand & Finger Skills",
-      subtitle: "Fine Motor",
-      domainKey: "fine_motor",
-      icon: "hand-left-outline",
-      color: "#A8D8B9",
-    },
-    {
-      title: "Thinking & Learning",
-      subtitle: "Cognitive",
-      domainKey: "cognitive",
-      icon: "bulb-outline",
-      color: "#B9C9F8",
-    },
+    ...(recentDomains.length > 0 ? recentDomains : ECCD_DOMAINS)
+      .slice(0, RECENT_ACTIVITY_COUNT)
+      .map((domain) => ({
+        title: domain.title,
+        subtitle: domain.label,
+        domainKey: domain.key as string | null,
+        icon: domain.icon,
+        color: domain.color,
+      })),
     {
       title: "View Full",
       subtitle: "ECCD Checklist",
       domainKey: null,
-      icon: "clipboard-outline",
-      color: "#F3B9C7",
+      icon: "clipboard-outline" as const,
+      color: "#CDEBE4",
     },
   ];
 
@@ -175,8 +209,10 @@ export default function DashboardScreen({
     },
   ];
 
-  const openActivity = (title: string) => {
-    if (title === "View Full") {
+  const openActivity = (domainKey: string | null) => {
+    if (domainKey) {
+      navigation.navigate("Domain", { student, domainKey });
+    } else {
       navigation.navigate("ECCDChecklist", { student });
     }
   };
@@ -207,15 +243,16 @@ export default function DashboardScreen({
 
       </View>
 
-      {/* FIXED CONTENT: NO SCROLLVIEW */}
+      {/* CONTENT: fills the screen, scrolls when it doesn't fit (short phones, large text) */}
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
         imageStyle={[styles.backgroundImage, isDark && darkStyles.backgroundImage]}
         resizeMode="cover"
       >
-        <View
-          style={[
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
             styles.content,
             {
               paddingHorizontal: small ? 12 : 18,
@@ -223,6 +260,15 @@ export default function DashboardScreen({
               paddingBottom: 6,
             },
           ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void handleRefresh()}
+              tintColor="#0BA8BD"
+              colors={["#0BA8BD"]}
+            />
+          }
         >
           {/* STUDENT CARD */}
           <View
@@ -303,12 +349,13 @@ export default function DashboardScreen({
                     compact && styles.compactActivityCard,
                   ]}
                   activeOpacity={0.8}
-                  onPress={() => openActivity(activity.title)}
+                  accessibilityRole="button"
+                  onPress={() => openActivity(activity.domainKey)}
                 >
                   <View style={styles.activityCardTop}>
                     <View style={styles.activityIcon}>
                       <Ionicons
-                        name={activity.icon as any}
+                        name={activity.icon}
                         size={compact ? 21 : 24}
                         color="#365C55"
                       />
@@ -390,7 +437,7 @@ export default function DashboardScreen({
               ))}
             </View>
           </View>
-        </View>
+        </ScrollView>
       </ImageBackground>
 
       {/* FIXED BOTTOM NAVIGATION */}
@@ -491,9 +538,16 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
 
-  content: {
+  scrollView: {
     flex: 1,
+  },
+
+  content: {
+    flexGrow: 1,
     justifyContent: "space-evenly",
+    width: "100%",
+    maxWidth: Layout.maxContentWidth,
+    alignSelf: "center",
   },
 
   studentCard: {
@@ -504,11 +558,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
-    shadowColor: "#31574F",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
+    ...Platform.select({
+      web: { boxShadow: "0px 3px 8px rgba(49, 87, 79, 0.08)" },
+      default: {
+        shadowColor: "#31574F",
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      },
+    }),
   },
 
   compactStudentCard: {

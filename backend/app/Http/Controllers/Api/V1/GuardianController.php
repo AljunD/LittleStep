@@ -4,18 +4,28 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Child;
+use App\Models\EccdChecklistItem;
 use App\Models\ProgressRecord;
 use App\Services\EccdExpertSystem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class GuardianController extends Controller
 {
-    private const DASHBOARD_DOMAINS = [
+    /** The 7 official ECCD domains, in Child's Record 2 order. */
+    public const DOMAIN_LABELS = [
         'gross_motor' => 'Gross Motor',
         'fine_motor' => 'Fine Motor',
+        'self_help' => 'Self-Help',
+        'receptive_language' => 'Receptive Language',
+        'expressive_language' => 'Expressive Language',
         'cognitive' => 'Cognitive',
+        'social_emotional' => 'Social-Emotional',
     ];
+
+    private const ROUNDS = [1, 2, 3];
 
     // GET /guardian/profile
     public function profile(Request $request)
@@ -58,21 +68,16 @@ class GuardianController extends Controller
         abort_unless($guardian, 404);
 
         $child = $guardian->children()->findOrFail($id);
-        $progressRecord = ProgressRecord::query()
-            ->where('child_id', $child->id)
-            ->latest('updated_at')
-            ->first();
+        $progressRecord = $this->latestProgressRecord($child);
 
         $rounds = [];
-        foreach ([1, 2, 3] as $round) {
-            $date = $progressRecord?->getAttribute("evaluation_date_round_{$round}")
-                ?? ($round === 1 ? $progressRecord?->evaluation_date : null);
+        foreach (self::ROUNDS as $round) {
             $computed = $progressRecord
                 ? $expert->compute($progressRecord, $round)
                 : null;
 
             $rounds[$round] = [
-                'date' => $date,
+                'date' => $this->roundDate($progressRecord, $round),
                 'completed_domains' => $computed
                     ? count(array_filter($computed['raw_scores'], fn ($score) => $score !== null))
                     : 0,
@@ -81,7 +86,7 @@ class GuardianController extends Controller
                 'domains' => [],
             ];
 
-            foreach (self::DASHBOARD_DOMAINS as $domainKey => $label) {
+            foreach (self::DOMAIN_LABELS as $domainKey => $label) {
                 $rounds[$round]['domains'][$domainKey] = [
                     'label' => $label,
                     'raw_score' => $computed['raw_scores'][$domainKey] ?? null,
@@ -90,12 +95,20 @@ class GuardianController extends Controller
             }
         }
 
-        $latestRound = null;
-        foreach ($rounds as $round => $roundData) {
-            if ($roundData['date'] !== null) {
-                $latestRound = $round;
-            }
-        }
+        $domainRows = $progressRecord ? $this->domainRows($progressRecord) : collect();
+        $lastUpdated = $this->lastUpdatedByDomain($domainRows);
+
+        // Most recently updated domain first; domains with no entries keep the official order.
+        $recentActivity = array_map(
+            fn (string $domainKey) => [
+                'domain' => $domainKey,
+                'label' => self::DOMAIN_LABELS[$domainKey],
+                'last_updated_at' => $lastUpdated[$domainKey]?->toIso8601String(),
+            ],
+            array_keys(self::DOMAIN_LABELS)
+        );
+        usort($recentActivity, fn (array $a, array $b) => ($lastUpdated[$b['domain']]?->getTimestamp() ?? 0)
+            <=> ($lastUpdated[$a['domain']]?->getTimestamp() ?? 0));
 
         return response()->json([
             'child' => [
@@ -112,10 +125,144 @@ class GuardianController extends Controller
             'progress' => [
                 'status' => $progressRecord?->status ?? 'not_started',
                 'evaluation_number' => $progressRecord?->evaluation_number,
-                'latest_round' => $latestRound,
+                'latest_round' => $this->latestRound($progressRecord),
                 'rounds' => $rounds,
+                'recent_activity' => $recentActivity,
             ],
         ]);
+    }
+
+    // GET /guardian/children/{id}/domains/{domain}
+    public function domain(Request $request, int $id, string $domain, EccdExpertSystem $expert)
+    {
+        abort_unless(array_key_exists($domain, self::DOMAIN_LABELS), 404);
+
+        $guardian = $request->user()->guardian;
+        abort_unless($guardian, 404);
+
+        $child = $guardian->children()->findOrFail($id);
+        $progressRecord = $this->latestProgressRecord($child);
+
+        $domainRows = $progressRecord
+            ? $this->domainRows($progressRecord)->filter(fn ($row) => $row->checklistItem?->domain === $domain)
+            : collect();
+
+        // [checklist item id][round] => recorded result
+        $results = [];
+        foreach ($domainRows as $row) {
+            $result = $row->results->first();
+            $results[$row->checklist_item_id][$row->evaluation_round] = $result ? [
+                'present' => $expert->normalizePresentValue($result->present),
+                'comments' => $result->comments,
+            ] : null;
+        }
+
+        $items = EccdChecklistItem::query()
+            ->where('domain', $domain)
+            ->orderBy('item_number')
+            ->orderBy('id')
+            ->get(['id', 'item_number', 'activity'])
+            ->map(fn (EccdChecklistItem $item) => [
+                'id' => $item->id,
+                'item_number' => $item->item_number,
+                'activity' => $item->activity,
+                'results' => array_combine(
+                    self::ROUNDS,
+                    array_map(fn (int $round) => $results[$item->id][$round] ?? null, self::ROUNDS)
+                ),
+            ])
+            ->values();
+
+        $rounds = [];
+        foreach (self::ROUNDS as $round) {
+            $computed = $progressRecord ? $expert->compute($progressRecord, $round) : null;
+
+            $rounds[$round] = [
+                'date' => $this->roundDate($progressRecord, $round),
+                'raw_score' => $computed['raw_scores'][$domain] ?? null,
+                'scaled_score' => $computed['scaled_scores'][$domain] ?? null,
+                'assessed_items' => $items->filter(fn (array $item) => $item['results'][$round] !== null)->count(),
+            ];
+        }
+
+        return response()->json([
+            'child' => [
+                'id' => $child->id,
+                'first_name' => $child->first_name,
+                'middle_name' => $child->middle_name,
+                'last_name' => $child->last_name,
+            ],
+            'domain' => [
+                'key' => $domain,
+                'label' => self::DOMAIN_LABELS[$domain],
+            ],
+            'progress' => [
+                'status' => $progressRecord?->status ?? 'not_started',
+                'latest_round' => $this->latestRound($progressRecord),
+                'last_updated_at' => $this->lastUpdatedByDomain($domainRows)[$domain]?->toIso8601String(),
+                'rounds' => $rounds,
+            ],
+            'items' => $items,
+        ]);
+    }
+
+    private function latestProgressRecord(Child $child): ?ProgressRecord
+    {
+        return ProgressRecord::query()
+            ->where('child_id', $child->id)
+            ->latest('updated_at')
+            ->first();
+    }
+
+    private function roundDate(?ProgressRecord $progressRecord, int $round): mixed
+    {
+        return $progressRecord?->getAttribute("evaluation_date_round_{$round}")
+            ?? ($round === 1 ? $progressRecord?->evaluation_date : null);
+    }
+
+    private function latestRound(?ProgressRecord $progressRecord): ?int
+    {
+        $latestRound = null;
+        foreach (self::ROUNDS as $round) {
+            if ($this->roundDate($progressRecord, $round) !== null) {
+                $latestRound = $round;
+            }
+        }
+
+        return $latestRound;
+    }
+
+    /** Checklist entries (all rounds) of a progress record, with their item and result. */
+    private function domainRows(ProgressRecord $progressRecord): Collection
+    {
+        return $progressRecord->domains()
+            ->with(['checklistItem:id,domain', 'results'])
+            ->get();
+    }
+
+    /**
+     * Latest time the teacher created or changed an entry in each domain.
+     *
+     * @return array<string, Carbon|null>
+     */
+    private function lastUpdatedByDomain(Collection $domainRows): array
+    {
+        $lastUpdated = array_fill_keys(array_keys(self::DOMAIN_LABELS), null);
+
+        foreach ($domainRows as $row) {
+            $domainKey = $row->checklistItem?->domain;
+            if (! array_key_exists($domainKey ?? '', $lastUpdated)) {
+                continue;
+            }
+
+            foreach ([$row->updated_at, ...$row->results->pluck('updated_at')] as $time) {
+                if ($time !== null && ($lastUpdated[$domainKey] === null || $time->gt($lastUpdated[$domainKey]))) {
+                    $lastUpdated[$domainKey] = $time;
+                }
+            }
+        }
+
+        return $lastUpdated;
     }
 
     // GET /guardian/children/{id}

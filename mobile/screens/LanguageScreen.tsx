@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 
 
@@ -247,6 +247,9 @@ const styles = StyleSheet.create({
   },
 
   contentContainer: {
+    width: "100%",
+    maxWidth: Layout.maxContentWidth,
+    alignSelf: "center",
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 24,

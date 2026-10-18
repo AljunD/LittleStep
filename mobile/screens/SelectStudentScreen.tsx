@@ -9,10 +9,13 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
@@ -45,6 +48,8 @@ async function fetchStudentData(): Promise<{
 
 export default function SelectStudentScreen({ navigation }: any) {
   const { isDark } = useAppTheme();
+  const { height } = useWindowDimensions();
+  const compact = height < Layout.compactHeight;
   const [students, setStudents] = useState<GuardianChild[]>([]);
   const [photoSources, setPhotoSources] = useState<Record<number, GuardianPhotoSource>>({});
   const [loading, setLoading] = useState(true);
@@ -115,7 +120,14 @@ export default function SelectStudentScreen({ navigation }: any) {
           </View>
 
           {/* STUDENT CARDS */}
-          <View style={styles.studentContainer}>
+          <ScrollView
+            style={styles.studentList}
+            contentContainerStyle={[
+              styles.studentContainer,
+              compact && styles.compactStudentContainer,
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
             {loading ? (
               <View style={styles.stateMessage}>
                 <ActivityIndicator color="#0BA8BD" />
@@ -190,7 +202,7 @@ export default function SelectStudentScreen({ navigation }: any) {
                   </TouchableOpacity>
                 );
               })}
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </ImageBackground>
     </View>
@@ -231,13 +243,21 @@ const styles = StyleSheet.create({
     fontSize: 27,
     fontWeight: "800",
   },
-  studentContainer: {
+  studentList: {
     flex: 1,
+  },
+  studentContainer: {
+    flexGrow: 1,
     alignItems: "center",
     paddingTop: 80,
+    paddingBottom: 24,
+  },
+  compactStudentContainer: {
+    paddingTop: 40,
   },
   studentCard: {
     width: "76%",
+    maxWidth: Layout.maxFormWidth,
     minHeight: 90,
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
@@ -245,11 +265,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 18,
     marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 6,
+    // react-native-web deprecates shadow* in favor of CSS boxShadow; native keeps shadow*/elevation.
+    ...Platform.select({
+      web: { boxShadow: "0px 5px 8px rgba(0, 0, 0, 0.16)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.16,
+        shadowRadius: 8,
+        elevation: 6,
+      },
+    }),
   },
   profile: {
     width: 55,

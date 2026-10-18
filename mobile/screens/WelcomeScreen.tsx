@@ -5,17 +5,23 @@ import {
   ImageBackground,
   Image,
   TouchableOpacity,
-  Dimensions,
   StatusBar,
   Text,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { DarkColors } from "../constants/theme";
+import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import { StackNavigationProp } from "@react-navigation/stack";
 
-const { width, height } = Dimensions.get("window");
+// Upper bounds so the logo doesn't balloon on tablets and wide web windows.
+const LOGO_MAX_WIDTH = 360;
+const LOGO_MAX_HEIGHT = 160;
+
+const BACKGROUND = require("../assets/images/back.jpg");
+// back.jpg is a 687 x 1024 portrait illustration.
+const BACKGROUND_ASPECT = 687 / 1024;
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -33,6 +39,16 @@ type Props = {
 
 export default function WelcomeScreen({ navigation }: Props) {
   const { isDark } = useAppTheme();
+  // Read on every render (not once at import) so sizes follow rotation and window resizes.
+  const { width, height } = useWindowDimensions();
+
+  // On screens wider than the portrait artwork (landscape tablets, desktop web),
+  // "cover" would zoom in and crop it to a thin strip. Show the whole illustration
+  // in a centered full-height frame instead, over a blurred copy that fills the sides.
+  const framedWidth = height * BACKGROUND_ASPECT;
+  const frameArtwork = width > framedWidth * 1.15;
+  const frameInset = frameArtwork ? (width - framedWidth) / 2 : 0;
+
   return (
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
@@ -41,20 +57,39 @@ export default function WelcomeScreen({ navigation }: Props) {
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 
+      {frameArtwork && (
+        <Image
+          source={BACKGROUND}
+          style={[StyleSheet.absoluteFill, isDark && darkStyles.backgroundImage]}
+          resizeMode="cover"
+          blurRadius={24}
+        />
+      )}
+
       <ImageBackground
-        source={require("../assets/images/back.jpg")}
-        style={[styles.background, isDark && darkStyles.container]}
-        imageStyle={isDark ? darkStyles.backgroundImage : undefined}
+        source={BACKGROUND}
+        style={styles.background}
+        imageStyle={[
+          frameArtwork && { left: frameInset, right: frameInset },
+          isDark && darkStyles.backgroundImage,
+        ]}
         resizeMode="cover"
       >
         <SafeAreaView style={styles.safeArea}>
           <Image
             source={require("../assets/images/logo.png")}
-            style={[styles.logo, isDark && darkStyles.logoBadge]}
+            style={[
+              {
+                width: Math.min(width * 0.55, LOGO_MAX_WIDTH),
+                height: Math.min(height * 0.16, LOGO_MAX_HEIGHT),
+                marginTop: height * 0.06,
+              },
+              isDark && darkStyles.logoBadge,
+            ]}
             resizeMode="contain"
           />
 
-          <View style={styles.bottomContent}>
+          <View style={[styles.bottomContent, { paddingBottom: height * 0.045 }]}>
             <TouchableOpacity
               style={styles.button}
               activeOpacity={0.85}
@@ -91,21 +126,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  logo: {
-    width: width * 0.55,
-    height: height * 0.16,
-    marginTop: height * 0.06,
-  },
-
   bottomContent: {
     width: "100%",
     alignItems: "center",
     paddingHorizontal: 28,
-    paddingBottom: height * 0.045,
   },
 
   button: {
     width: "88%",
+    maxWidth: Layout.maxFormWidth,
     height: 52,
     borderRadius: 26,
     backgroundColor: "#08A9C1",

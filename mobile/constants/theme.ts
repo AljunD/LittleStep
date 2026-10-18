@@ -44,6 +44,19 @@ export const DarkColors = {
   danger: '#F97066',
 };
 
+/**
+ * Responsive layout limits. On phones content fills the width as before;
+ * on tablets and wide web windows it is centered and capped at these widths.
+ */
+export const Layout = {
+  maxContentWidth: 640,
+  maxFormWidth: 380,
+  /** Screens shorter than this use the compact spacing variants. */
+  compactHeight: 760,
+  /** Screens narrower than this use the small spacing variants. */
+  smallWidth: 360,
+};
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
