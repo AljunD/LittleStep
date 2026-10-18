@@ -35,6 +35,17 @@ export default function LoginScreen({ navigation, route }: any) {
     route?.params?.initialError ?? null,
   );
   const submittingRef = useRef(false);
+  // Opened from the email-verification page (deep link, see App.tsx). Only a boolean is passed, never text.
+  const justVerified = route?.params?.verified === true && !errorMessage;
+
+  // Opened straight from a link there is no screen behind Login, so Back goes to Welcome.
+  const goBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace("Welcome");
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -98,7 +109,9 @@ export default function LoginScreen({ navigation, route }: any) {
         {/* BACK */}
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={goBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <Ionicons
             name="chevron-back"
@@ -134,6 +147,15 @@ export default function LoginScreen({ navigation, route }: any) {
               <Text style={[styles.subtitle, isDark && darkStyles.mutedText]}>
                 Log in to your Account
               </Text>
+
+              {justVerified ? (
+                <View accessibilityRole="alert" style={[styles.verifiedNotice, isDark && darkStyles.verifiedNotice]}>
+                  <Ionicons name="checkmark-circle" size={18} color={isDark ? DarkColors.accent : "#1E8E5A"} />
+                  <Text style={[styles.verifiedText, isDark && darkStyles.text]}>
+                    Your email is verified. Log in with your email and password to continue.
+                  </Text>
+                </View>
+              ) : null}
 
               {/* EMAIL */}
               <View style={[styles.inputBox, isDark && darkStyles.card]}>
@@ -343,6 +365,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  verifiedNotice: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#E7F6EE",
+    borderRadius: 14,
+    padding: 12,
+    marginTop: -6,
+    marginBottom: 16,
+  },
+
+  verifiedText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#1D5C3F",
+    fontWeight: "600",
+  },
+
   /* INPUT */
 
   inputBox: {
@@ -473,5 +514,9 @@ const darkStyles = StyleSheet.create({
 
   danger: {
     color: DarkColors.danger,
+  },
+
+  verifiedNotice: {
+    backgroundColor: DarkColors.selected,
   },
 });

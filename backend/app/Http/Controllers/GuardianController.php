@@ -7,6 +7,7 @@ use App\Models\ProgressRecord;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Support\FormRules;
+use App\Support\SafeMail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +62,7 @@ class GuardianController extends Controller
     {
         $guardians = $this->currentTeacher($request)
             ->ownedGuardians()
-            ->with(['children' => function ($query) use ($request) {
+            ->with(['user', 'children' => function ($query) use ($request) {
                 $query->whereHas('progressRecords', function ($progressQuery) use ($request) {
                     $progressQuery->withTrashed()->where('teacher_id', $request->user()->teacher->id);
                 });
@@ -159,14 +160,16 @@ class GuardianController extends Controller
         });
 
         // Sent after the commit so a rolled-back registration never emails a verification link.
-        event(new Registered($user));
+        $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
 
         $message = 'Guardian and child registered successfully.';
         if ($usesDefaultPassword) {
             $message .= ' No password was entered, so the account uses the default password. Ask the guardian to change it after signing in.';
         }
 
-        return redirect()->route('guardians.index')->with('success', $message);
+        return redirect()->route('guardians.index')
+            ->with('success', $message)
+            ->with('error', $verificationSent ? null : SafeMail::VERIFICATION_FAILED);
     }
 
     public function show(Request $request, $id)
@@ -247,18 +250,43 @@ class GuardianController extends Controller
             }
         });
 
-        if ($emailChanged) {
-            $user->sendEmailVerificationNotification();
-        }
+        $verificationSent = $emailChanged && SafeMail::attempt(fn () => $user->sendEmailVerificationNotification());
 
-        recordLog('updated', 'Guardian', $guardian->id, $emailChanged ? 'Guardian updated; email changed and re-verification sent.' : 'Guardian updated');
+        recordLog('updated', 'Guardian', $guardian->id, match (true) {
+            ! $emailChanged => 'Guardian updated',
+            $verificationSent => 'Guardian updated; email changed and re-verification sent.',
+            default => 'Guardian updated; email changed but the verification email could not be sent.',
+        });
 
         $message = 'Guardian updated successfully.';
-        if ($emailChanged) {
+        if ($verificationSent) {
             $message .= ' A verification link was sent to the new email address; the guardian must verify it before signing in.';
         }
 
-        return redirect()->route('guardians.index')->with('success', $message);
+        return redirect()->route('guardians.index')
+            ->with('success', $message)
+            ->with('error', $emailChanged && ! $verificationSent ? SafeMail::VERIFICATION_FAILED : null);
+    }
+
+    /** Sends a new verification link to a guardian who has not verified their email yet. */
+    public function resendVerification(Request $request, $id)
+    {
+        $guardian = $this->currentTeacher($request)->ownedGuardians()->with('user')->findOrFail($id);
+        $user = $guardian->user;
+
+        if (! $user || $user->hasVerifiedEmail()) {
+            return redirect()->route('guardians.index')
+                ->with('success', 'This guardian\'s email address is already verified.');
+        }
+
+        if (! SafeMail::attempt(fn () => $user->sendEmailVerificationNotification())) {
+            return redirect()->route('guardians.index')->with('error', SafeMail::VERIFICATION_FAILED);
+        }
+
+        recordLog('verification_resent', 'Guardian', $guardian->id, 'Verification email sent again.');
+
+        return redirect()->route('guardians.index')
+            ->with('success', 'A new verification link was sent to '.$user->email.'.');
     }
 
     public function destroy(Request $request, $id)

@@ -75,6 +75,12 @@
                                 <x-action-menu.item :href="route('guardians.edit', $guardian->id)" icon="edit">Edit</x-action-menu.item>
                                 <x-action-menu.item :href="route('guardians.create-child', $guardian->id)" icon="link">Link Child</x-action-menu.item>
                                 <x-action-menu.item :href="route('guardians.archive-child', $guardian->id)" icon="unlink">Unlink Child</x-action-menu.item>
+                                @if($guardian->user && ! $guardian->user->hasVerifiedEmail())
+                                    <form action="{{ route('guardians.resend-verification', $guardian->id) }}" method="POST">
+                                        @csrf
+                                        <x-action-menu.item icon="mail">Resend Verification Email</x-action-menu.item>
+                                    </form>
+                                @endif
                                 <form action="{{ route('guardians.destroy', $guardian->id) }}" method="POST"
                                       data-confirm="Are you sure you want to archive {{ $guardian->first_name }} {{ $guardian->last_name }} and all linked children records?">
                                     @csrf

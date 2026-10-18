@@ -409,6 +409,11 @@ async function setMustChangePassword(value: boolean, persist: boolean): Promise<
   }
 }
 
+/** True while this app holds a sign-in token (loaded by restoreGuardianSession() or set by loginGuardian()). */
+export function hasGuardianSession(): boolean {
+  return sessionToken !== null;
+}
+
 /** True while the guardian is signed in with the default password. */
 export function isUsingDefaultPassword(): boolean {
   return mustChangePassword;

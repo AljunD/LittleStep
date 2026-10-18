@@ -154,6 +154,29 @@ Form actions (Save/Cancel, wizard steps, Filter, Add Guardian) stay visible. Run
 
 **Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
 
+**Opening the app after verification.** When a guardian taps the link in the verification email, the server verifies the address through the signed link. The confirmation page then shows **Open LittleStep App**, a deep link to the mobile app's Login screen.
+
+- **What opens it:**
+  - On a phone, the page opens the app automatically, right after verifying only. Reloading or revisiting the page doesn't reopen it.
+  - Desktop browsers just show the page.
+- **What the link carries:** no token, password or email, only `verified=1`. The app then says the email is verified, and the guardian logs in with their own password.
+- **Where the link comes from:** `GUARDIAN_APP_LOGIN_URL` (`config/littlestep.php`).
+  - **Installed app builds:** `littlestep://login` (default).
+  - **Expo Go:** `exp://<your-LAN-IP>:8081/--/login`.
+  - **Safety check:** `App\Support\GuardianAppLink` accepts only `littlestep`, `exp`, `exps` and `https` links without credentials or fragments. Anything else, or an empty value, hides the button.
+- **The email link itself:** verification links are built from `APP_URL`, not from the address the teacher's browser used. Opened on the guardian's phone, a `localhost` link would point at the phone.
+  - **Testing on a phone:** set `APP_URL` to the address the phone uses for the API, e.g. `http://192.168.100.19/LittleStep/backend/public`, the same host as the app's `EXPO_PUBLIC_API_URL`.
+  - **The tests:** they pin `APP_URL` in `phpunit.xml`, so a local `.env` never affects them.
+- **Tests:** `tests/Feature/GuardianAppLinkTest.php`.
+
+**When email can't be sent.** If the mail server can't be reached (no internet, wrong SMTP settings), the action still completes and nothing is lost.
+
+- **What happens:** `App\Support\SafeMail::attempt()` logs the error to `storage/logs/laravel.log`, and the page shows a red warning next to the success message instead of a 500 error.
+- **Where it applies:** registering or editing a guardian, teacher sign-up, resending the teacher's verification link, forgot password, and the "account verified" email.
+  - The forgot-password reply stays the same either way, so it never reveals which emails have accounts.
+- **Resending:** while a guardian's email is unverified, their ⋮ menu on the Guardians list has **Resend Verification Email**. It is limited to 6 per minute and logged.
+- **Working offline:** set `MAIL_MAILER=log` to write emails to the log instead of sending them.
+
 **Evaluation status.** The Progress Records list and the progress record page both use `<x-progress-status>`:
 
 - **The evaluation shown:** the highest round with any answers.

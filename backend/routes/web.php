@@ -7,6 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\ProgressController;
+use App\Support\GuardianAppLink;
+use App\Support\SafeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -50,7 +52,9 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
     ->name('verification.verify');
 
 Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
+    if (! SafeMail::attempt(fn () => $request->user()->sendEmailVerificationNotification())) {
+        return back()->with('error', 'The verification email could not be sent because the mail server could not be reached. Please try again later.');
+    }
 
     return back()->with('success', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
@@ -60,7 +64,11 @@ Route::get('/email/confirmation', function () {
 })->name('verification.confirmation');
 
 Route::get('/guardian/email/confirmation', function () {
-    return view('emails.guardian-verified');
+    return view('emails.guardian-verified', [
+        'appLoginUrl' => GuardianAppLink::verifiedLoginUrl(),
+        // Open the app automatically only right after verifying (not on reloads or later visits).
+        'openAppAutomatically' => session()->has('status'),
+    ]);
 })->name('guardian.verification.confirmation');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -83,6 +91,9 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
     Route::get('/{id}/edit', [GuardianController::class, 'edit'])->name('guardians.edit');
     Route::put('/{id}', [GuardianController::class, 'update'])->name('guardians.update');
     Route::delete('/{id}', [GuardianController::class, 'destroy'])->name('guardians.destroy');
+    Route::post('/{id}/resend-verification', [GuardianController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('guardians.resend-verification');
 });
 
 Route::middleware(['auth', 'verified', 'teacher'])->group(function () {

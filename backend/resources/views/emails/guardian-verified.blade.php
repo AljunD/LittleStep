@@ -45,10 +45,32 @@
                     <div>
                         <h2 class="font-semibold text-slate-900">Next step</h2>
                         <p class="mt-1 text-sm leading-relaxed text-slate-600">
-                            Open the LittleStep mobile app and log in with your verified account. You can close this page and return to the app whenever you’re ready.
+                            @if ($appLoginUrl)
+                                On the phone where LittleStep is installed, tap the button below to open the app and log in with your verified account.
+                            @else
+                                Open the LittleStep mobile app and log in with your verified account.
+                            @endif
+                            You can close this page and return to the app whenever you’re ready.
                         </p>
                     </div>
                 </div>
+
+                @if ($appLoginUrl)
+                    {{-- Opens the app's Login screen. The link has no token or personal data; the guardian signs in themselves. --}}
+                    <div class="mt-7 text-center">
+                        <a id="open-guardian-app" href="{{ $appLoginUrl }}" rel="noopener"
+                           class="inline-flex h-12 w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-teal-600 px-6 text-base font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <rect x="6" y="2" width="12" height="20" rx="2" />
+                                <path stroke-linecap="round" d="M11 18h2" />
+                            </svg>
+                            Open LittleStep App
+                        </a>
+                        <p class="mt-3 text-xs text-slate-500">
+                            Nothing happens? Make sure the LittleStep app is installed on this phone, then open it and log in.
+                        </p>
+                    </div>
+                @endif
 
                 <div class="mt-8 border-t border-slate-100 pt-6 text-center">
                     <p class="text-sm text-slate-500">Thank you for being part of your child’s learning journey.</p>
@@ -59,5 +81,18 @@
             </div>
         </section>
     </main>
+
+    @if ($appLoginUrl && $openAppAutomatically)
+        <script nonce="{{ request()->attributes->get('cspNonce') }}">
+            // Right after verifying on a phone, hand over to the app. Desktop browsers have no app to open, so they
+            // keep this page. The link is read from the button, so it is never written into the script.
+            (() => {
+                const link = document.getElementById('open-guardian-app');
+                if (link && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    window.setTimeout(() => { window.location.href = link.href; }, 600);
+                }
+            })();
+        </script>
+    @endif
 </body>
 </html>

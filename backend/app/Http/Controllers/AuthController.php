@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Support\FormRules;
+use App\Support\SafeMail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,14 +67,15 @@ class AuthController extends Controller
             return [$user, $teacher];
         });
 
-        event(new Registered($user));
+        $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
         Auth::login($user);
         $request->session()->regenerate();
 
         recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered.', $user->id);
 
         return redirect()->route('verification.notice')
-            ->with('success', 'Registration successful! Please verify your email.');
+            ->with('success', 'Registration successful! Please verify your email.')
+            ->with('error', $verificationSent ? null : 'The verification email could not be sent because the mail server could not be reached. Try "Resend" once the connection is back.');
     }
 
     public function showLoginForm()
@@ -158,7 +160,8 @@ class AuthController extends Controller
 
         $email = Str::lower(trim($request->email));
 
-        Password::sendResetLink(['email' => $email]);
+        // The reply stays the same whether or not the email went out, so it never reveals which addresses have accounts.
+        SafeMail::attempt(fn () => Password::sendResetLink(['email' => $email]));
 
         return back()->with(['success' => 'If an account exists for that email, a password reset link will be sent.']);
     }
@@ -213,12 +216,13 @@ class AuthController extends Controller
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
 
-            Mail::send('emails.account-details', [
+            // A courtesy email; the account is verified even if it can't be sent.
+            SafeMail::attempt(fn () => Mail::send('emails.account-details', [
                 'user' => $user,
             ], function ($message) use ($user) {
                 $message->to($user->email)
                     ->subject('Your LittleStep Account Is Verified');
-            });
+            }));
 
             recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
         }

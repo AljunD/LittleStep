@@ -103,6 +103,13 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
     - The server's own field errors appear under the matching input. The button shows "Saving..." while the request runs.
     - On success it shows a confirmation. The server keeps this session and signs out the guardian's other devices.
     - It calls `changeGuardianPassword()` (`PUT /guardian/password`).
+- **Opening the app from the verification email:** the app's URL scheme is `littlestep` (`app.json`). After a guardian verifies their email, the backend's confirmation page opens `littlestep://login?verified=1`. In Expo Go it opens `exp://<host>:8081/--/login?verified=1`; set `GUARDIAN_APP_LOGIN_URL` on the backend to match.
+  - **What handles it:** `linking` in `App.tsx` (native only) shows **Login** with "Your email is verified. Log in with your email and password to continue."
+  - **What's accepted:** only the `login` path, and only the `verified=1` value. Other paths and query parameters are ignored, so a link can't open a protected screen or put its own text on screen.
+  - **Already signed in:** the link is ignored (`hasGuardianSession()`).
+  - **No automatic sign-in:** the guardian always signs in with their own password.
+  - **Back button:** when the app was opened straight on Login, Back goes to Welcome.
+  - **After changing the scheme:** rebuild development and store builds. Expo Go doesn't need a rebuild.
 - **Default password reminder:** a teacher who leaves the password empty gives the guardian a shared default password.
   - **When it shows:** the login response's `must_change_password` is true, so **Select Student** shows a pop-up asking the guardian to change it (`components/password-reminder.tsx`).
   - **Its buttons:** **Change Password** opens the Change Password screen. **Remind me later** hides it until the next sign-in.
