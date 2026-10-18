@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Image,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors, Layout } from "../constants/theme";
-import { useAppTheme } from "../hooks/use-app-theme";
+import { DarkColors, Layout } from "../../constants/theme";
+import { useAppTheme } from "../../hooks/use-app-theme";
+import { useApiResource } from "../../hooks/use-api-resource";
+import { getGuardianAccount } from "../../services/guardianApi";
+import { fullName } from "../../services/format";
 
 const COLORS = {
   background: "#FFFFFF",
@@ -32,12 +35,12 @@ export default function ProfileScreen({
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
 
-  const student = route?.params?.student ?? {
-    name: "Juan Dela Cruz",
-    firstName: "Juan",
-    email: "juan.delacruz@gmail.com",
-    image: require("../assets/images/juan.jpg"),
-  };
+  const student = route?.params?.student;
+  const account = useApiResource(getGuardianAccount);
+  const guardianName = fullName(account.data);
+  const initials = account.data
+    ? `${account.data.first_name.charAt(0)}${account.data.last_name.charAt(0)}`.toUpperCase()
+    : "";
 
   const profileItems = [
     {
@@ -47,7 +50,7 @@ export default function ProfileScreen({
     },
     {
       title: "Notification",
-      subtitle: "Manage notifications",
+      subtitle: "Updates from your child's teacher",
       icon: "notifications-outline",
     },
     {
@@ -81,10 +84,10 @@ export default function ProfileScreen({
       openScreen("Display");
     } else if (title === "Language") {
       openScreen("Language");
-      } else if (title === "Contact Us") {
+    } else if (title === "Contact Us") {
       openScreen("ContactUs");
-    } else {
-      console.log("Selected:", title);
+    } else if (title === "Notification") {
+      openScreen("Notifications");
     }
   };
 
@@ -113,29 +116,54 @@ export default function ProfileScreen({
         style={[styles.content, isDark && darkStyles.container]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={account.refreshing}
+            onRefresh={account.refresh}
+            tintColor="#0BA8BD"
+            colors={["#0BA8BD"]}
+          />
+        }
       >
-        {/* Student profile card */}
+        {/* Guardian account card */}
         <View style={[styles.profileCard, isDark && darkStyles.iconContainer]}>
           <View style={[styles.avatarContainer, isDark && darkStyles.avatarContainer]}>
-            <Image
-              source={
-                typeof student.image === "string"
-                  ? { uri: student.image }
-                  : student.image ??
-                    require("../assets/images/juan.jpg")
-              }
-              style={styles.avatar}
-            />
+            {initials ? (
+              <Text style={[styles.avatarInitials, isDark && darkStyles.text]}>{initials}</Text>
+            ) : (
+              <Ionicons name="person" size={28} color={isDark ? DarkColors.icon : COLORS.green} />
+            )}
           </View>
 
           <View style={styles.profileDetails}>
-            <Text style={[styles.studentName, isDark && darkStyles.text]}>
-              {student.name ?? "Juan Dela Cruz"}
-            </Text>
-            <Text style={[styles.studentEmail, isDark && darkStyles.mutedText]}>
-              {student.email ?? "juan.delacruz@gmail.com"}
-            </Text>
-
+            {account.data ? (
+              <>
+                <Text style={[styles.studentName, isDark && darkStyles.text]} numberOfLines={1}>
+                  {guardianName}
+                </Text>
+                <Text style={[styles.studentEmail, isDark && darkStyles.mutedText]} numberOfLines={1}>
+                  {account.data.email}
+                </Text>
+                {account.data.relationship_to_child ? (
+                  <Text style={[styles.accountBadgeText, isDark && darkStyles.mutedText]}>
+                    Guardian · {account.data.relationship_to_child}
+                  </Text>
+                ) : null}
+              </>
+            ) : account.error ? (
+              <>
+                <Text style={[styles.errorText, isDark && darkStyles.danger]} accessibilityRole="alert">
+                  {account.error}
+                </Text>
+                <TouchableOpacity onPress={account.retry} accessibilityRole="button">
+                  <Text style={styles.retryLink}>Try again</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <Text style={[styles.studentEmail, isDark && darkStyles.mutedText]}>
+                Loading your profile...
+              </Text>
+            )}
           </View>
 
           <Ionicons
@@ -303,11 +331,27 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.background,
     marginRight: 13,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
-  avatar: {
-    width: "100%",
-    height: "100%",
+  avatarInitials: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: COLORS.green,
+  },
+
+  errorText: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#B42318",
+  },
+
+  retryLink: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0BA8BD",
+    marginTop: 4,
   },
 
   profileDetails: {
@@ -330,6 +374,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     color: COLORS.green,
+    marginTop: 4,
   },
 
   sectionHeader: {
@@ -473,6 +518,10 @@ const darkStyles = StyleSheet.create({
 
   avatarContainer: {
     borderColor: DarkColors.surface,
+  },
+
+  danger: {
+    color: DarkColors.danger,
   },
 
   divider: {

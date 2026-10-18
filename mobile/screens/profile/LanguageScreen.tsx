@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors, Layout } from "../constants/theme";
-import { useAppTheme } from "../hooks/use-app-theme";
+import { DarkColors, Layout } from "../../constants/theme";
+import { useAppTheme } from "../../hooks/use-app-theme";
+import { readDevicePreference, writeDevicePreference } from "../../services/device-preferences";
 
+const LANGUAGE_KEY = "littlestep.language";
+const LANGUAGES = ["English", "Filipino"];
 
 const COLORS = {
   background: "#FFFFFF",
@@ -35,8 +38,29 @@ export default function LanguageScreen({
 
   const [selectedLanguage, setSelectedLanguage] =
     useState("English");
+  const [saveFailed, setSaveFailed] = useState(false);
 
-  const languages = ["English", "Filipino"];
+  // The language is a device setting (there is no language field on the server).
+  useEffect(() => {
+    let isMounted = true;
+
+    void readDevicePreference(LANGUAGE_KEY).then((stored) => {
+      if (isMounted && stored && LANGUAGES.includes(stored)) {
+        setSelectedLanguage(stored);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const selectLanguage = (language: string) => {
+    setSelectedLanguage(language);
+    void writeDevicePreference(LANGUAGE_KEY, language).then((saved) => setSaveFailed(!saved));
+  };
+
+  const languages = LANGUAGES;
 
   const goTo = (screen: string) => {
     navigation.navigate(
@@ -100,16 +124,18 @@ export default function LanguageScreen({
               <React.Fragment key={language}>
                 <TouchableOpacity
                   style={styles.languageRow}
-                  onPress={() => setSelectedLanguage(language)}
+                  onPress={() => selectLanguage(language)}
                   activeOpacity={0.7}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
                 >
                   <View style={styles.languageInfo}>
                     <View
                       style={[
                         styles.languageIcon,
                         selected && styles.selectedLanguageIcon,
-                      isDark && darkStyles.surfaceMuted,
-                      selected && isDark && darkStyles.selectedIcon,
+                        isDark && darkStyles.surfaceMuted,
+                        selected && isDark && darkStyles.selectedIcon,
                       ]}
                     >
                       <Ionicons
@@ -134,8 +160,8 @@ export default function LanguageScreen({
                     style={[
                       styles.radioOuter,
                       selected && styles.radioOuterSelected,
-                    isDark && darkStyles.radioOuter,
-                    selected && isDark && darkStyles.radioOuterSelected,
+                      isDark && darkStyles.radioOuter,
+                      selected && isDark && darkStyles.radioOuterSelected,
                     ]}
                   >
                     {selected && (
@@ -151,6 +177,12 @@ export default function LanguageScreen({
             );
           })}
         </View>
+
+        <Text style={[styles.note, isDark && darkStyles.mutedText]}>
+          {saveFailed
+            ? "Your choice applies for now but could not be saved on this device."
+            : "Your choice is saved on this device. LittleStep is currently shown in English; other languages will apply once translations are available."}
+        </Text>
       </ScrollView>
 
       {/* Bottom navigation */}
@@ -272,6 +304,13 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  note: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.gray,
+    marginTop: 14,
+  },
+
   languageCard: {
     backgroundColor: COLORS.background,
     borderWidth: 1,
@@ -370,7 +409,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-activeNavText: {
+  activeNavText: {
     color: "#337D73",
     fontWeight: "800",
   },

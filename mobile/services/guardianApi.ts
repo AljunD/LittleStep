@@ -48,6 +48,59 @@ export type GuardianDashboard = {
   };
 };
 
+/** Values the API returns for free-form profile fields (some numeric columns may be null). */
+export type DisplayValue = string | number | null;
+
+export type GuardianAccount = GuardianProfile & {
+  email: string;
+  sex: string | null;
+  contact_number: string | null;
+  relationship_to_child: string | null;
+  address: string | null;
+};
+
+export type GuardianChildDetails = {
+  id: number;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  sex: string;
+  date_of_birth: string;
+  address: DisplayValue;
+  handedness: DisplayValue;
+  is_studying: boolean;
+  school_name: DisplayValue;
+  fathers_name: DisplayValue;
+  fathers_age: DisplayValue;
+  fathers_occupation: DisplayValue;
+  fathers_education: DisplayValue;
+  mothers_name: DisplayValue;
+  mothers_age: DisplayValue;
+  mothers_occupation: DisplayValue;
+  mothers_education: DisplayValue;
+  number_of_siblings: DisplayValue;
+  birth_order: DisplayValue;
+  photo_url: string | null;
+};
+
+export type GuardianContact = {
+  child: Pick<GuardianChild, "id" | "first_name" | "middle_name" | "last_name">;
+  teacher: {
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+    contact_number: string | null;
+  } | null;
+};
+
+/** A teacher update to one domain of one child, for the notifications feed. */
+export type GuardianProgressUpdate = {
+  child: GuardianChild;
+  domain: string;
+  label: string;
+  updatedAt: string;
+};
+
 export type GuardianRecentActivity = {
   domain: string;
   label: string;
@@ -393,6 +446,103 @@ export async function getGuardianProfile(): Promise<GuardianProfile> {
   }
 
   return profile;
+}
+
+function isOptionalString(value: unknown): value is string | null {
+  return typeof value === "string" || value === null;
+}
+
+function isDisplayValue(value: unknown): value is DisplayValue {
+  return typeof value === "string" || typeof value === "number" || value === null;
+}
+
+const CHILD_DETAIL_FIELDS = [
+  "address", "handedness", "school_name",
+  "fathers_name", "fathers_age", "fathers_occupation", "fathers_education",
+  "mothers_name", "mothers_age", "mothers_occupation", "mothers_education",
+  "number_of_siblings", "birth_order",
+] as const;
+
+/** Full guardian profile (contact details and account email) for the Profile screens. */
+export async function getGuardianAccount(): Promise<GuardianAccount> {
+  const account = await requestJson<unknown>("/api/v1/guardian/profile");
+  if (
+    !isRecord(account)
+    || typeof account.email !== "string"
+    || !isOptionalString(account.sex)
+    || !isOptionalString(account.contact_number)
+    || !isOptionalString(account.relationship_to_child)
+    || !isOptionalString(account.address)
+    || !isGuardianProfile(account)
+  ) {
+    throw new GuardianApiError("The server returned an invalid guardian profile.");
+  }
+
+  return account as GuardianAccount;
+}
+
+export async function getGuardianChild(childId: number): Promise<GuardianChildDetails> {
+  const child = await requestJson<unknown>(`/api/v1/guardian/children/${childId}`);
+  if (
+    !isRecord(child)
+    || typeof child.is_studying !== "boolean"
+    || !CHILD_DETAIL_FIELDS.every((field) => isDisplayValue(child[field]))
+    || !isGuardianChild(child)
+  ) {
+    throw new GuardianApiError("The server returned invalid child details.");
+  }
+
+  return child as GuardianChildDetails;
+}
+
+function isGuardianContact(value: unknown): value is GuardianContact {
+  if (!isRecord(value) || !isRecord(value.child) || typeof value.child.id !== "number") {
+    return false;
+  }
+
+  const teacher = value.teacher;
+  return teacher === null || (
+    isRecord(teacher)
+    && typeof teacher.first_name === "string"
+    && typeof teacher.last_name === "string"
+    && isOptionalString(teacher.middle_name)
+    && isOptionalString(teacher.contact_number)
+  );
+}
+
+/** Each of the guardian's children with the teacher handling them (null until assigned). */
+export async function getGuardianContacts(): Promise<GuardianContact[]> {
+  const contacts = await requestJson<unknown>("/api/v1/guardian/contacts");
+  if (!Array.isArray(contacts) || !contacts.every(isGuardianContact)) {
+    throw new GuardianApiError("The server returned invalid contact details.");
+  }
+
+  return contacts;
+}
+
+/**
+ * Teacher updates across all of the guardian's children, newest first.
+ * Built from each child's dashboard `recent_activity` (there is no separate notifications table).
+ */
+export async function getGuardianProgressUpdates(): Promise<GuardianProgressUpdate[]> {
+  const children = await getGuardianChildren();
+  const dashboards = await Promise.all(children.map((child) => getGuardianDashboard(child.id)));
+
+  return dashboards
+    .flatMap((dashboard) => (dashboard.progress.recent_activity ?? [])
+      .filter((activity) => activity.last_updated_at !== null)
+      .map((activity) => ({
+        child: dashboard.child,
+        domain: activity.domain,
+        label: activity.label,
+        updatedAt: activity.last_updated_at as string,
+      })))
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+}
+
+/** True when the server rejected the session (token expired, revoked, or account no longer allowed). */
+export function isSessionEndedError(error: unknown): boolean {
+  return error instanceof GuardianApiError && (error.status === 401 || error.status === 403);
 }
 
 export async function getGuardianChildren(): Promise<GuardianChild[]> {

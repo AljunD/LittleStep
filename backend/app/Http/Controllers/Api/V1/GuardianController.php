@@ -37,7 +37,41 @@ class GuardianController extends Controller
             'first_name' => $guardian->first_name,
             'middle_name' => $guardian->middle_name,
             'last_name' => $guardian->last_name,
+            'email' => $request->user()->email,
+            'sex' => $guardian->sex,
+            'contact_number' => $guardian->contact_number,
+            'relationship_to_child' => $guardian->relationship_to_child,
+            // Barangay, municipality, province and region are stored joined in `address`.
+            'address' => $guardian->address,
         ], 200);
+    }
+
+    // GET /guardian/contacts
+    // The teacher handling each of the guardian's children: name and contact number only.
+    public function contacts(Request $request)
+    {
+        $children = $request->user()->guardian->children()
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'middle_name', 'last_name']);
+
+        return response()->json($children->map(function (Child $child) {
+            $teacher = $this->latestProgressRecord($child)?->teacher;
+
+            return [
+                'child' => [
+                    'id' => $child->id,
+                    'first_name' => $child->first_name,
+                    'middle_name' => $child->middle_name,
+                    'last_name' => $child->last_name,
+                ],
+                'teacher' => $teacher ? [
+                    'first_name' => $teacher->first_name,
+                    'middle_name' => $teacher->middle_name,
+                    'last_name' => $teacher->last_name,
+                    'contact_number' => $teacher->contact_number,
+                ] : null,
+            ];
+        })->values(), 200);
     }
 
 
@@ -271,7 +305,32 @@ class GuardianController extends Controller
         $child = Child::where('guardian_id', $request->user()->guardian->id)
             ->findOrFail($id);
 
-        return response()->json($child, 200);
+        // Explicit fields only: never expose storage paths or internal columns.
+        return response()->json([
+            'id' => $child->id,
+            'first_name' => $child->first_name,
+            'middle_name' => $child->middle_name,
+            'last_name' => $child->last_name,
+            'sex' => $child->sex,
+            'date_of_birth' => $child->date_of_birth,
+            'address' => $child->address,
+            'handedness' => $child->handedness,
+            'is_studying' => (bool) $child->is_studying,
+            'school_name' => $child->school_name,
+            'fathers_name' => $child->fathers_name,
+            'fathers_age' => $child->fathers_age,
+            'fathers_occupation' => $child->fathers_occupation,
+            'fathers_education' => $child->fathers_education,
+            'mothers_name' => $child->mothers_name,
+            'mothers_age' => $child->mothers_age,
+            'mothers_occupation' => $child->mothers_occupation,
+            'mothers_education' => $child->mothers_education,
+            'number_of_siblings' => $child->number_of_siblings,
+            'birth_order' => $child->birth_order,
+            'photo_url' => $child->photo_path
+                ? 'api/v1/guardian/children/'.$child->id.'/photo'
+                : null,
+        ], 200);
     }
 
     public function photo(Request $request, int $id)

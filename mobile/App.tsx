@@ -17,12 +17,14 @@ import SelectStudentScreen from "./screens/SelectStudentScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import ECCDChecklistScreen from "./screens/ECCDChecklistScreen";
 import DomainScreen from "./screens/DomainScreen";
-import ProfileScreen from "./screens/ProfileScreen";
-import PersonalInformationScreen from "./screens/PersonalInformationScreen";
+import ProfileScreen from "./screens/profile/ProfileScreen";
+import PersonalInformationScreen from "./screens/profile/PersonalInformationScreen";
 import ChildDetailsScreen from "./screens/ChildDetailsScreen";
 import GuardianDetailsScreen from "./screens/GuardianDetailsScreen";
 import DisplayScreen from "./screens/DisplayScreen";
-import LanguageScreen from "./screens/LanguageScreen";
+import LanguageScreen from "./screens/profile/LanguageScreen";
+import ContactUsScreen from "./screens/profile/ContactUsScreen";
+import NotificationScreen from "./screens/profile/NotificationScreen";
 
 const Stack = createStackNavigator();
 
@@ -158,6 +160,14 @@ function AppNavigator() {
           name="Language"
           component={LanguageScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ContactUs"
+          component={ContactUsScreen}
+        />
+        <Stack.Screen
+          name="Notifications"
+          component={NotificationScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

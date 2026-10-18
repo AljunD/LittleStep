@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DarkColors, Layout } from "../constants/theme";
 import { getEccdDomain } from "../constants/eccd-domains";
 import { useAppTheme } from "../hooks/use-app-theme";
+import { formatDate } from "../services/format";
 import {
   getGuardianApiErrorMessage,
   getGuardianChildDomain,
@@ -30,22 +31,6 @@ const ROUND_LABELS: Record<number, string> = {
   2: "2nd Eval",
   3: "3rd Eval",
 };
-
-/** Formats "YYYY-MM-DD" as a local calendar date and full ISO timestamps as-is. */
-function formatDate(value: string | null): string | null {
-  if (!value) {
-    return null;
-  }
-
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  const date = dateOnly
-    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
-    : new Date(value);
-
-  return Number.isNaN(date.getTime())
-    ? null
-    : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
 
 export default function DomainScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
