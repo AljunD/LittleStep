@@ -19,11 +19,11 @@
                 </div>
                 <div class="flex items-baseline">
                     <span class="whitespace-nowrap mr-2">Date administered :</span>
-                    <input type="date" name="date_administered" value="{{ old('date_administered', $progressRecord?->evaluation_date ?? now()->toDateString()) }}" required class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
+                    <input type="date" name="date_administered" value="{{ old('date_administered', $progressRecord?->evaluation_date ?? now()->toDateString()) }}" min="{{ $child->date_of_birth }}" max="{{ now()->toDateString() }}" required class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
                 </div>
                 <div class="flex items-baseline">
                     <span class="whitespace-nowrap mr-2">Place where test is administered :</span>
-                    <input type="text" name="place_administered" value="{{ old('place_administered', $progressRecord?->domainObservation?->place_administered) }}" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
+                    <input type="text" name="place_administered" maxlength="255" value="{{ old('place_administered', $progressRecord?->domainObservation?->place_administered) }}" class="flex-1 bg-transparent border-b border-dashed border-gray-400 focus:outline-none focus:border-blue-500 px-2 font-sans py-0.5">
                 </div>
                 <p class="text-xs text-gray-500">Child: {{ $child->first_name }} {{ $child->last_name }}</p>
             </div>
@@ -39,7 +39,7 @@
                     Child’s background (ex. behavior/health/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="background_observations" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('background_observations', $progressRecord?->domainObservation?->background_observations) }}</textarea>
+                    <textarea name="background_observations" maxlength="5000" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('background_observations', $progressRecord?->domainObservation?->background_observations) }}</textarea>
                 </div>
             </div>
 
@@ -48,7 +48,7 @@
                     Family environment (ex. Health of family members/family problems/ economic conditions/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="family_environment_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('family_environment_notes', $progressRecord?->domainObservation?->family_environment_notes) }}</textarea>
+                    <textarea name="family_environment_notes" maxlength="5000" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('family_environment_notes', $progressRecord?->domainObservation?->family_environment_notes) }}</textarea>
                 </div>
             </div>
 
@@ -57,7 +57,7 @@
                     Parents’ stimulating activities for the child (What are the activities/things that the parents do to help stimulate the child’s development?)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="stimulating_activities_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('stimulating_activities_notes', $progressRecord?->domainObservation?->stimulating_activities_notes) }}</textarea>
+                    <textarea name="stimulating_activities_notes" maxlength="5000" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('stimulating_activities_notes', $progressRecord?->domainObservation?->stimulating_activities_notes) }}</textarea>
                 </div>
             </div>
 
@@ -66,7 +66,7 @@
                     Home environment (ex. Facilities/type of house/ household items/interaction/etc.)
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="home_environment_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('home_environment_notes', $progressRecord?->domainObservation?->home_environment_notes) }}</textarea>
+                    <textarea name="home_environment_notes" maxlength="5000" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('home_environment_notes', $progressRecord?->domainObservation?->home_environment_notes) }}</textarea>
                 </div>
             </div>
 
@@ -75,7 +75,7 @@
                     Others
                 </label>
                 <div class="relative bg-transparent" style="background-image: linear-gradient(to bottom, transparent 31px, #9ca3af 32px); background-size: 100% 32px; line-height: 32px;">
-                    <textarea name="other_notes" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('other_notes', $progressRecord?->domainObservation?->other_notes) }}</textarea>
+                    <textarea name="other_notes" maxlength="5000" rows="5" class="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-0 font-sans text-sm leading-[32px] tracking-wide">{{ old('other_notes', $progressRecord?->domainObservation?->other_notes) }}</textarea>
                 </div>
             </div>
 

@@ -115,8 +115,27 @@
     document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
     document.getElementById('sidebar-overlay')?.addEventListener('click', toggleSidebar);
     document.addEventListener('submit', event => {
-      const form = event.target.closest('form[data-confirm]');
-      if (form && !confirm(form.dataset.confirm)) event.preventDefault();
+      const form = event.target;
+      if (form.dataset.confirm && !confirm(form.dataset.confirm)) {
+        event.preventDefault();
+        return;
+      }
+      // One submission per click: stops duplicate records from double-clicks (GET filter forms are exempt).
+      if (form.method.toLowerCase() !== 'post') return;
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+      form.dataset.submitting = 'true';
+      form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
+    });
+    // Re-enable forms restored from the back/forward cache.
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted) return;
+      document.querySelectorAll('form[data-submitting="true"]').forEach(form => {
+        form.dataset.submitting = 'false';
+        form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = false; });
+      });
     });
     // Dismiss buttons on the shared flash-message banners.
     document.addEventListener('click', event => {

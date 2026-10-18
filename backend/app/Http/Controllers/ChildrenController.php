@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProgressRecord;
 use App\Models\Teacher;
+use App\Support\FormRules;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ChildrenController extends Controller
@@ -16,43 +15,6 @@ class ChildrenController extends Controller
         $children = $teacher->ownedChildren()->with('guardian')->paginate(10);
 
         return view('children.index', compact('children'));
-    }
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'guardian_id' => 'required|integer|exists:guardians,id',
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'sex' => 'required|string|max:10',
-            'date_of_birth' => 'required|date',
-            'address' => 'nullable|string|max:500',
-        ]);
-
-        $teacher = $this->currentTeacher($request);
-        $guardian = $teacher->ownedGuardians()->findOrFail($data['guardian_id']);
-        $data['handedness'] = 'not_yet_established';
-
-        $child = DB::transaction(function () use ($guardian, $data, $teacher) {
-            $child = $guardian->children()->create($data);
-            ProgressRecord::create([
-                'child_id' => $child->id,
-                'teacher_id' => $teacher->id,
-                'evaluation_date' => now()->toDateString(),
-                'evaluation_date_round_1' => now()->toDateString(),
-                'evaluation_number' => 1,
-                'status' => 'pending',
-            ]);
-
-            return $child;
-        });
-
-        // Log creation
-        recordLog('created', 'Child', $child->id, 'Child created: '.$child->first_name.' '.$child->last_name);
-
-        return redirect()->route('children.index')
-            ->with('success', 'Child created successfully.');
     }
 
     public function show(Request $request, $id)
@@ -78,52 +40,24 @@ class ChildrenController extends Controller
     {
         $child = $this->currentTeacher($request)->ownedChildren()->findOrFail($id);
 
-        $data = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'sex' => 'required|in:Male,Female',
-            'date_of_birth' => 'required|date',
-            'barangay' => 'nullable|string|max:255',
-            'municipality' => 'nullable|string|max:255',
-            'province' => 'nullable|string|max:255',
-            'region' => 'nullable|string|max:255',
-            'handedness' => 'nullable|in:right,left,both,not_yet_established',
-            'is_studying' => 'nullable|boolean',
-            'school_name' => 'nullable|string|max:255',
-            'fathers_name' => 'nullable|string|max:255',
-            'fathers_age' => 'nullable|integer|min:0|max:120',
-            'fathers_occupation' => 'nullable|string|max:255',
-            'fathers_education' => 'nullable|string|max:255',
-            'mothers_name' => 'nullable|string|max:255',
-            'mothers_age' => 'nullable|integer|min:0|max:120',
-            'mothers_occupation' => 'nullable|string|max:255',
-            'mothers_education' => 'nullable|string|max:255',
-            'number_of_siblings' => 'nullable|integer|min:0',
-            'birth_order' => 'nullable|integer|min:1',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|mimetypes:image/jpeg,image/png,image/gif|max:2048',
-        ]);
+        // Education values saved before the dropdown existed stay valid until they are changed.
+        $data = $request->validate(
+            FormRules::childProfile('', [$child->fathers_education, $child->mothers_education]),
+            FormRules::messages()
+        );
 
-        $addressParts = array_filter([
-            $request->input('barangay'),
-            $request->input('municipality'),
-            $request->input('province'),
-            $request->input('region'),
-        ]);
-        $data['address'] = ! empty($addressParts) ? implode(', ', $addressParts) : null;
+        $data['address'] = FormRules::joinAddress($data) ?: null;
+        unset($data['barangay'], $data['municipality'], $data['province'], $data['region'], $data['photo']);
 
         if ($request->hasFile('photo')) {
             $oldPhotoPath = $child->photo_path;
             $data['photo_path'] = $request->file('photo')->store('photos/children', 'local');
         }
 
-        $data['is_studying'] = $request->input('is_studying') == '1' ? 1 : 0;
-
-        if ($data['is_studying'] === 0) {
+        $data['is_studying'] = (bool) ($data['is_studying'] ?? false);
+        if (! $data['is_studying']) {
             $data['school_name'] = null;
         }
-
-        unset($data['photo']);
 
         $child->update($data);
 

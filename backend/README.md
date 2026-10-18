@@ -101,6 +101,25 @@ resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
 
 `tests/Feature/FlashMessagesTest.php` follows each main action through its redirects and checks that its message appears exactly once on the page the teacher lands on. Run `npm run build` after changing these components so Tailwind picks up their classes.
 
+**Forms and validation.** The teacher forms share their rules through `App\Support\FormRules`, so a field is accepted or rejected the same way everywhere:
+
+- **Names** (people, parents, relationship): letters including ñ and accents, spaces, periods, apostrophes and hyphens, up to 255 characters, e.g. `Ma. Peña-O'Neil`.
+- **Contact numbers** (teacher and guardian): 11 digits starting with `09`.
+- **Passwords:** 12–72 characters.
+- **Child profile:**
+  - The date of birth can't be in the future.
+  - Handedness is required.
+  - Parents' age must be 10–120, siblings 0–30, birth order 1–31.
+  - Parents' education comes from a fixed list (`<x-education-select>`). An older stored value stays selectable when editing.
+  - The photo must be a JPG, PNG or GIF of at most 2 MB, stored under `photos/children`.
+- **Browser hints:** inputs carry matching `maxlength`/`min`/`max`/`pattern` attributes, but the server rules are the authority.
+- **Double submits:** the teacher layout blocks double submits of POST forms, so a double-click can't create duplicates.
+- **Progress comments:** a progress comment needs a ✓/— response before it can be saved. This applies on both the create and edit forms.
+
+**Default guardian password.** On Guardians → Add Guardian the password is optional. If both password fields are left empty, the account gets the default password from `GUARDIAN_DEFAULT_PASSWORD` (`Password123@` when unset, see `config/littlestep.php`). The form shows the default, and the success banner says when it was used. Everyone who gets the default shares the same known password. The guardian should change it from "Forgot password" after the first sign-in. For real deployments, set your own value in `.env`.
+
+**Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
+
 **Audit log.** Teacher actions call `recordLog($action, $entityType, $entityId, $details)`. Entries are listed at `/logs`.
 
 **Security.**

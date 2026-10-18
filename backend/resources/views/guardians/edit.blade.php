@@ -37,19 +37,19 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Role</label>
-                            <input type="text" value="guardian" readonly 
+                            <input type="text" maxlength="255" value="guardian" readonly 
                                 class="w-full border-gray-100 bg-gray-50 text-gray-500 rounded-xl p-3 cursor-not-allowed border">
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">New Password <span class="text-gray-400 text-xs">(optional)</span></label>
-                            <input type="password" id="guardianPassword" name="password" minlength="12" autocomplete="new-password"
+                            <input type="password" id="guardianPassword" name="password" minlength="12" maxlength="72" autocomplete="new-password"
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border" 
                                 placeholder="Leave blank to keep current password">
                             @error('password') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Confirm New Password</label>
-                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" autocomplete="new-password"
+                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" maxlength="72" autocomplete="new-password"
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('password_confirmation') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -61,19 +61,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">First Name</label>
-                            <input type="text" id="guardianFirst" name="first_name" value="{{ old('first_name', $guardian->first_name ?? '') }}" 
+                            <input type="text" maxlength="255" id="guardianFirst" name="first_name" value="{{ old('first_name', $guardian->first_name ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('first_name') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Middle Name</label>
-                            <input type="text" id="guardianMiddle" name="middle_name" value="{{ old('middle_name', $guardian->middle_name ?? '') }}" 
+                            <input type="text" maxlength="255" id="guardianMiddle" name="middle_name" value="{{ old('middle_name', $guardian->middle_name ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('middle_name') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Last Name</label>
-                            <input type="text" id="guardianLast" name="last_name" value="{{ old('last_name', $guardian->last_name ?? '') }}" 
+                            <input type="text" maxlength="255" id="guardianLast" name="last_name" value="{{ old('last_name', $guardian->last_name ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('last_name') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -92,13 +92,13 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Contact Number</label>
-                            <input type="tel" id="guardianContact" name="contact_number" value="{{ old('contact_number', $guardian->contact_number ?? '') }}" 
+                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number', $guardian->contact_number ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('contact_number') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Relationship to Child</label>
-                            <input type="text" id="guardianRelation" name="relationship_to_child" value="{{ old('relationship_to_child', $guardian->relationship_to_child ?? '') }}" 
+                            <input type="text" maxlength="255" id="guardianRelation" name="relationship_to_child" value="{{ old('relationship_to_child', $guardian->relationship_to_child ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('relationship_to_child') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -110,22 +110,22 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="text-sm text-gray-600">Barangay</label>
-                            <input type="text" id="guardianBarangay" name="barangay" value="{{ old('barangay', $guardian->barangay ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
+                            <input type="text" maxlength="255" id="guardianBarangay" name="barangay" value="{{ old('barangay', $guardian->barangay ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('barangay') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm text-gray-600">Municipality/City</label>
-                            <input type="text" id="guardianMunicipality" name="municipality" value="{{ old('municipality', $guardian->municipality ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
+                            <input type="text" maxlength="255" id="guardianMunicipality" name="municipality" value="{{ old('municipality', $guardian->municipality ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('municipality') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm text-gray-600">Province</label>
-                            <input type="text" id="guardianProvince" name="province" value="{{ old('province', $guardian->province ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
+                            <input type="text" maxlength="255" id="guardianProvince" name="province" value="{{ old('province', $guardian->province ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('province') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm text-gray-600">Region</label>
-                            <input type="text" id="guardianRegion" name="region" value="{{ old('region', $guardian->region ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
+                            <input type="text" maxlength="255" id="guardianRegion" name="region" value="{{ old('region', $guardian->region ?? '') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('region') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>

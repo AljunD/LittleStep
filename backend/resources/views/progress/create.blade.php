@@ -107,11 +107,15 @@
                                 $saved2 = $savedResults[2][$item->id] ?? null;
                                 $saved3 = $savedResults[3][$item->id] ?? null;
 
-                                $present1 = $saved1['present'] ?? null;
-                                $present2 = $saved2['present'] ?? null;
-                                $present3 = $saved3['present'] ?? null;
+                                // After a failed save, the current round shows what the teacher entered instead of the saved answers.
+                                $restoreInput = session()->hasOldInput();
+                                $present1 = $restoreInput && $currentRound === 1 ? old("results.{$item->id}.1") : ($saved1['present'] ?? null);
+                                $present2 = $restoreInput && $currentRound === 2 ? old("results.{$item->id}.2") : ($saved2['present'] ?? null);
+                                $present3 = $restoreInput && $currentRound === 3 ? old("results.{$item->id}.3") : ($saved3['present'] ?? null);
 
-                                $savedComment = $savedResults[$currentRound][$item->id]['comments'] ?? '';
+                                $savedComment = $restoreInput
+                                    ? old("comments.{$item->id}", '')
+                                    : ($savedResults[$currentRound][$item->id]['comments'] ?? '');
                             @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-2 py-4 text-center font-bold w-10 border border-gray-300">{{ $index + 1 }}.</td>
@@ -163,10 +167,13 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4 border border-gray-300">
-                                    <textarea name="comments[{{ $item->id }}]"
+                                    <textarea name="comments[{{ $item->id }}]" maxlength="5000"
                                               class="w-full h-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring focus:ring-blue-200 resize-none"
                                               placeholder="Add observations..."
                                               {{ $currentRound > 3 ? 'disabled' : '' }}>{{ $savedComment }}</textarea>
+                                    @error("comments.{$item->id}")
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
                                 </td>
                             </tr>
                         @empty
@@ -214,13 +221,6 @@
 
 <script nonce="{{ request()->attributes->get('cspNonce') }}">
     function updateScores() {
-        const totals = {1: 0, 2: 0, 3: 0};
-        document.querySelectorAll('.score-check:checked').forEach(cb => {
-            if (!cb.disabled) totals[cb.dataset.eval]++;
-        });
-        document.querySelectorAll('.score-check:checked').forEach(cb => {
-            totals[cb.dataset.eval]++;
-        });
         document.getElementById('totalEval1').textContent = document.querySelectorAll('.score-check[data-eval="1"]:checked').length;
         document.getElementById('totalEval2').textContent = document.querySelectorAll('.score-check[data-eval="2"]:checked').length;
         document.getElementById('totalEval3').textContent = document.querySelectorAll('.score-check[data-eval="3"]:checked').length;

@@ -50,7 +50,7 @@
     {{-- Sex --}}
     <div>
         <label for="sex" class="block text-sm font-semibold text-gray-600 mb-2">Sex</label>
-        <select id="sex" name="sex"
+        <select id="sex" name="sex" required
                 class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
             <option value="" disabled {{ old('sex') ? '' : 'selected' }}>Select sex</option>
             <option value="Male" {{ old('sex') == 'Male' ? 'selected' : '' }}>Male</option>
@@ -65,9 +65,9 @@
     {{-- Contact Number --}}
     <div>
         <label for="contact_number" class="block text-sm font-semibold text-gray-600 mb-2">Contact Number</label>
-        <input type="text" id="contact_number" name="contact_number" placeholder="09123456789"
+        <input type="text" id="contact_number" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" placeholder="09123456789"
                value="{{ old('contact_number') }}"
-               maxlength="20" autocomplete="tel" required
+               autocomplete="tel" required
                class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
         @error('contact_number')
             <p class="text-red-500 text-xs mt-2">{{ $message }}</p>

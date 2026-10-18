@@ -438,6 +438,18 @@ class ProgressController extends Controller
             return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
         }
 
+        // Same rule as the edit form: a comment needs a ✓ / — answer, otherwise it would be saved as "not present".
+        $responseErrors = [];
+        foreach ($comments as $itemId => $comment) {
+            $answer = $results[$itemId][$currentRound] ?? null;
+            if (is_string($comment) && trim($comment) !== '' && ($answer === null || $answer === '')) {
+                $responseErrors["comments.{$itemId}"] = 'Select a present or not-present response before saving this comment.';
+            }
+        }
+        if ($responseErrors !== []) {
+            return back()->withErrors($responseErrors)->withInput();
+        }
+
         DB::beginTransaction();
 
         try {

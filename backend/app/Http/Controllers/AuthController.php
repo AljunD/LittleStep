@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\FormRules;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -33,25 +34,15 @@ class AuthController extends Controller
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'sex' => 'required|string|in:Male,Female',
-            'contact_number' => 'required|string|max:20',
+            'first_name' => FormRules::name(),
+            'middle_name' => FormRules::name(false),
+            'last_name' => FormRules::name(),
+            'sex' => ['required', Rule::in(FormRules::SEXES)],
+            'contact_number' => FormRules::contactNumber(),
             'address' => 'required|string|max:500',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                PasswordRule::min(12)->max(72),
-                static function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 72) {
-                        $fail('The password may not exceed 72 bytes.');
-                    }
-                },
-            ],
-        ]);
+            'password' => FormRules::password(),
+        ], FormRules::messages());
 
         $cleanEmail = Str::lower(trim($request->email));
 
@@ -182,17 +173,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                PasswordRule::min(12)->max(72),
-                static function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 72) {
-                        $fail('The password may not exceed 72 bytes.');
-                    }
-                },
-            ],
+            'password' => FormRules::password(),
         ]);
 
         $status = Password::reset(
@@ -228,18 +209,19 @@ class AuthController extends Controller
             abort(403, 'Invalid verification link.');
         }
 
+        // Re-opening an old link must not send the "verified" email again.
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
+
+            Mail::send('emails.account-details', [
+                'user' => $user,
+            ], function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Your LittleStep Account Is Verified');
+            });
+
+            recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
         }
-
-        Mail::send('emails.account-details', [
-            'user' => $user,
-        ], function ($message) use ($user) {
-            $message->to($user->email)
-                ->subject('Your LittleStep Account Is Verified');
-        });
-
-        recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
 
         if ($user->role === 'teacher') {
             return redirect()->route('login')->with('status', 'Your email has been verified successfully. You may now log in.');

@@ -87,8 +87,9 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
 
 Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
 
-    // Children are registered through a guardian (guardians.create-child); there is no standalone create form.
-    Route::resource('children', ChildrenController::class)->except(['create']);
+    // Children are registered through a guardian (guardians.create-child / guardians.store-child),
+    // so there is no standalone create form or store endpoint.
+    Route::resource('children', ChildrenController::class)->except(['create', 'store']);
     Route::get('/children/{id}/photo', [ChildrenController::class, 'photo'])->name('children.photo');
 });
 

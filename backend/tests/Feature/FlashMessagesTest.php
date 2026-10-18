@@ -237,7 +237,7 @@ class FlashMessagesTest extends TestCase
 
         $response->assertOk()
             ->assertSee('data-validation-errors', false)
-            ->assertSee('The first name must only contain letters and spaces.')
+            ->assertSee('The first name may only contain letters, spaces, periods, apostrophes and hyphens.')
             ->assertSee('id="editGuardianForm"', false)
             ->assertSee('value="Casey1"', false);
     }

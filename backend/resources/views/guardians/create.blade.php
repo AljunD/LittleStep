@@ -52,17 +52,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label for="guardianFirst" class="text-sm font-semibold text-gray-700">First Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="guardianFirst" name="first_name" value="{{ old('first_name') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Maria">
+                            <input type="text" maxlength="255" id="guardianFirst" name="first_name" value="{{ old('first_name') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Maria">
                             @error('first_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label for="guardianMiddle" class="text-sm font-semibold text-gray-700">Middle Name</label>
-                            <input type="text" id="guardianMiddle" name="middle_name" value="{{ old('middle_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Lopez">
+                            <input type="text" maxlength="255" id="guardianMiddle" name="middle_name" value="{{ old('middle_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Lopez">
                             @error('middle_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label for="guardianLast" class="text-sm font-semibold text-gray-700">Last Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="guardianLast" name="last_name" value="{{ old('last_name') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Santos">
+                            <input type="text" maxlength="255" id="guardianLast" name="last_name" value="{{ old('last_name') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="e.g. Santos">
                             @error('last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -80,12 +80,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label for="guardianContact" class="text-sm font-semibold text-gray-700">Contact Number <span class="text-red-500">*</span></label>
-                            <input type="tel" id="guardianContact" name="contact_number" value="{{ old('contact_number') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="09171234567">
+                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="09171234567">
                             @error('contact_number') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
                             <label for="guardianRelation" class="text-sm font-semibold text-gray-700">Relationship to Child <span class="text-red-500">*</span></label>
-                            <input type="text" id="guardianRelation" name="relationship_to_child" value="{{ old('relationship_to_child') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Mother, Father, Legal Guardian, etc.">
+                            <input type="text" maxlength="255" id="guardianRelation" name="relationship_to_child" value="{{ old('relationship_to_child') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Mother, Father, Legal Guardian, etc.">
                             @error('relationship_to_child') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -95,19 +95,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label for="guardianBarangay" class="text-xs text-gray-600 font-medium">Barangay</label>
-                                <input type="text" id="guardianBarangay" name="barangay" value="{{ old('barangay') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Barangay">
+                                <input type="text" maxlength="255" id="guardianBarangay" name="barangay" value="{{ old('barangay') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Barangay">
                             </div>
                             <div class="space-y-2">
                                 <label for="guardianMunicipality" class="text-xs text-gray-600 font-medium">Municipality/City</label>
-                                <input type="text" id="guardianMunicipality" name="municipality" value="{{ old('municipality') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Municipality/City">
+                                <input type="text" maxlength="255" id="guardianMunicipality" name="municipality" value="{{ old('municipality') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Municipality/City">
                             </div>
                             <div class="space-y-2">
                                 <label for="guardianProvince" class="text-xs text-gray-600 font-medium">Province</label>
-                                <input type="text" id="guardianProvince" name="province" value="{{ old('province') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Province">
+                                <input type="text" maxlength="255" id="guardianProvince" name="province" value="{{ old('province') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Province">
                             </div>
                             <div class="space-y-2">
                                 <label for="guardianRegion" class="text-xs text-gray-600 font-medium">Region</label>
-                                <input type="text" id="guardianRegion" name="region" value="{{ old('region') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Region">
+                                <input type="text" maxlength="255" id="guardianRegion" name="region" value="{{ old('region') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Region">
                             </div>
                         </div>
                     </div>
@@ -120,19 +120,24 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label for="guardianPassword" class="text-sm font-semibold text-gray-700">Password <span class="text-red-500">*</span></label>
-                            <input type="password" id="guardianPassword" name="password" minlength="12" autocomplete="new-password" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
+                            <label for="guardianPassword" class="text-sm font-semibold text-gray-700">Password <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <input type="password" id="guardianPassword" name="password" minlength="12" maxlength="72" autocomplete="new-password" aria-describedby="guardianPasswordHint" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="12-72 characters">
                             @error('password') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">
-                            <label for="guardianConfirmPassword" class="text-sm font-semibold text-gray-700">Confirm Password <span class="text-red-500">*</span></label>
-                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" autocomplete="new-password" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
+                            <label for="guardianConfirmPassword" class="text-sm font-semibold text-gray-700">Confirm Password</label>
+                            <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" maxlength="72" autocomplete="new-password" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
                         </div>
+                        <p id="guardianPasswordHint" class="md:col-span-2 text-xs text-gray-500 -mt-3">
+                            Leave both password fields empty to use the default password
+                            <span class="font-mono font-semibold text-gray-700">{{ $defaultPassword }}</span>.
+                            Ask the guardian to change it after signing in.
+                        </p>
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-gray-700">Account Role</label>
-                        <input type="text" class="w-full border-gray-100 rounded-xl p-3 bg-gray-50 text-gray-500 cursor-not-allowed border text-sm" value="guardian" readonly>
+                        <input type="text" maxlength="255" class="w-full border-gray-100 rounded-xl p-3 bg-gray-50 text-gray-500 cursor-not-allowed border text-sm" value="guardian" readonly>
                     </div>
 
                     <div class="pt-6 flex justify-end">
@@ -152,16 +157,16 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="space-y-2">
                                 <label for="childFirst" class="text-sm font-semibold text-gray-700">First Name <span class="text-red-500">*</span></label>
-                                <input type="text" id="childFirst" name="child_first_name" value="{{ old('child_first_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
+                                <input type="text" maxlength="255" id="childFirst" name="child_first_name" required value="{{ old('child_first_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
                                 @error('child_first_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div class="space-y-2">
                                 <label for="childMiddle" class="text-sm font-semibold text-gray-700">Middle Name</label>
-                                <input type="text" id="childMiddle" name="child_middle_name" value="{{ old('child_middle_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
+                                <input type="text" maxlength="255" id="childMiddle" name="child_middle_name" value="{{ old('child_middle_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
                             </div>
                             <div class="space-y-2">
                                 <label for="childLast" class="text-sm font-semibold text-gray-700">Last Name <span class="text-red-500">*</span></label>
-                                <input type="text" id="childLast" name="child_last_name" value="{{ old('child_last_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
+                                <input type="text" maxlength="255" id="childLast" name="child_last_name" required value="{{ old('child_last_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
                                 @error('child_last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -169,7 +174,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label for="childSex" class="text-sm font-semibold text-gray-700">Sex <span class="text-red-500">*</span></label>
-                                <select id="childSex" name="child_sex" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm bg-white transition">
+                                <select id="childSex" name="child_sex" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm bg-white transition">
                                     <option value="" disabled {{ old('child_sex') ? '' : 'selected' }}>Select sex</option>
                                     <option value="Male" {{ old('child_sex') == 'Male' ? 'selected' : '' }}>Male</option>
                                     <option value="Female" {{ old('child_sex') == 'Female' ? 'selected' : '' }}>Female</option>
@@ -178,7 +183,7 @@
                             </div>
                             <div class="space-y-2">
                                 <label for="childDob" class="text-sm font-semibold text-gray-700">Date of Birth <span class="text-red-500">*</span></label>
-                                <input type="date" id="childDob" name="child_date_of_birth" value="{{ old('child_date_of_birth') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
+                                <input type="date" id="childDob" name="child_date_of_birth" required max="{{ now()->toDateString() }}" value="{{ old('child_date_of_birth') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 border outline-none text-sm transition">
                                 @error('child_date_of_birth') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -188,19 +193,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="space-y-2">
                                     <label for="childBarangay" class="text-xs text-gray-600 font-medium">Barangay</label>
-                                    <input type="text" id="childBarangay" name="child_barangay" value="{{ old('child_barangay') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Barangay">
+                                    <input type="text" maxlength="255" id="childBarangay" name="child_barangay" value="{{ old('child_barangay') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Barangay">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="childMunicipality" class="text-xs text-gray-600 font-medium">Municipality/City</label>
-                                    <input type="text" id="childMunicipality" name="child_municipality" value="{{ old('child_municipality') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Municipality/City">
+                                    <input type="text" maxlength="255" id="childMunicipality" name="child_municipality" value="{{ old('child_municipality') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Municipality/City">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="childProvince" class="text-xs text-gray-600 font-medium">Province</label>
-                                    <input type="text" id="childProvince" name="child_province" value="{{ old('child_province') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Province">
+                                    <input type="text" maxlength="255" id="childProvince" name="child_province" value="{{ old('child_province') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Province">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="childRegion" class="text-xs text-gray-600 font-medium">Region</label>
-                                    <input type="text" id="childRegion" name="child_region" value="{{ old('child_region') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Region">
+                                    <input type="text" maxlength="255" id="childRegion" name="child_region" value="{{ old('child_region') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="Region">
                                 </div>
                             </div>
                         </div>
@@ -208,7 +213,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label for="childHandedness" class="text-sm font-semibold text-gray-700">Child’s Handedness <span class="text-red-500">*</span></label>
-                                <select id="childHandedness" name="child_handedness" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm bg-white transition">
+                                <select id="childHandedness" name="child_handedness" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm bg-white transition">
                                     <option value="right" {{ old('child_handedness', 'right') == 'right' ? 'selected' : '' }}>Right</option>
                                     <option value="left" {{ old('child_handedness') == 'left' ? 'selected' : '' }}>Left</option>
                                     <option value="both" {{ old('child_handedness') == 'both' ? 'selected' : '' }}>Both</option>
@@ -220,20 +225,20 @@
                                 <span class="text-sm font-semibold text-gray-700">Is the child presently studying?</span>
                                 <div class="flex items-center space-x-4">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="childStudyingYes" name="is_studying" value="1" {{ old('is_studying') ? 'checked' : '' }} class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition">
+                                        <input type="radio" id="childStudyingYes" name="is_studying" value="1" {{ old('is_studying') == '1' ? 'checked' : '' }} class="w-4 h-4 border-gray-300 text-blue-600 focus:ring-blue-500 transition">
                                         <span class="text-sm font-medium text-gray-700">Yes</span>
                                     </label>
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="childStudyingNo" {{ old('is_studying') ? '' : 'checked' }} class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition">
+                                        <input type="radio" id="childStudyingNo" name="is_studying" value="0" {{ old('is_studying') == '1' ? '' : 'checked' }} class="w-4 h-4 border-gray-300 text-blue-600 focus:ring-blue-500 transition">
                                         <span class="text-sm font-medium text-gray-700">No</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="schoolNameField" class="space-y-2 {{ old('is_studying') ? '' : 'hidden' }}">
+                        <div id="schoolNameField" class="space-y-2 {{ old('is_studying') == '1' ? '' : 'hidden' }}">
                             <label for="childSchool" class="text-sm font-semibold text-gray-700">School / Learning Center / Day Care</label>
-                            <input type="text" id="childSchool" name="school_name" value="{{ old('school_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="School name">
+                            <input type="text" maxlength="255" id="childSchool" name="school_name" value="{{ old('school_name') }}" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="School name">
                         </div>
                     </div>
 
@@ -244,26 +249,19 @@
                             <div class="space-y-3">
                                 <div>
                                     <label for="fatherName" class="text-xs text-gray-500 font-medium mb-1 block">Full Name</label>
-                                    <input type="text" id="fatherName" name="fathers_name" value="{{ old('fathers_name') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Full Name">
+                                    <input type="text" maxlength="255" id="fatherName" name="fathers_name" value="{{ old('fathers_name') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Full Name">
                                 </div>
                                 <div>
                                     <label for="fatherAge" class="text-xs text-gray-500 font-medium mb-1 block">Age</label>
-                                    <input type="number" id="fatherAge" name="fathers_age" value="{{ old('fathers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Age">
+                                    <input type="number" id="fatherAge" name="fathers_age" min="10" max="120" value="{{ old('fathers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Age">
                                 </div>
                                 <div>
                                     <label for="fatherOccupation" class="text-xs text-gray-500 font-medium mb-1 block">Occupation</label>
-                                    <input type="text" id="fatherOccupation" name="fathers_occupation" value="{{ old('fathers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Occupation">
+                                    <input type="text" maxlength="255" id="fatherOccupation" name="fathers_occupation" value="{{ old('fathers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Occupation">
                                 </div>
                                 <div>
                                     <label for="fatherEducation" class="text-xs text-gray-500 font-medium mb-1 block">Educational Attainment</label>
-                                    <select id="fatherEducation" name="fathers_education" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition">
-                                        <option value="">Select Educational Attainment</option>
-                                        <option value="Elementary" {{ old('fathers_education') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
-                                        <option value="High School" {{ old('fathers_education') == 'High School' ? 'selected' : '' }}>High School</option>
-                                        <option value="College" {{ old('fathers_education') == 'College' ? 'selected' : '' }}>College</option>
-                                        <option value="Vocational" {{ old('fathers_education') == 'Vocational' ? 'selected' : '' }}>Vocational</option>
-                                        <option value="Postgraduate" {{ old('fathers_education') == 'Postgraduate' ? 'selected' : '' }}>Postgraduate</option>
-                                    </select>
+                                    <x-education-select name="fathers_education" id="fatherEducation"  class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" :value="old('fathers_education')" />
                                 </div>
                             </div>
                         </div>
@@ -273,26 +271,19 @@
                             <div class="space-y-3">
                                 <div>
                                     <label for="motherName" class="text-xs text-gray-500 font-medium mb-1 block">Full Name</label>
-                                    <input type="text" id="motherName" name="mothers_name" value="{{ old('mothers_name') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Full Name">
+                                    <input type="text" maxlength="255" id="motherName" name="mothers_name" value="{{ old('mothers_name') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Full Name">
                                 </div>
                                 <div>
                                     <label for="motherAge" class="text-xs text-gray-500 font-medium mb-1 block">Age</label>
-                                    <input type="number" id="motherAge" name="mothers_age" value="{{ old('mothers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Age">
+                                    <input type="number" id="motherAge" name="mothers_age" min="10" max="120" value="{{ old('mothers_age') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Age">
                                 </div>
                                 <div>
                                     <label for="motherOccupation" class="text-xs text-gray-500 font-medium mb-1 block">Occupation</label>
-                                    <input type="text" id="motherOccupation" name="mothers_occupation" value="{{ old('mothers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Occupation">
+                                    <input type="text" maxlength="255" id="motherOccupation" name="mothers_occupation" value="{{ old('mothers_occupation') }}" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" placeholder="Occupation">
                                 </div>
                                 <div>
                                     <label for="motherEducation" class="text-xs text-gray-500 font-medium mb-1 block">Educational Attainment</label>
-                                    <select id="motherEducation" name="mothers_education" class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition">
-                                        <option value="">Select Educational Attainment</option>
-                                        <option value="Elementary" {{ old('mothers_education') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
-                                        <option value="High School" {{ old('mothers_education') == 'High School' ? 'selected' : '' }}>High School</option>
-                                        <option value="College" {{ old('mothers_education') == 'College' ? 'selected' : '' }}>College</option>
-                                        <option value="Vocational" {{ old('mothers_education') == 'Vocational' ? 'selected' : '' }}>Vocational</option>
-                                        <option value="Postgraduate" {{ old('mothers_education') == 'Postgraduate' ? 'selected' : '' }}>Postgraduate</option>
-                                    </select>
+                                    <x-education-select name="mothers_education" id="motherEducation"  class="w-full border-gray-200 rounded-xl p-3 border outline-none text-sm bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition" :value="old('mothers_education')" />
                                 </div>
                             </div>
                         </div>
@@ -301,11 +292,11 @@
                     <div class="bg-blue-50/70 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6 border border-blue-100">
                         <div class="space-y-2">
                             <label for="siblings" class="text-sm font-semibold text-blue-900">Number of Siblings</label>
-                            <input type="number" id="siblings" name="number_of_siblings" value="{{ old('number_of_siblings') }}" class="w-full bg-white border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm">
+                            <input type="number" id="siblings" name="number_of_siblings" min="0" max="30" value="{{ old('number_of_siblings') }}" class="w-full bg-white border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm">
                         </div>
                         <div class="space-y-2">
                             <label for="birthOrder" class="text-sm font-semibold text-blue-900">Birth Order</label>
-                            <input type="number" id="birthOrder" name="birth_order" value="{{ old('birth_order') }}" class="w-full bg-white border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm">
+                            <input type="number" id="birthOrder" name="birth_order" min="1" max="31" value="{{ old('birth_order') }}" class="w-full bg-white border-blue-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 border outline-none text-sm">
                         </div>
                     </div>
 
@@ -353,6 +344,10 @@
                                 <div>
                                     <p class="text-xs text-gray-500 uppercase">Role</p>
                                     <p class="font-semibold text-gray-800 text-sm mt-0.5">guardian</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase">Password</p>
+                                    <p id="reviewGuardianPassword" class="font-semibold text-gray-800 text-sm mt-0.5">-</p>
                                 </div>
                             </div>
                         </div>
@@ -473,7 +468,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formContainer) formContainer.scrollTop = 0;
     }
 
-    @if ($errors->has('child_first_name') || $errors->has('child_last_name') || $errors->has('child_sex') || $errors->has('child_date_of_birth') || $errors->has('child_handedness') || $errors->has('photo'))
+    {{-- Reopen the step that holds the failed field; guardian/account errors stay on step 1. --}}
+    @if ($errors->any() && ! $errors->hasAny(['email', 'password', 'first_name', 'middle_name', 'last_name', 'sex', 'contact_number', 'relationship_to_child', 'barangay', 'municipality', 'province', 'region']))
         goToStep(2);
     @else
         goToStep(1);
@@ -512,10 +508,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('back3')?.addEventListener('click', () => goToStep(2));
 
-    // Confirm and Save
-    document.getElementById('saveBtn')?.addEventListener('click', () => {
+    // Confirm and Save. requestSubmit() (unlike submit()) fires the layout's double-submit lock.
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn?.addEventListener('click', () => {
+        if (form.dataset.submitting === 'true') return;
+        // Show the step holding the first invalid field instead of failing silently on a hidden step.
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) {
+            const stepIndex = steps.findIndex((step) => step?.contains(firstInvalid));
+            if (stepIndex >= 0) goToStep(stepIndex + 1);
+            firstInvalid.reportValidity();
+            return;
+        }
         if (confirm("Are you sure you want to confirm and save this record?")) {
-            form.submit();
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            form.requestSubmit();
         }
     });
 
@@ -547,21 +555,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const noBox = document.getElementById('childStudyingNo');
     const schoolField = document.getElementById('schoolNameField');
 
-    yesBox?.addEventListener('change', () => {
-        if (yesBox.checked) {
-            if (noBox) noBox.checked = false;
-            schoolField?.classList.remove('hidden');
-        } else {
-            schoolField?.classList.add('hidden');
-        }
-    });
-
-    noBox?.addEventListener('change', () => {
-        if (noBox.checked) {
-            if (yesBox) yesBox.checked = false;
-            schoolField?.classList.add('hidden');
-        }
-    });
+    const syncSchoolField = () => schoolField?.classList.toggle('hidden', !yesBox?.checked);
+    [yesBox, noBox].forEach((radio) => radio?.addEventListener('change', syncSchoolField));
 
     function updateReview() {
         const fields = {
@@ -610,7 +605,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const reviewStudying = document.getElementById('reviewChildIsStudying');
         if (reviewStudying) {
-            reviewStudying.textContent = yesBox?.checked ? 'Yes' : (noBox?.checked ? 'No' : 'No');
+            reviewStudying.textContent = yesBox?.checked ? 'Yes' : 'No';
+        }
+
+        const reviewPassword = document.getElementById('reviewGuardianPassword');
+        if (reviewPassword) {
+            reviewPassword.textContent = document.getElementById('guardianPassword')?.value
+                ? 'Custom password'
+                : 'Default password';
+        }
+
+        const handedness = document.getElementById('childHandedness');
+        const reviewHandedness = document.getElementById('reviewChildHandedness');
+        if (handedness && reviewHandedness) {
+            reviewHandedness.textContent = handedness.options[handedness.selectedIndex]?.text || '-';
         }
     }
 });

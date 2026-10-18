@@ -111,6 +111,7 @@
                                                 <textarea
                                                     id="comment-{{ $item->id }}-{{ $round }}"
                                                     name="comments[{{ $item->id }}][{{ $round }}]"
+                                                    maxlength="5000"
                                                     rows="3"
                                                     class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
                                                     placeholder="Optional comment"
@@ -146,6 +147,7 @@
                         <textarea
                             id="observation-{{ $field }}"
                             name="observation[{{ $field }}]"
+                            maxlength="{{ $field === 'place_administered' ? 255 : 5000 }}"
                             rows="{{ $field === 'place_administered' ? 2 : 4 }}"
                             class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         >{{ old("observation.{$field}", $observation?->{$field} ?? '') }}</textarea>
