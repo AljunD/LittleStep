@@ -142,6 +142,20 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
 
 **Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
 
+**Evaluation status.** The Progress Records list and the progress record page both use `<x-progress-status>`:
+
+- **The evaluation shown:** the highest round with any answers.
+- **The status:** green Completed (all 7 domains), amber In Progress, or gray Pending, with "n/7 domains completed".
+- **The date:** that round's assessment date.
+
+Both pages get this from `ProgressController::currentRoundProgress()`, so they always agree.
+
+**Editing a progress record.** The edit form (`/progress/edit/{id}`) covers the assessment dates, every round's ✓/— marks and comments, and the observation notes. Teachers reach it in three ways:
+
+- **Edit Record** next to **Download PDF Report** at the top of the progress record page.
+- **Edit** next to **View** on each row of the Progress Records list. The row buttons are always visible, so they also work on touch screens and with the keyboard.
+- A small **Edit** link on each section of the record page (Computation of the Child's Age, each domain table, Notes). It opens the form at the matching section: `#assessment-dates`, `#domain-{domain_key}` or `#observation-notes`.
+
 **PDF download (Child's Record 2).** On a progress record, **Download PDF Report** (`/progress/{id}/download-pdf`) produces the official ECCD Checklist, Child's Record 2: 20 US Letter pages, filled in.
 
 - **How it's built:**

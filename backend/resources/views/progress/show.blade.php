@@ -23,19 +23,25 @@
                 </h1>
                 <p class="text-sm text-gray-500 font-medium">Early Childhood Care and Development (ECCD) Checklist</p>
             </div>
-            <div class="text-right">
-                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-widest">
-                    {{ $progressRecord?->status === 'completed' ? 'Completed' : 'In Progress' }} View
-                </span>
+            <div class="flex flex-col items-start sm:items-end gap-3">
+                <x-progress-status class="sm:text-right" :status="$roundProgress['status']" :completed="$roundProgress['completed']" :round="$roundProgress['round']" />
                 @if($progressRecord)
-                    <a href="{{ route('progress.edit', $progressRecord->id) }}"
-                       class="mt-3 inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
-                        Edit Record
-                    </a>
-                    <a href="{{ route('progress.download-pdf', $progressRecord->id) }}"
-                       class="mt-3 inline-flex items-center rounded-lg bg-[#001f5b] px-4 py-2 text-sm font-bold text-white hover:bg-blue-900 transition">
-                        Download PDF Report
-                    </a>
+                    <div class="flex flex-wrap gap-2 sm:justify-end">
+                        <a href="{{ route('progress.edit', $progressRecord->id) }}"
+                           class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.5V20z"></path>
+                            </svg>
+                            Edit Record
+                        </a>
+                        <a href="{{ route('progress.download-pdf', $progressRecord->id) }}"
+                           class="inline-flex items-center gap-2 rounded-lg bg-[#001f5b] px-4 py-2 text-sm font-bold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"></path>
+                            </svg>
+                            Download PDF Report
+                        </a>
+                    </div>
                 @endif
             </div>
         </div>
@@ -43,30 +49,28 @@
         {{-- Child / Teacher / Date info --}}
         <div class="p-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm text-gray-700">
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase">Child</p>
+                <p class="text-xs font-bold text-gray-500 uppercase">Child</p>
                 <p class="mt-1 text-base font-semibold text-gray-900 underline decoration-dotted decoration-gray-300">
                     {{ $child?->first_name ?? '—' }} {{ $child?->last_name ?? '' }}
                 </p>
             </div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase">Teacher/Examiner</p>
+                <p class="text-xs font-bold text-gray-500 uppercase">Teacher/Examiner</p>
                 <p class="mt-1 text-base font-semibold text-gray-900 underline decoration-dotted decoration-gray-300">
                     {{ $progressRecord?->teacher?->first_name ?? '—' }}
                     {{ $progressRecord?->teacher?->last_name ?? '' }}
                 </p>
             </div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase">Assessment Date</p>
+                <p class="text-xs font-bold text-gray-500 uppercase">Assessment Date</p>
                 <p class="mt-1 text-base font-medium text-gray-900">
-                    {{ $progressRecord?->evaluation_date
-                        ? \Carbon\Carbon::parse($progressRecord->evaluation_date)->format('F d, Y')
-                        : '—' }}
+                    {{ $roundProgress['date'] ? \Carbon\Carbon::parse($roundProgress['date'])->format('F d, Y') : 'Not yet tested' }}
                 </p>
             </div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase">Assessment No.</p>
+                <p class="text-xs font-bold text-gray-500 uppercase">Assessment No.</p>
                 <p class="mt-1 text-base font-medium text-gray-900">
-                    {{ $progressRecord?->evaluation_number ?? '1' }}
+                    {{ [1 => '1st', 2 => '2nd', 3 => '3rd'][$roundProgress['round']] }} of 3
                 </p>
             </div>
         </div>
@@ -78,6 +82,9 @@
             <div class="text-center mb-6">
                 <p class="text-red-600 font-black italic text-lg uppercase mb-2">It is recommended that the Checklist be administered to the child once a year.</p>
                 <h2 class="text-4xl font-black text-[#001f5b] italic uppercase tracking-tight">Computation of the Child's Age</h2>
+                @if($progressRecord)
+                    <x-edit-section-link class="mt-3" :href="route('progress.edit', $progressRecord->id).'#assessment-dates'" label="assessment dates" />
+                @endif
                 <div class="max-w-3xl mx-auto mt-4 text-sm text-gray-700 leading-relaxed font-medium px-4">
                     <p>After verifying the dates, compute the child's age by subtracting the date he was born from the date the test was administered. Each month is composed of 30 days. Do not round off the months or years. Write the examiner's name each time the test is administered.</p>
                 </div>
@@ -125,9 +132,10 @@
                         @endphp
                         @foreach($assessments as $asmt)
                         <tr class="h-32">
-                            <td class="border-r-2 border-[#001f5b] p-0 overflow-hidden">
-                                <div class="flex h-full">
-                                    <div class="w-16 flex flex-col items-center justify-center text-white font-black italic leading-none shrink-0" style="background-color: {{ $asmt['color'] }}">
+                            <td class="relative border-r-2 border-[#001f5b] p-0 overflow-hidden">
+                                <div class="absolute inset-0 flex">
+                                    {{-- Official colours; the dark outline keeps the white label readable on the 3rd assessment's yellow. --}}
+                                    <div class="w-16 flex flex-col items-center justify-center text-white font-black italic leading-none shrink-0" style="background-color: {{ $asmt['color'] }}; text-shadow: 0 0 2px rgba(0, 31, 91, .55), 0 1px 1px rgba(0, 31, 91, .45);">
                                         <span class="text-3xl">{{ $asmt['label'] }}</span>
                                         <span class="text-[8px] uppercase tracking-tighter mt-1">assessment</span>
                                     </div>
@@ -174,9 +182,12 @@
         <div class="p-8 space-y-16">
             @forelse($preparedDomains ?? [] as $key => $data)
                 <div>
-                    <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight text-center mb-6">
-                        {{ $data['name'] }} Domain
-                    </h2>
+                    <div class="mb-6 flex flex-col items-center gap-2">
+                        <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight text-center">
+                            {{ $data['name'] }} Domain
+                        </h2>
+                        <x-edit-section-link :href="route('progress.edit', $progressRecord->id).'#domain-'.$key" :label="$data['name'].' checklist'" />
+                    </div>
                     @include('progress.partials.domain-table', [
                         'domainName' => $data['name'],
                         'items'      => $data['items']
@@ -189,6 +200,11 @@
 
         {{-- Notes Section --}}
         <div class="px-6 py-8 sm:p-10 space-y-8 bg-white border-t border-gray-100">
+            @if($progressRecord)
+                <div class="flex justify-end">
+                    <x-edit-section-link :href="route('progress.edit', $progressRecord->id).'#observation-notes'" label="observation notes" />
+                </div>
+            @endif
             <div class="grid grid-cols-1 gap-3 max-w-3xl font-mono text-[11px] sm:text-xs">
                 <div class="flex items-baseline gap-2">
                     <span class="whitespace-nowrap text-gray-700">Name of examiner :</span>

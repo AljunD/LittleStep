@@ -259,6 +259,68 @@ class ExpertSystemInsightsTest extends TestCase
             ->assertSee('gross_motor activity 2');
     }
 
+    public function test_edit_record_is_reachable_from_the_list_the_record_page_and_each_section(): void
+    {
+        $edit = route('progress.edit', $this->record->id);
+
+        $this->actingAs($this->teacherUser)
+            ->get(route('progress.index'))
+            ->assertOk()
+            ->assertSee('href="'.$edit.'"', false);
+
+        $record = $this->actingAs($this->teacherUser)->get(route('progress.show', $this->record->id))->assertOk();
+        $record->assertSee('Edit Record')
+            ->assertSee('href="'.$edit.'#assessment-dates"', false)
+            ->assertSee('href="'.$edit.'#observation-notes"', false);
+        foreach (array_keys(EccdExpertSystem::DOMAIN_LABELS) as $domainKey) {
+            $record->assertSee('href="'.$edit.'#domain-'.$domainKey.'"', false);
+        }
+
+        // Every section link lands on a matching anchor of the edit form.
+        $form = $this->actingAs($this->teacherUser)->get($edit)->assertOk();
+        $form->assertSee('id="assessment-dates"', false)->assertSee('id="observation-notes"', false);
+        foreach (array_keys(EccdExpertSystem::DOMAIN_LABELS) as $domainKey) {
+            $form->assertSee('id="domain-'.$domainKey.'"', false);
+        }
+    }
+
+    public function test_the_record_page_and_the_list_show_the_same_evaluation_status(): void
+    {
+        // Gross Motor fully answered in round 1: 1 of 7 domains complete, so the evaluation is in progress.
+        foreach ($this->items['gross_motor'] as $item) {
+            $this->answer($item, 'check');
+        }
+
+        $this->actingAs($this->teacherUser)
+            ->get(route('progress.show', $this->record->id))
+            ->assertOk()
+            ->assertSee('1st Evaluation · In Progress')
+            ->assertSee('1/7 domains completed')
+            ->assertSee('October 01, 2026')
+            ->assertSee('1st of 3')
+            ->assertDontSee('In Progress View');
+
+        $this->actingAs($this->teacherUser)
+            ->get(route('progress.index'))
+            ->assertOk()
+            ->assertSee('In Progress')
+            ->assertSee('1/7 domains completed')
+            ->assertSee('2026-10-01');
+
+        foreach (array_keys(EccdExpertSystem::DOMAIN_LABELS) as $domainKey) {
+            foreach ($this->items[$domainKey] as $item) {
+                if ($domainKey !== 'gross_motor') {
+                    $this->answer($item, 'check');
+                }
+            }
+        }
+
+        $this->actingAs($this->teacherUser)
+            ->get(route('progress.show', $this->record->id))
+            ->assertSee('1st Evaluation · Completed')
+            ->assertSee('7/7 domains completed');
+    }
+
     public function test_guardians_get_the_explanation_and_skills_for_their_own_child_only(): void
     {
         $this->answer($this->items['gross_motor'][0], 'check');

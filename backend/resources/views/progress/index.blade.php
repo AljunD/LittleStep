@@ -51,43 +51,25 @@
                             </td>
 
                             <td class="px-6 py-5 text-sm text-gray-700">
-                                {{ $latestRecord ? \Carbon\Carbon::parse($latestRecord->evaluation_date)->format('Y-m-d') : '—' }}
+                                {{ $child->current_round_date ?? '—' }}
                             </td>
 
-                            {{-- Status matches select-domain logic --}}
+                            {{-- Same status and colours as the progress record page --}}
                             <td class="px-6 py-5 text-sm">
-                                @if($child->current_round_status === 'completed')
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                                        Completed
-                                    </span>
-                                    <div class="text-[10px] text-gray-400 mt-1">
-                                        7/7 domains
-                                    </div>
-
-                                @elseif($child->current_round_status === 'in_progress')
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                                        In Progress
-                                    </span>
-                                    <div class="text-[10px] text-gray-400 mt-1">
-                                        {{ $child->completed_domains_count }}/7 domains completed
-                                    </div>
-
-                                @else
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-                                        Pending
-                                    </span>
-                                    <div class="text-[10px] text-gray-400 mt-1">
-                                        0/7 domains
-                                    </div>
-                                @endif
+                                <x-progress-status :status="$child->current_round_status" :completed="$child->completed_domains_count" />
                             </td>
 
                             <td class="px-6 py-5 whitespace-nowrap text-right">
-                                <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="flex justify-end space-x-2">
                                     @if($latestRecord)
                                         <a href="{{ route('progress.show', $latestRecord->id) }}"
                                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
                                             View
+                                        </a>
+
+                                        <a href="{{ route('progress.edit', $latestRecord->id) }}"
+                                           class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-semibold hover:bg-amber-200 transition">
+                                            Edit
                                         </a>
                                     @endif
 

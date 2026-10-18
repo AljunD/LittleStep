@@ -9,6 +9,7 @@ use App\Models\ProgressRecord;
 use App\Services\ChildsRecord2Report;
 use App\Services\EccdExpertSystem;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -138,62 +139,65 @@ class ProgressController extends Controller
             ->orderBy('first_name')
             ->paginate(10);
 
-        $definedDomains = [
-            'gross_motor', 'fine_motor', 'self_help',
-            'receptive_language', 'expressive_language',
-            'cognitive', 'social_emotional',
-        ];
-
-        $children->getCollection()->transform(function ($child) use ($definedDomains) {
-
-            $roundStats = [
-                1 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
-                2 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
-                3 => ['completed' => 0, 'in_progress' => 0, 'pending' => 0],
-            ];
-
-            $highestRoundWithRecord = 0;
-
-            foreach ($definedDomains as $key) {
-                $statuses = $this->getDomainRoundStatus($child->id, $key);
-
-                foreach ([1, 2, 3] as $round) {
-                    if ($statuses[$round] === 'Completed') {
-                        $roundStats[$round]['completed']++;
-                        if ($round > $highestRoundWithRecord) {
-                            $highestRoundWithRecord = $round;
-                        }
-                    } elseif ($statuses[$round] === 'In Progress') {
-                        $roundStats[$round]['in_progress']++;
-                        if ($round > $highestRoundWithRecord) {
-                            $highestRoundWithRecord = $round;
-                        }
-                    } else {
-                        $roundStats[$round]['pending']++;
-                    }
-                }
-            }
-
-            $currentRound = $highestRoundWithRecord > 0 ? $highestRoundWithRecord : 1;
-            $child->current_evaluation_round = $currentRound;
-
-            $stats = $roundStats[$currentRound];
-
-            if ($stats['completed'] >= 7) {
-                $child->current_round_status = 'completed';
-            } elseif ($stats['pending'] >= 7) {
-                $child->current_round_status = 'pending';
-            } else {
-                $child->current_round_status = 'in_progress';
-            }
-
-            $child->completed_domains_count = $stats['completed'];
+        $children->getCollection()->transform(function ($child) {
             $child->latest_record = $child->progressRecords->first();
+            $progress = $this->currentRoundProgress($child->id, $child->latest_record);
+            $child->current_evaluation_round = $progress['round'];
+            $child->current_round_status = $progress['status'];
+            $child->completed_domains_count = $progress['completed'];
+            $child->current_round_date = $progress['date'];
 
             return $child;
         });
 
         return view('progress.index', compact('children'));
+    }
+
+    /**
+     * The evaluation a child is on (the highest round with any answers, else 1), its status
+     * (completed / in_progress / pending across the 7 domains), how many domains are complete, and its date.
+     * The Progress Records list and the record page both show this, so they always agree.
+     *
+     * @return array{round: int, status: string, completed: int, date: ?string}
+     */
+    private function currentRoundProgress(int $childId, ?ProgressRecord $progressRecord): array
+    {
+        $roundStats = [
+            1 => ['completed' => 0, 'pending' => 0],
+            2 => ['completed' => 0, 'pending' => 0],
+            3 => ['completed' => 0, 'pending' => 0],
+        ];
+        $currentRound = 1;
+
+        foreach (array_keys(EccdExpertSystem::DOMAIN_LABELS) as $key) {
+            foreach ($this->getDomainRoundStatus($childId, $key) as $round => $status) {
+                if ($status === 'Pending') {
+                    $roundStats[$round]['pending']++;
+
+                    continue;
+                }
+                if ($status === 'Completed') {
+                    $roundStats[$round]['completed']++;
+                }
+                $currentRound = max($currentRound, $round);
+            }
+        }
+
+        $stats = $roundStats[$currentRound];
+        $status = match (true) {
+            $stats['completed'] >= 7 => 'completed',
+            $stats['pending'] >= 7 => 'pending',
+            default => 'in_progress',
+        };
+        $date = $progressRecord?->getAttribute("evaluation_date_round_{$currentRound}")
+            ?? ($currentRound === 1 ? $progressRecord?->evaluation_date : null);
+
+        return [
+            'round' => $currentRound,
+            'status' => $status,
+            'completed' => $stats['completed'],
+            'date' => $date ? Carbon::parse($date)->toDateString() : null,
+        ];
     }
 
     public function selectDomain(Request $request, $child_id = null)
@@ -943,9 +947,11 @@ class ProgressController extends Controller
         $skillsToPractice = $expert->skillsToPractice($progressRecord);
 
         $computed = $computedByRound[1];
-        $currentRound = $progressRecord?->evaluation_number ?? 1;
+        $roundProgress = $this->currentRoundProgress($progressRecord->child_id, $progressRecord);
+        $currentRound = $roundProgress['round'];
 
         return view('progress.show', compact(
+            'roundProgress',
             'progressRecord',
             'child',
             'id',

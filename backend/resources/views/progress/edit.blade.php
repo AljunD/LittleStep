@@ -24,7 +24,7 @@
         @csrf
         @method('PUT')
 
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <section id="assessment-dates" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 bg-gray-50 px-5 py-4">
                 <h2 class="font-bold text-gray-900">Assessment dates</h2>
                 <p class="mt-1 text-xs text-gray-600">Saved dates are shown below. Leave a date blank if that round has not been administered.</p>
@@ -39,7 +39,7 @@
                             id="assessment-date-{{ $round }}"
                             type="date"
                             name="assessment_dates[{{ $round }}]"
-                            value="{{ old("assessment_dates.{$round}", $assessmentDates[$round]) } }"
+                            value="{{ old("assessment_dates.{$round}", $assessmentDates[$round]) }}"
                             min="{{ $progressRecord->child?->date_of_birth }}"
                             max="{{ now()->toDateString() }}"
                             class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -59,7 +59,7 @@
             </div>
 
             @foreach ($domainLabels as $domainKey => $domainLabel)
-                <details open class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                <details open id="domain-{{ $domainKey }}" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                     <summary class="cursor-pointer border-b border-gray-200 bg-gray-50 px-5 py-4 font-bold text-gray-900">
                         {{ $domainLabel }}
                         <span class="ml-2 text-xs font-normal text-gray-500">{{ $itemsByDomain->get($domainKey, collect())->count() }} checklist items</span>
@@ -127,7 +127,7 @@
             @endforeach
         </section>
 
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <section id="observation-notes" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 bg-gray-50 px-5 py-4">
                 <h2 class="font-bold text-gray-900">Observation notes</h2>
                 <p class="mt-1 text-xs text-gray-600">Saved notes and test location are prefilled.</p>
