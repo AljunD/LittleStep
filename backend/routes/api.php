@@ -10,6 +10,7 @@ Route::prefix('/v1')->group(function () {
     Route::middleware(['auth:sanctum', 'guardian', 'verified'])->group(function () {
         Route::post('/guardian/logout', [AuthController::class, 'logout']);
         Route::get('/guardian/profile', [GuardianController::class, 'profile']);
+        Route::get('/guardian/contacts', [GuardianController::class, 'contacts']);
         Route::get('/guardian/views', [GuardianController::class, 'views']);
         Route::get('/guardian/children', [GuardianController::class, 'children']);
         Route::get('/guardian/children/{id}', [GuardianController::class, 'showChild']);

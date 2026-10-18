@@ -1,41 +1,37 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   StatusBar,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
+import { useApiResource } from "../hooks/use-api-resource";
+import { ErrorState, LoadingState } from "../components/screen-state";
+import { ReadOnlyField } from "../components/read-only-field";
+import { getGuardianChild, GuardianApiError } from "../services/guardianApi";
+import { formatDate, fullName } from "../services/format";
 
 const ChildDetailsScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const student = route?.params?.student ?? {};
+  const studentId: unknown = route?.params?.student?.id;
 
-  const childName =
-    student.fullName ||
-    student.name ||
-    [student.lastName, student.firstName].filter(Boolean).join(", ") ||
-    "Dela Cruz, Juan";
-
-  const Field = ({ label, value }: { label: string; value: string }) => (
-    <View style={styles.fieldContainer}>
-      <Text style={[styles.label, isDark && darkStyles.label]}>{label}</Text>
-      <TextInput
-        style={[styles.input, isDark && darkStyles.input]}
-        value={String(value ?? "")}
-        editable={false}
-        selectTextOnFocus={false}
-      />
-    </View>
+  const loadChild = useCallback(
+    () => typeof studentId === "number"
+      ? getGuardianChild(studentId)
+      : Promise.reject(new GuardianApiError("No child was selected.")),
+    [studentId],
   );
+  const childResource = useApiResource(loadChild);
+  const child = childResource.data;
 
   return (
     <View style={[styles.container, isDark && darkStyles.container]}>
@@ -65,74 +61,83 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
           { paddingBottom: insets.bottom + 24 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={childResource.refreshing}
+            onRefresh={childResource.refresh}
+            tintColor="#0BA8BD"
+            colors={["#0BA8BD"]}
+          />
+        }
       >
-        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Student Information</Text>
+        {childResource.loading && !child ? (
+          <LoadingState message="Loading child details..." />
+        ) : !child ? (
+          <ErrorState
+            message={childResource.error ?? "Child details could not be loaded."}
+            onRetry={childResource.retry}
+          />
+        ) : (
+          <>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Student Information</Text>
 
-        <Field label="Full Name" value={childName} />
+            <ReadOnlyField label="Full Name" value={fullName(child)} />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Field
-              label="Sex"
-              value={student.sex || student.gender || "Male"}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Field
-              label="Handedness"
-              value={student.handedness || "Right-handed"}
-            />
-          </View>
-        </View>
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Sex" value={child.sex} />
+              </View>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Handedness" value={child.handedness} />
+              </View>
+            </View>
 
-        <Field
-          label="Address"
-          value={
-            student.address ||
-            "246 Rizal Avenue, Barangay San Isidro, Taytay, Rizal"
-          }
-        />
+            <ReadOnlyField label="Birthday" value={formatDate(child.date_of_birth) ?? child.date_of_birth} />
+            <ReadOnlyField label="Address" value={child.address} />
 
-        <Field
-          label="Birthday"
-          value={student.birthday || "January 1, 2024"}
-        />
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>School Information</Text>
 
-        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>School Information</Text>
+            <ReadOnlyField label="Currently Studying" value={child.is_studying ? "Yes" : "No"} />
+            <ReadOnlyField label="School Name" value={child.school_name} />
 
-        <Field
-          label="School Name"
-          value={
-            student.schoolName || "Barangay Balite Day Care Center"
-          }
-        />
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Father</Text>
 
-        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Family Information</Text>
+            <ReadOnlyField label="Name" value={child.fathers_name} />
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Age" value={child.fathers_age} />
+              </View>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Occupation" value={child.fathers_occupation} />
+              </View>
+            </View>
+            <ReadOnlyField label="Educational Attainment" value={child.fathers_education} />
 
-        <Field
-          label="Father's Name"
-          value={student.fatherName || "Samuel Alejandro"}
-        />
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Mother</Text>
 
-        <Field
-          label="Mother's Name"
-          value={student.motherName || "Amelia Dela Cruz"}
-        />
+            <ReadOnlyField label="Name" value={child.mothers_name} />
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Age" value={child.mothers_age} />
+              </View>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Occupation" value={child.mothers_occupation} />
+              </View>
+            </View>
+            <ReadOnlyField label="Educational Attainment" value={child.mothers_education} />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Field
-              label="Number of Siblings"
-              value={String(student.siblings ?? 3)}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Field
-              label="Birth Order"
-              value={String(student.birthOrder ?? 1)}
-            />
-          </View>
-        </View>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Siblings</Text>
+
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Number of Siblings" value={child.number_of_siblings} />
+              </View>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Birth Order" value={child.birth_order} />
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -188,27 +193,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: 8,
   },
-  fieldContainer: {
-    flex: 1,
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#53675D",
-    marginBottom: 7,
-  },
-  input: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: "#DCE7E1",
-    borderRadius: 9,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#263B32",
-    backgroundColor: "#FAFCFB",
-  },
   row: {
     flexDirection: "row",
     gap: 14,
@@ -228,13 +212,5 @@ const darkStyles = StyleSheet.create({
   },
   text: {
     color: DarkColors.text,
-  },
-  label: {
-    color: DarkColors.textMuted,
-  },
-  input: {
-    borderColor: DarkColors.border,
-    color: DarkColors.text,
-    backgroundColor: DarkColors.surface,
   },
 });

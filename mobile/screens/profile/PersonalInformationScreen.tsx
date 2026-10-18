@@ -10,8 +10,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DarkColors, Layout } from "../constants/theme";
-import { useAppTheme } from "../hooks/use-app-theme";
+import { DarkColors, Layout } from "../../constants/theme";
+import { useAppTheme } from "../../hooks/use-app-theme";
+import { useApiResource } from "../../hooks/use-api-resource";
+import { getGuardianAccount } from "../../services/guardianApi";
+import { fullName } from "../../services/format";
 
 export default function PersonalInformationScreen({
   navigation,
@@ -20,6 +23,9 @@ export default function PersonalInformationScreen({
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
   const student = route?.params?.student;
+  const account = useApiResource(getGuardianAccount);
+  const guardianName = fullName(account.data);
+  const childName: string = student?.name ?? "";
 
   const openDetails = (type: "GuardianDetails" | "ChildDetails") => {
     navigation.navigate(type, { student });
@@ -94,7 +100,7 @@ export default function PersonalInformationScreen({
               </Text>
 
               <Text style={[styles.optionDescription, isDark && darkStyles.mutedText]}>
-                View guardian information and contact details
+                {guardianName || "View guardian information and contact details"}
               </Text>
             </View>
 
@@ -126,7 +132,7 @@ export default function PersonalInformationScreen({
               </Text>
 
               <Text style={[styles.optionDescription, isDark && darkStyles.mutedText]}>
-                View your child's personal and school information
+                {childName || "View your child's personal and school information"}
               </Text>
             </View>
 

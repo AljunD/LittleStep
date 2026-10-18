@@ -80,6 +80,17 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 
   Data comes from `getGuardianChildDomain()` (`GET /guardian/children/{id}/domains/{domain}`). Domain names, icons and colors live in `constants/eccd-domains.ts` (official Child's Record 2 order).
 - **Recent Activities:** the Dashboard shows the 3 domains the teacher updated most recently, newest first, using `recent_activity` from the dashboard API. Until the teacher records anything, it shows the first three official domains. The Dashboard reloads whenever it comes back into view and supports pull-to-refresh, so a new teacher entry moves that domain to the front.
+- **Profile screens** (`screens/profile/`):
+  - **Profile:** shows the signed-in guardian's name, email and relationship.
+  - **Guardian Details** and **Child Details:** show every stored field (contact number, address; birthday, school, both parents, siblings, birth order).
+  - **Contact Us:** lists the teacher handling each child, with Call / Text buttons.
+  - **Notifications:** a feed of teacher updates across all children, newest first. It's built from each child's dashboard `recent_activity`, since there are no push notifications. Tapping an update opens that domain.
+  - **Language:** saves English/Filipino on the device only (there is no language field on the server, and the app is English-only for now).
+- **Loading data on a screen:** use `useApiResource(loader)` (`hooks/use-api-resource.ts`).
+  - It loads when the screen comes into view and provides `retry` and pull-to-refresh.
+  - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token).
+  - Pair it with `LoadingState` / `ErrorState` / `EmptyState` from `components/screen-state.tsx`, and with `ReadOnlyField` for detail rows.
+  - `services/format.ts` has the shared date and name formatting.
 - **Display mode:** Profile → Display lets the guardian choose **Light** (default), **Dark**, or **System** (follows the device setting and updates live). The choice is held in `hooks/use-app-theme.tsx` (`AppThemeProvider` wraps the app in `App.tsx`) and saved on the device (SecureStore on iOS/Android, `localStorage` on web). Screens call `useAppTheme()` and apply `DarkColors` from `constants/theme.ts` when `isDark` is true. Light mode keeps each screen's original colors. Dark mode applies to every screen and the navigation background. On the illustrated screens (Welcome, Login, Select Student, Dashboard, ECCD Checklist), the artwork is dimmed and the logo sits on a light badge so it stays readable. Category and activity cards keep their pastel colors in both modes. New screens should follow the same pattern: import `useAppTheme()` and add `isDark && darkStyles.*` overrides.
 
 ## Expo documentation

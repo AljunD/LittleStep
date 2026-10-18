@@ -100,10 +100,11 @@ All endpoints are under `/api/v1`. Everything except login requires `Authorizati
 |--------|-------------------------------------------|------------------------------------------|
 | POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at }` |
 | POST   | `/guardian/logout`                        | Revokes the current token                |
-| GET    | `/guardian/profile`                       | Guardian's name                          |
+| GET    | `/guardian/profile`                       | Guardian's name, account email, sex, contact number, relationship to child and address (barangay/municipality/province/region are stored joined in `address`) |
+| GET    | `/guardian/contacts`                      | Each of the guardian's children with the teacher handling them (name and contact number only; `null` until a teacher starts a progress record) |
 | GET    | `/guardian/views`                         | Guardian with children, progress records, domains and scores |
 | GET    | `/guardian/children`                      | Guardian's children                      |
-| GET    | `/guardian/children/{id}`                 | Child details                            |
+| GET    | `/guardian/children/{id}`                 | Child details: name, sex, birthday, address, handedness, schooling, parents' name/age/occupation/education, siblings and birth order, and `photo_url` (explicit fields only, no storage paths) |
 | GET    | `/guardian/children/{id}/dashboard`       | Progress summary, raw/scaled scores for all 7 domains per round, and `recent_activity` (domains ordered by when the teacher last updated them, newest first) |
 | GET    | `/guardian/children/{id}/domains/{domain}`| One domain's checklist: each item's ✓/— result and teacher comment per round, plus raw/scaled score and assessed-item count per round. `{domain}` is one of the 7 domain keys (`gross_motor`, `fine_motor`, `self_help`, `receptive_language`, `expressive_language`, `cognitive`, `social_emotional`); anything else returns 404 |
 | GET    | `/guardian/children/{id}/photo`           | Child photo (authenticated image)        |

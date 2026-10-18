@@ -3,38 +3,27 @@ import React from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   StatusBar,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
+import { useApiResource } from "../hooks/use-api-resource";
+import { ErrorState, LoadingState } from "../components/screen-state";
+import { ReadOnlyField } from "../components/read-only-field";
+import { getGuardianAccount } from "../services/guardianApi";
+import { fullName } from "../services/format";
 
-const GuardianDetailsScreen = ({ navigation, route }: any) => {
+const GuardianDetailsScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const student = route?.params?.student ?? {};
-
-  const guardianName =
-    student.guardianName ||
-    student.parentName ||
-    "Juan dela Cruz";
-
-  const Field = ({ label, value }: { label: string; value: string }) => (
-    <View style={styles.fieldContainer}>
-      <Text style={[styles.label, isDark && darkStyles.label]}>{label}</Text>
-      <TextInput
-        style={[styles.input, isDark && darkStyles.input]}
-        value={String(value ?? "")}
-        editable={false}
-        selectTextOnFocus={false}
-      />
-    </View>
-  );
+  const account = useApiResource(getGuardianAccount);
+  const guardian = account.data;
 
   return (
     <View style={[styles.container, isDark && darkStyles.container]}>
@@ -64,34 +53,39 @@ const GuardianDetailsScreen = ({ navigation, route }: any) => {
           { paddingBottom: insets.bottom + 24 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={account.refreshing}
+            onRefresh={account.refresh}
+            tintColor="#0BA8BD"
+            colors={["#0BA8BD"]}
+          />
+        }
       >
-        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Guardian Information</Text>
+        {account.loading && !guardian ? (
+          <LoadingState message="Loading guardian details..." />
+        ) : !guardian ? (
+          <ErrorState message={account.error ?? "Guardian details could not be loaded."} onRetry={account.retry} />
+        ) : (
+          <>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Guardian Information</Text>
 
-        <Field label="Full Name" value={guardianName} />
+            <ReadOnlyField label="Full Name" value={fullName(guardian)} />
+            <ReadOnlyField label="Email Address" value={guardian.email} />
+            <ReadOnlyField label="Contact Number" value={guardian.contact_number} />
 
-        <Field
-          label="Email Address"
-          value={student.guardianEmail || "juan.delacruz@gmail.com"}
-        />
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Sex" value={guardian.sex} />
+              </View>
+              <View style={styles.halfField}>
+                <ReadOnlyField label="Relationship to Child" value={guardian.relationship_to_child} />
+              </View>
+            </View>
 
-        <Field
-          label="Contact Number"
-          value={student.guardianContact || "63 917 123 4567"}
-        />
-
-        <Field
-          label="Address"
-          value={
-            student.guardianAddress ||
-            student.address ||
-            "246 Rizal Avenue, Barangay San Isidro, Taytay, Rizal"
-          }
-        />
-
-        <Field
-          label="Relationship to Child"
-          value={student.relationship || "Uncle"}
-        />
+            <ReadOnlyField label="Address" value={guardian.address} />
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -147,26 +141,12 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: 8,
   },
-  fieldContainer: {
+  row: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  halfField: {
     flex: 1,
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#53675D",
-    marginBottom: 7,
-  },
-  input: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: "#DCE7E1",
-    borderRadius: 9,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#263B32",
-    backgroundColor: "#FAFCFB",
   },
 });
 
@@ -180,13 +160,5 @@ const darkStyles = StyleSheet.create({
   },
   text: {
     color: DarkColors.text,
-  },
-  label: {
-    color: DarkColors.textMuted,
-  },
-  input: {
-    borderColor: DarkColors.border,
-    color: DarkColors.text,
-    backgroundColor: DarkColors.surface,
   },
 });
