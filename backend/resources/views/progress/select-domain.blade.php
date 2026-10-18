@@ -28,16 +28,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="p-4 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="p-4 bg-red-100 text-red-800 rounded-lg text-sm font-medium">
-            {{ session('error') }}
-        </div>
-    @endif
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
@@ -89,10 +79,7 @@
                             </td>
 
                             <td class="px-6 py-5 text-right">
-                                <a href="{{ route('progress.create', ['child_id' => $childId]) }}?domain={{ $domain['key'] }}"
-                                   class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
-                                    Evaluate
-                                </a>
+                                <x-button variant="secondary" icon="evaluate" :href="route('progress.create', ['child_id' => $childId, 'domain' => $domain['key']])">Evaluate</x-button>
                             </td>
                         </tr>
                     @endforeach

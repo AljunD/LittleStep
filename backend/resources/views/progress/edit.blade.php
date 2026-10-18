@@ -12,28 +12,16 @@
                 <span class="text-gray-400">| Record #{{ $progressRecord->id }}</span>
             </p>
         </div>
-        <a href="{{ route('progress.show', $progressRecord->id) }}"
-           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-            Back to record
-        </a>
+        <x-button variant="secondary" icon="back" :href="route('progress.show', $progressRecord->id)">Back to Record</x-button>
     </div>
 
-    @if ($errors->any())
-        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
-            <p class="font-bold">Please correct the following errors:</p>
-            <ul class="mt-2 list-inside list-disc">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-validation-errors />
 
     <form action="{{ route('progress.update', $progressRecord->id) }}" method="POST" class="space-y-8">
         @csrf
         @method('PUT')
 
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <section id="assessment-dates" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 bg-gray-50 px-5 py-4">
                 <h2 class="font-bold text-gray-900">Assessment dates</h2>
                 <p class="mt-1 text-xs text-gray-600">Saved dates are shown below. Leave a date blank if that round has not been administered.</p>
@@ -48,7 +36,7 @@
                             id="assessment-date-{{ $round }}"
                             type="date"
                             name="assessment_dates[{{ $round }}]"
-                            value="{{ old("assessment_dates.{$round}", $assessmentDates[$round]) } }"
+                            value="{{ old("assessment_dates.{$round}", $assessmentDates[$round]) }}"
                             min="{{ $progressRecord->child?->date_of_birth }}"
                             max="{{ now()->toDateString() }}"
                             class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -68,7 +56,7 @@
             </div>
 
             @foreach ($domainLabels as $domainKey => $domainLabel)
-                <details open class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                <details open id="domain-{{ $domainKey }}" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                     <summary class="cursor-pointer border-b border-gray-200 bg-gray-50 px-5 py-4 font-bold text-gray-900">
                         {{ $domainLabel }}
                         <span class="ml-2 text-xs font-normal text-gray-500">{{ $itemsByDomain->get($domainKey, collect())->count() }} checklist items</span>
@@ -120,6 +108,7 @@
                                                 <textarea
                                                     id="comment-{{ $item->id }}-{{ $round }}"
                                                     name="comments[{{ $item->id }}][{{ $round }}]"
+                                                    maxlength="5000"
                                                     rows="3"
                                                     class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
                                                     placeholder="Optional comment"
@@ -135,7 +124,7 @@
             @endforeach
         </section>
 
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <section id="observation-notes" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 bg-gray-50 px-5 py-4">
                 <h2 class="font-bold text-gray-900">Observation notes</h2>
                 <p class="mt-1 text-xs text-gray-600">Saved notes and test location are prefilled.</p>
@@ -155,6 +144,7 @@
                         <textarea
                             id="observation-{{ $field }}"
                             name="observation[{{ $field }}]"
+                            maxlength="{{ $field === 'place_administered' ? 255 : 5000 }}"
                             rows="{{ $field === 'place_administered' ? 2 : 4 }}"
                             class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         >{{ old("observation.{$field}", $observation?->{$field} ?? '') }}</textarea>
@@ -164,14 +154,8 @@
         </section>
 
         <div class="flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-5">
-            <a href="{{ route('progress.show', $progressRecord->id) }}"
-               class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700">
-                Save changes
-            </button>
+            <x-button variant="secondary" :href="route('progress.show', $progressRecord->id)">Cancel</x-button>
+            <x-button type="submit" icon="save">Save Changes</x-button>
         </div>
     </form>
 </div>

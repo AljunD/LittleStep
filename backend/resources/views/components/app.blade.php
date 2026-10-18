@@ -72,9 +72,9 @@
           </div>
           <form action="{{ route('auth.logout') }}" method="POST">
             @csrf
-            <button type="submit"
+            <button type="submit" aria-label="Sign out" title="Sign out"
                     class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors">
-              <i class="fas fa-sign-out-alt"></i>
+              <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
             </button>
           </form>
         </div>
@@ -84,8 +84,8 @@
 
     <div class="flex-1 flex flex-col min-w-0 h-screen">
       <div class="lg:hidden bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-        <button id="sidebar-toggle" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
-          <i class="fas fa-bars text-2xl"></i>
+        <button type="button" id="sidebar-toggle" aria-label="Open navigation menu" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
+          <i class="fas fa-bars text-2xl" aria-hidden="true"></i>
         </button>
         <h1 class="text-lg font-black text-[#081028] uppercase tracking-tighter">KidWatch</h1>
         @auth
@@ -96,6 +96,7 @@
       </div>
 
       <main class="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
+        <x-flash-messages />
         @yield('content')
       </main>
     </div>
@@ -114,9 +115,91 @@
     document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
     document.getElementById('sidebar-overlay')?.addEventListener('click', toggleSidebar);
     document.addEventListener('submit', event => {
-      const form = event.target.closest('form[data-confirm]');
-      if (form && !confirm(form.dataset.confirm)) event.preventDefault();
+      const form = event.target;
+      if (form.dataset.confirm && !confirm(form.dataset.confirm)) {
+        event.preventDefault();
+        return;
+      }
+      // One submission per click: stops duplicate records from double-clicks (GET filter forms are exempt).
+      if (form.method.toLowerCase() !== 'post') return;
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+      form.dataset.submitting = 'true';
+      form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
     });
+    // Re-enable forms restored from the back/forward cache.
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted) return;
+      document.querySelectorAll('form[data-submitting="true"]').forEach(form => {
+        form.dataset.submitting = 'false';
+        form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = false; });
+      });
+    });
+    // Dismiss buttons on the shared flash-message banners.
+    document.addEventListener('click', event => {
+      event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
+    });
+
+    // Three-dot action menus (the action-menu component): one open at a time, placed beside the ⋮ button with fixed
+    // positioning so scrolling tables can't clip them. They follow the button on scroll/resize and close on an
+    // outside click, Escape, Tab, or when the button scrolls out of view.
+    const menuItems = panel => [...panel.querySelectorAll('[role="menuitem"]:not([disabled])')];
+    function placeActionMenu(trigger, panel) {
+      const button = trigger.getBoundingClientRect();
+      if (button.bottom < 0 || button.top > window.innerHeight) return closeActionMenus();
+      const gap = 6, edge = 8;
+      const left = Math.min(Math.max(button.right - panel.offsetWidth, edge), window.innerWidth - panel.offsetWidth - edge);
+      const below = button.bottom + gap;
+      const top = below + panel.offsetHeight > window.innerHeight - edge ? Math.max(button.top - panel.offsetHeight - gap, edge) : below;
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
+    }
+    function placeOpenActionMenu() {
+      const trigger = document.querySelector('[data-action-menu-trigger][aria-expanded="true"]');
+      if (trigger) placeActionMenu(trigger, trigger.parentElement.querySelector('[data-action-menu-panel]'));
+    }
+    function closeActionMenus(except = null) {
+      document.querySelectorAll('[data-action-menu-trigger][aria-expanded="true"]').forEach(trigger => {
+        if (trigger === except) return;
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.parentElement.querySelector('[data-action-menu-panel]').hidden = true;
+      });
+    }
+    function openActionMenu(trigger) {
+      const panel = trigger.parentElement.querySelector('[data-action-menu-panel]');
+      closeActionMenus(trigger);
+      trigger.setAttribute('aria-expanded', 'true');
+      panel.hidden = false;
+      placeActionMenu(trigger, panel);
+      menuItems(panel)[0]?.focus({ preventScroll: true });
+    }
+    document.addEventListener('click', event => {
+      const trigger = event.target.closest('[data-action-menu-trigger]');
+      if (trigger) {
+        trigger.getAttribute('aria-expanded') === 'true' ? closeActionMenus() : openActionMenu(trigger);
+        return;
+      }
+      if (!event.target.closest('[data-action-menu-panel]')) closeActionMenus();
+    });
+    document.addEventListener('keydown', event => {
+      const panel = event.target.closest('[data-action-menu-panel]');
+      if (event.key === 'Escape' && panel) {
+        closeActionMenus();
+        panel.parentElement.querySelector('[data-action-menu-trigger]').focus();
+      } else if (panel && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const items = menuItems(panel);
+        const index = items.indexOf(document.activeElement);
+        const next = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: items.length - 1 }[event.key];
+        items[(next + items.length) % items.length]?.focus();
+      } else if (event.key === 'Tab' && panel) {
+        closeActionMenus();
+      }
+    });
+    document.addEventListener('scroll', placeOpenActionMenu, true);
+    window.addEventListener('resize', placeOpenActionMenu);
   </script>
 </body>
 </html>

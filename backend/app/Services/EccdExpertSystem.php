@@ -12,6 +12,17 @@ use LogicException;
 
 class EccdExpertSystem
 {
+    /** The 7 official ECCD domains, in Child's Record 2 order. */
+    public const DOMAIN_LABELS = [
+        'gross_motor' => 'Gross Motor',
+        'fine_motor' => 'Fine Motor',
+        'self_help' => 'Self-Help',
+        'receptive_language' => 'Receptive Language',
+        'expressive_language' => 'Expressive Language',
+        'cognitive' => 'Cognitive',
+        'social_emotional' => 'Social-Emotional',
+    ];
+
     private const DOMAIN_KEYS = [
         'gross_motor',
         'fine_motor',
@@ -22,6 +33,16 @@ class EccdExpertSystem
         'social_emotional',
     ];
 
+    /** Child's Record 2 age bands (Technical Manual §6), used to describe the band in explanations. */
+    private const AGE_BAND_RANGES = [
+        '3.1-4.0' => ['label' => '3.1–4.0', 'range' => '3 years 1 month to 4 years 0 months'],
+        '4.1-5.0' => ['label' => '4.1–5.0', 'range' => '4 years 1 month to 5 years 0 months'],
+        '5.1-5.11' => ['label' => '5.1–5.11', 'range' => '5 years 1 month to 5 years 11 months'],
+    ];
+
+    /** @var array<string, list<int>>|null checklist item ids per domain, loaded once per instance */
+    private ?array $checklistItemIdsByDomain = null;
+
     public function compute(ProgressRecord $progressRecord, int $round = 1): array
     {
         $this->validateRound($round);
@@ -31,13 +52,26 @@ class EccdExpertSystem
             throw new LogicException('A progress record with a child date of birth is required to compute ECCD scores.');
         }
 
-        $testDate = $this->getAssessmentDate($progressRecord, $round);
+        return $this->computeFromAnswers(
+            $child->date_of_birth,
+            $this->getAssessmentDate($progressRecord, $round),
+            $this->roundAnswers($progressRecord, $round)
+        );
+    }
 
+    /**
+     * Runs the official pipeline on a set of answers (age → raw → scaled → sum → standard → interpretation).
+     * Used for saved results (compute()) and for the teacher's unsaved live preview.
+     *
+     * @param  array<int, string>  $answers  checklist item id => 'check' | 'hyphen'
+     */
+    public function computeFromAnswers($birthDate, $testDate, array $answers): array
+    {
         $age = $testDate === null
             ? null
-            : $this->computeAge($child->date_of_birth, $testDate);
+            : $this->computeAge($birthDate, $testDate);
 
-        $rawScores = $this->computeRawScores($progressRecord, $round);
+        $rawScores = $this->rawScoresFromAnswers($answers);
 
         $scaledScores = $age === null
             ? array_fill_keys(self::DOMAIN_KEYS, null)
@@ -52,6 +86,7 @@ class EccdExpertSystem
         $interpretation = $this->interpret($standardScore, $scaledScores);
 
         return [
+            'birth_date'       => Carbon::parse($birthDate)->toDateString(),
             'evaluation_date'  => $testDate === null ? null : Carbon::parse($testDate)->toDateString(),
             'age'              => $age,
             'raw_scores'       => $rawScores,
@@ -115,51 +150,248 @@ class EccdExpertSystem
     {
         $this->validateRound($round);
 
-        $rawScores = array_fill_keys(self::DOMAIN_KEYS, null);
-        $checklistItems = EccdChecklistItem::whereIn('domain', self::DOMAIN_KEYS)
-            ->get(['id', 'domain'])
-            ->groupBy('domain');
+        return $this->rawScoresFromAnswers($this->roundAnswers($progressRecord, $round));
+    }
 
+    /**
+     * The saved ✓ / — answers for one round. Only completed entries count, as in Child's Record 2.
+     *
+     * @return array<int, string> checklist item id => 'check' | 'hyphen'
+     */
+    public function roundAnswers(ProgressRecord $progressRecord, int $round): array
+    {
+        $this->validateRound($round);
+
+        $answers = [];
         $domainItems = Domain::with('results')
             ->where('progress_record_id', $progressRecord->id)
             ->where('evaluation_round', $round)
-            ->whereIn(
-                'checklist_item_id',
-                $checklistItems->flatten()->pluck('id')
-            )
-            ->get()
-            ->keyBy('checklist_item_id');
+            ->get();
 
-        foreach (self::DOMAIN_KEYS as $domainKey) {
-            $expectedItems = $checklistItems->get($domainKey, collect());
-            if ($expectedItems->isEmpty()) {
+        foreach ($domainItems as $domainItem) {
+            $present = $this->normalizePresentValue($domainItem->results->first()?->present);
+            if ($domainItem->status === 'completed' && $present !== null) {
+                $answers[(int) $domainItem->checklist_item_id] = $present;
+            }
+        }
+
+        return $answers;
+    }
+
+    /**
+     * Raw score = number of ✓ per domain. A domain only gets a raw score once every one of its items is answered.
+     *
+     * @param  array<int, string>  $answers  checklist item id => 'check' | 'hyphen'
+     */
+    public function rawScoresFromAnswers(array $answers): array
+    {
+        $rawScores = array_fill_keys(self::DOMAIN_KEYS, null);
+
+        foreach ($this->checklistItemIdsByDomain() as $domainKey => $itemIds) {
+            if ($itemIds === []) {
                 continue;
             }
 
             $rawScore = 0;
-            $isComplete = true;
-
-            foreach ($expectedItems as $checklistItem) {
-                $domainItem = $domainItems->get($checklistItem->id);
-                $result = $domainItem?->results->first();
-                $present = $result ? $this->normalizePresentValue($result->present) : null;
-
-                if ($domainItem?->status !== 'completed' || $present === null) {
-                    $isComplete = false;
-                    break;
+            foreach ($itemIds as $itemId) {
+                $present = $answers[$itemId] ?? null;
+                if ($present === null) {
+                    continue 2;
                 }
-
                 if ($present === 'check') {
                     $rawScore++;
                 }
             }
 
-            if ($isComplete) {
-                $rawScores[$domainKey] = $rawScore;
-            }
+            $rawScores[$domainKey] = $rawScore;
         }
 
         return $rawScores;
+    }
+
+    /**
+     * Step-by-step account of how a result was reached (the expert system's explanation facility).
+     * Shared by the teacher web pages, the live preview and the guardian API.
+     *
+     * @param  array  $computed  output of compute() / computeFromAnswers()
+     * @param  array<int, string>  $answers  the answers that produced $computed
+     */
+    public function explain(array $computed, array $answers): array
+    {
+        $age = $computed['age'] ?? null;
+        $band = $age ? (self::AGE_BAND_RANGES[$age['band']] ?? null) : null;
+        $itemIdsByDomain = $this->checklistItemIdsByDomain();
+
+        $domains = [];
+        $incomplete = [];
+        $answeredTotal = 0;
+        $warnings = [];
+
+        foreach (self::DOMAIN_LABELS as $domainKey => $label) {
+            $itemIds = $itemIdsByDomain[$domainKey] ?? [];
+            $answered = count(array_filter($itemIds, fn (int $id) => isset($answers[$id])));
+            $present = count(array_filter($itemIds, fn (int $id) => ($answers[$id] ?? null) === 'check'));
+            $raw = $computed['raw_scores'][$domainKey] ?? null;
+            $scaled = $computed['scaled_scores'][$domainKey] ?? null;
+            $answeredTotal += $answered;
+
+            $domains[$domainKey] = [
+                'label' => $label,
+                'items_total' => count($itemIds),
+                'items_answered' => $answered,
+                'items_present' => $present,
+                'raw_score' => $raw,
+                'scaled_score' => $scaled,
+                'interpretation' => $scaled === null ? null : $this->interpretScaledScore($scaled),
+            ];
+
+            if ($itemIds !== [] && $answered < count($itemIds)) {
+                $incomplete[] = "{$label} ({$answered}/".count($itemIds).')';
+            }
+
+            if ($raw !== null && $band !== null && $scaled === null) {
+                $warnings[] = "{$label}: raw score {$raw} has no entry in the scaled-score table for age band {$band['label']}.";
+            }
+        }
+
+        $scoredDomains = count(array_filter($computed['raw_scores'] ?? [], fn ($raw) => $raw !== null));
+        $sumScaled = $computed['sum_scaled_score'] ?? null;
+        $standardScore = $computed['standard_score'] ?? null;
+        $overall = $standardScore === null ? null : ($computed['interpretation']['overall'] ?? null);
+
+        $steps = [];
+        if ($age === null) {
+            $steps[] = 'No assessment date is set for this round yet, so the child\'s age at test cannot be computed.';
+            $warnings[] = 'Set the assessment date for this round to compute the scores.';
+        } else {
+            $steps[] = sprintf(
+                'Age at test: %d years %d months %d days, counted from the birth date (%s) to the test date (%s) with every month counted as 30 days.',
+                $age['years'], $age['months'], $age['days'], $computed['birth_date'] ?? '—', $computed['evaluation_date']
+            );
+            if ($band !== null) {
+                $steps[] = "Age band {$band['label']} ({$band['range']}) selects which official scaled-score table is used.";
+            } else {
+                $warnings[] = "The child's age at test ({$age['label']}) is outside Child's Record 2 (3 years 1 month to 5 years 11 months), so no scaled scores can be computed.";
+            }
+        }
+
+        $steps[] = "Raw score: the number of ✓ items in a domain. A domain is scored once all of its items are answered ({$scoredDomains} of 7 domains so far).";
+        $steps[] = 'Scaled score: each raw score is converted to a scaled score from 1 to 19 using the official table for the age band. 7–13 is average.';
+        $steps[] = $sumScaled !== null
+            ? "Sum of the 7 scaled scores: {$sumScaled}."
+            : 'Sum of scaled scores: available once all 7 domains have a scaled score.';
+        $steps[] = $standardScore !== null
+            ? "Standard score: {$standardScore}, which means: {$overall}."
+            : 'Standard score: available once the sum of scaled scores is known.';
+
+        if ($answeredTotal === 0) {
+            $warnings[] = 'No checklist results have been recorded for this round yet.';
+        } elseif ($incomplete !== []) {
+            $warnings[] = 'Not all items are answered yet: '.implode(', ', $incomplete).'.';
+        }
+
+        return [
+            'evaluation_date' => $computed['evaluation_date'] ?? null,
+            'age' => $age === null ? null : [
+                'label' => $age['label'],
+                'years' => $age['years'],
+                'months' => $age['months'],
+                'days' => $age['days'],
+                'band' => $band['label'] ?? null,
+                'band_range' => $band['range'] ?? null,
+            ],
+            'domains' => $domains,
+            'scored_domains' => $scoredDomains,
+            'sum_scaled_score' => $sumScaled,
+            'standard_score' => $standardScore,
+            'overall' => $overall,
+            'interpretation_code' => $computed['interpretation']['code'] ?? null,
+            'steps' => $steps,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /** explain() for a saved round. */
+    public function explainRound(ProgressRecord $progressRecord, int $round): array
+    {
+        $this->validateRound($round);
+
+        $child = $progressRecord->child;
+        if (!$child || !$child->date_of_birth) {
+            throw new LogicException('A progress record with a child date of birth is required to explain ECCD scores.');
+        }
+
+        $answers = $this->roundAnswers($progressRecord, $round);
+
+        return $this->explain(
+            $this->computeFromAnswers($child->date_of_birth, $this->getAssessmentDate($progressRecord, $round), $answers),
+            $answers
+        );
+    }
+
+    /**
+     * Skills to practise next: for each domain, the official checklist items marked — (not yet present)
+     * in the latest round where that domain was assessed. Nothing is invented; it is the checklist itself.
+     *
+     * @return array<string, array{label: string, round: int, items: list<array{id: int, item_number: int|null, activity: string}>}>
+     */
+    public function skillsToPractice(ProgressRecord $progressRecord): array
+    {
+        $rows = Domain::with(['results', 'checklistItem'])
+            ->where('progress_record_id', $progressRecord->id)
+            ->get();
+
+        // [domain][round] => list of answered rows
+        $answered = [];
+        foreach ($rows as $row) {
+            $domainKey = $row->checklistItem?->domain;
+            $present = $this->normalizePresentValue($row->results->first()?->present);
+            if (!isset(self::DOMAIN_LABELS[$domainKey]) || $row->status !== 'completed' || $present === null) {
+                continue;
+            }
+            $answered[$domainKey][(int) $row->evaluation_round][] = ['row' => $row, 'present' => $present];
+        }
+
+        $skills = [];
+        foreach (self::DOMAIN_LABELS as $domainKey => $label) {
+            if (empty($answered[$domainKey])) {
+                continue;
+            }
+
+            $latestRound = max(array_keys($answered[$domainKey]));
+            $items = collect($answered[$domainKey][$latestRound])
+                ->filter(fn (array $entry) => $entry['present'] === 'hyphen')
+                ->map(fn (array $entry) => [
+                    'id' => $entry['row']->checklistItem->id,
+                    'item_number' => $entry['row']->checklistItem->item_number,
+                    'activity' => $entry['row']->checklistItem->activity,
+                ])
+                ->sortBy([['item_number', 'asc'], ['id', 'asc']])
+                ->values()
+                ->all();
+
+            if ($items !== []) {
+                $skills[$domainKey] = ['label' => $label, 'round' => $latestRound, 'items' => $items];
+            }
+        }
+
+        return $skills;
+    }
+
+    /** @return array<string, list<int>> */
+    private function checklistItemIdsByDomain(): array
+    {
+        if ($this->checklistItemIdsByDomain === null) {
+            $this->checklistItemIdsByDomain = array_fill_keys(self::DOMAIN_KEYS, []);
+            EccdChecklistItem::whereIn('domain', self::DOMAIN_KEYS)
+                ->orderBy('id')
+                ->get(['id', 'domain'])
+                ->each(function (EccdChecklistItem $item) {
+                    $this->checklistItemIdsByDomain[$item->domain][] = (int) $item->id;
+                });
+        }
+
+        return $this->checklistItemIdsByDomain;
     }
 
     public function normalizePresentValue(mixed $value): ?string
@@ -385,14 +617,7 @@ class EccdExpertSystem
 
         $perDomain = [];
         foreach ($scaledScores as $domain => $scaled) {
-            $perDomain[$domain] = match (true) {
-                $scaled === null => 'No data',
-                $scaled <= 3     => 'Suggest significant delay in overall development',
-                $scaled <= 6     => 'Suggest slight delay in overall development',
-                $scaled <= 13    => 'Average development',
-                $scaled <= 16    => 'Suggest slightly advanced development',
-                default          => 'Suggest highly advanced development',
-            };
+            $perDomain[$domain] = $scaled === null ? 'No data' : $this->interpretScaledScore($scaled);
         }
 
         return [
@@ -400,6 +625,18 @@ class EccdExpertSystem
             'per_domain' => $perDomain,
             'code'       => $this->mapInterpretationCode($standardScore),
         ];
+    }
+
+    /** Technical Manual Table 6: interpretation of one domain's scaled score. */
+    public function interpretScaledScore(int $scaled): string
+    {
+        return match (true) {
+            $scaled <= 3  => 'Suggest significant delay',
+            $scaled <= 6  => 'Suggest slight delay',
+            $scaled <= 13 => 'Average development',
+            $scaled <= 16 => 'Suggest slightly advanced development',
+            default       => 'Suggest highly advanced development',
+        };
     }
 
     private function mapInterpretationCode(?int $standardScore): ?string

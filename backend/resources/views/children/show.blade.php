@@ -41,21 +41,14 @@
                         </span>
                     </p>
 
-                    <div class="flex flex-wrap justify-center md:justify-start gap-3">
-                        <a href="{{ route('children.edit', $child->id) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                            </svg>
-                            Edit Profile
-                        </a>
+                    <x-action-menu label="Child actions">
+                        <x-action-menu.item :href="route('children.edit', $child->id)" icon="edit">Edit Profile</x-action-menu.item>
                         <form action="{{ route('children.destroy', $child->id) }}" method="POST" data-confirm="Are you sure you want to archive this record?">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-100 transition">
-                                Archive Record
-                            </button>
+                            <x-action-menu.item icon="archive" variant="danger">Archive Record</x-action-menu.item>
                         </form>
-                    </div>
+                    </x-action-menu>
                 </div>
             </div>
         </div>

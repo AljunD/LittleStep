@@ -74,11 +74,22 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 - **Development areas (Domain screen):** tapping a Recent Activity card on the Dashboard, or any of the 7 development areas on the ECCD Checklist screen, opens `screens/DomainScreen.tsx`. It shows:
   - a round selector (1st/2nd/3rd evaluation, with dates)
   - the raw score, scaled score, and how many skills were assessed
+  - the interpretation of the scaled score (e.g. "Average development"), with a "Why this result?" link
   - every checklist item with ✓ (present), — (not present), or a clock icon (not yet assessed), plus the teacher's comment
+  - **Things to try at home:** the items marked — in the latest evaluation of this area
   - a "No results yet" panel when the teacher hasn't recorded that round
   - loading and error-with-retry states, and pull-to-refresh
 
   Data comes from `getGuardianChildDomain()` (`GET /guardian/children/{id}/domains/{domain}`). Domain names, icons and colors live in `constants/eccd-domains.ts` (official Child's Record 2 order).
+- **Why this result? (Insights screen):** the Dashboard's **Latest result** card and the Domain screen's "Why this result?" link open `screens/InsightsScreen.tsx`. For each evaluation round with a date, it shows:
+  - the standard score and overall interpretation, or how many of the 7 areas are scored so far
+  - notes, e.g. items not answered yet, or an age outside the 3y1m–5y11m range
+  - the numbered scoring steps: age in 30-day months, age band, raw score, scaled score, sum, standard score
+  - each area's ✓ count, scaled score and interpretation (tap an area to open it)
+  - "Things to try at home" for every area
+  - a note that results suggest development and are not a diagnosis
+
+  Data comes from `getGuardianChildInsights()` (`GET /guardian/children/{id}/insights`). The text is produced by the backend expert system, so it always matches what the teacher sees. The screen is read-only.
 - **Recent Activities:** the Dashboard shows the 3 domains the teacher updated most recently, newest first, using `recent_activity` from the dashboard API. Until the teacher records anything, it shows the first three official domains. The Dashboard reloads whenever it comes back into view and supports pull-to-refresh, so a new teacher entry moves that domain to the front.
 - **Profile screens** (`screens/profile/`):
   - **Profile:** shows the signed-in guardian's name, email and relationship.
@@ -86,9 +97,29 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   - **Contact Us:** lists the teacher handling each child, with Call / Text buttons.
   - **Notifications:** a feed of teacher updates across all children, newest first. It's built from each child's dashboard `recent_activity`, since there are no push notifications. Tapping an update opens that domain.
   - **Language:** saves English/Filipino on the device only (there is no language field on the server, and the app is English-only for now).
+  - **Change Password** (`ChangePasswordScreen`):
+    - The form takes the current password, a new password and its confirmation, each with a show/hide toggle.
+    - It checks the server's rules before sending: at least 12 characters, at most 72 bytes, different from the current password, and the two new entries must match.
+    - The server's own field errors appear under the matching input. The button shows "Saving..." while the request runs.
+    - On success it shows a confirmation. The server keeps this session and signs out the guardian's other devices.
+    - It calls `changeGuardianPassword()` (`PUT /guardian/password`).
+- **Opening the app from the verification email:** the app's URL scheme is `littlestep` (`app.json`). After a guardian verifies their email, the backend's confirmation page opens `littlestep://login?verified=1`. In Expo Go it opens `exp://<host>:8081/--/login?verified=1`; set `GUARDIAN_APP_LOGIN_URL` on the backend to match.
+  - **What handles it:** `linking` in `App.tsx` (native only) shows **Login** with "Your email is verified. Log in with your email and password to continue."
+  - **What's accepted:** only the `login` path, and only the `verified=1` value. Other paths and query parameters are ignored, so a link can't open a protected screen or put its own text on screen.
+  - **Already signed in:** the link is ignored (`hasGuardianSession()`).
+  - **No automatic sign-in:** the guardian always signs in with their own password.
+  - **Back button:** when the app was opened straight on Login, Back goes to Welcome.
+  - **After changing the scheme:** rebuild development and store builds. Expo Go doesn't need a rebuild.
+- **Default password reminder:** a teacher who leaves the password empty gives the guardian a shared default password.
+  - **When it shows:** the login response's `must_change_password` is true, so **Select Student** shows a pop-up asking the guardian to change it (`components/password-reminder.tsx`).
+  - **Its buttons:** **Change Password** opens the Change Password screen. **Remind me later** hides it until the next sign-in.
+  - **Profile hint:** while the default password is still in use, Profile → Change Password says so.
+  - **Where the state lives:** `guardianApi.ts` (`shouldShowPasswordReminder()`, `dismissPasswordReminder()`, `isUsingDefaultPassword()`).
+  - **Storage:** with Remember me, the flag sits in secure storage next to the token, so the reminder returns after an app restart. Otherwise it is kept in memory. It is cleared on sign-out, on a 401/403, and once the password is changed.
+  - **No hardcoded password:** the app never stores or compares the default password itself. The server decides.
 - **Loading data on a screen:** use `useApiResource(loader)` (`hooks/use-api-resource.ts`).
   - It loads when the screen comes into view and provides `retry` and pull-to-refresh.
-  - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token).
+  - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token). Screens that send data (like Change Password) get the same behavior from `useSessionEndedRedirect()`.
   - Pair it with `LoadingState` / `ErrorState` / `EmptyState` from `components/screen-state.tsx`, and with `ReadOnlyField` for detail rows.
   - `services/format.ts` has the shared date and name formatting.
 - **Display mode:** Profile → Display lets the guardian choose **Light** (default), **Dark**, or **System** (follows the device setting and updates live). The choice is held in `hooks/use-app-theme.tsx` (`AppThemeProvider` wraps the app in `App.tsx`) and saved on the device (SecureStore on iOS/Android, `localStorage` on web). Screens call `useAppTheme()` and apply `DarkColors` from `constants/theme.ts` when `isDark` is true. Light mode keeps each screen's original colors. Dark mode applies to every screen and the navigation background. On the illustrated screens (Welcome, Login, Select Student, Dashboard, ECCD Checklist), the artwork is dimmed and the logo sits on a light badge so it stays readable. Category and activity cards keep their pastel colors in both modes. New screens should follow the same pattern: import `useAppTheme()` and add `isDark && darkStyles.*` overrides.

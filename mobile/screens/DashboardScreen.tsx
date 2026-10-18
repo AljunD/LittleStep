@@ -323,6 +323,36 @@ export default function DashboardScreen({
 
           </View>
 
+          {/* LATEST RESULT: opens the expert system's step-by-step explanation */}
+          {latestRoundData && (
+            <TouchableOpacity
+              style={[styles.resultCard, compact && styles.compactResultCard, isDark && darkStyles.surface]}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Why this result? See how the result was computed"
+              onPress={() => navigation.navigate("Insights", { student })}
+            >
+              <View style={[styles.resultIcon, isDark && darkStyles.surfaceMuted]}>
+                <Ionicons name="analytics-outline" size={22} color={isDark ? DarkColors.icon : "#365C55"} />
+              </View>
+              <View style={styles.resultText}>
+                <Text style={[styles.resultLabel, isDark && darkStyles.mutedText]}>LATEST RESULT</Text>
+                <Text style={[styles.resultValue, isDark && darkStyles.text]} numberOfLines={2}>
+                  {latestRoundData.standard_score !== null && latestRoundData.interpretation
+                    ? latestRoundData.interpretation
+                    : `${latestRoundData.completed_domains} of 7 areas scored so far`}
+                </Text>
+                <Text style={[styles.resultLink, isDark && darkStyles.accentText]}>Why this result? ›</Text>
+              </View>
+              {latestRoundData.standard_score !== null && (
+                <View style={styles.resultScore}>
+                  <Text style={[styles.resultScoreValue, isDark && darkStyles.text]}>{latestRoundData.standard_score}</Text>
+                  <Text style={[styles.resultScoreCaption, isDark && darkStyles.mutedText]}>Standard</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+
           {/* RECENT ACTIVITIES */}
           <View style={styles.section}>
             <View style={styles.sectionHeading}>
@@ -621,6 +651,71 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 4,
   },
+  resultCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 6,
+    marginBottom: 6,
+    ...Platform.select({
+      web: { boxShadow: "0px 3px 8px rgba(49, 87, 79, 0.08)" },
+      default: {
+        shadowColor: "#31574F",
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      },
+    }),
+  },
+  compactResultCard: {
+    padding: 10,
+  },
+  resultIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#EEF5F1",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultText: {
+    flex: 1,
+  },
+  resultLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    color: "#8A9692",
+  },
+  resultValue: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#263447",
+    marginTop: 2,
+  },
+  resultLink: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0B8C9E",
+    marginTop: 3,
+  },
+  resultScore: {
+    alignItems: "center",
+    minWidth: 54,
+  },
+  resultScoreValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#263447",
+  },
+  resultScoreCaption: {
+    fontSize: 10,
+    color: "#8A9692",
+  },
 
   sectionHeading: {
     flexDirection: "row",
@@ -793,6 +888,10 @@ const darkStyles = StyleSheet.create({
 
   surfaceMuted: {
     backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  accentText: {
+    color: DarkColors.accent,
   },
 
   bottomNav: {

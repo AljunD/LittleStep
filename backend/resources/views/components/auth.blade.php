@@ -38,6 +38,7 @@
         {{-- Left: Form --}}
         <div class="w-full md:w-1/2 overflow-y-auto custom-scrollbar bg-white">
             <div class="min-h-full flex flex-col justify-center p-8 md:p-12 lg:p-16">
+                <x-flash-messages />
                 @yield('content')
             </div>
         </div>
@@ -58,6 +59,11 @@
     </div>
 
     <script nonce="{{ request()->attributes->get('cspNonce') }}">
+        // Dismiss buttons on the shared flash-message banners.
+        document.addEventListener('click', (event) => {
+            event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
+        });
+
         (() => {
             const unlockForm = (form) => {
                 form.dataset.submitting = 'false';

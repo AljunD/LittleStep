@@ -230,6 +230,23 @@ export default function DomainScreen({ navigation, route }: any) {
           ))}
         </View>
 
+        {/* INTERPRETATION (Technical Manual Table 6) + link to the full explanation */}
+        {roundData?.interpretation ? (
+          <TouchableOpacity
+            style={[styles.interpretationCard, isDark && darkStyles.card]}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`${roundData.interpretation}. Why this result?`}
+            onPress={() => navigation.navigate("Insights", { student })}
+          >
+            <Ionicons name="analytics-outline" size={20} color={iconColor} />
+            <View style={styles.interpretationTextContainer}>
+              <Text style={[styles.interpretationText, isDark && darkStyles.text]}>{roundData.interpretation}</Text>
+              <Text style={[styles.interpretationLink, isDark && darkStyles.accentText]}>Why this result? ›</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+
         {!hasResults ? (
           /* EMPTY STATE */
           <View style={[styles.emptyCard, isDark && darkStyles.card]}>
@@ -274,6 +291,24 @@ export default function DomainScreen({ navigation, route }: any) {
                 </View>
               );
             })}
+          </View>
+        )}
+
+        {/* SKILLS TO PRACTISE: items marked — in the latest evaluation of this area */}
+        {detail.skills_to_practice && detail.skills_to_practice.items.length > 0 && (
+          <View style={[styles.itemsCard, styles.skillsCard, isDark && darkStyles.card]}>
+            <Text style={[styles.skillsTitle, isDark && darkStyles.text]}>Things to try at home</Text>
+            <Text style={[styles.skillsSubtitle, isDark && darkStyles.mutedText]}>
+              Not yet observed in the{" "}
+              {ROUND_LABELS[detail.skills_to_practice.round].replace(" Eval", " evaluation")}. Everyday play helps
+              practise these.
+            </Text>
+            {detail.skills_to_practice.items.map((item) => (
+              <View key={item.id} style={styles.skillRow}>
+                <Ionicons name="sparkles-outline" size={15} color={iconColor} />
+                <Text style={[styles.itemActivity, styles.skillText, isDark && darkStyles.text]}>{item.activity}</Text>
+              </View>
+            ))}
           </View>
         )}
       </>
@@ -566,6 +601,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
+  interpretationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E9EEEC",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  interpretationTextContainer: {
+    flex: 1,
+  },
+  interpretationText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#294E46",
+  },
+  interpretationLink: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0B8C9E",
+    marginTop: 2,
+  },
+  skillsCard: {
+    marginTop: 12,
+    paddingVertical: 14,
+  },
+  skillsTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#294E46",
+  },
+  skillsSubtitle: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#788781",
+    marginTop: 3,
+    marginBottom: 4,
+  },
+  skillRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 9,
+    marginTop: 8,
+  },
+  skillText: {
+    flex: 1,
+  },
 
   legend: {
     flexDirection: "row",
@@ -763,6 +849,10 @@ const darkStyles = StyleSheet.create({
 
   text: {
     color: DarkColors.text,
+  },
+
+  accentText: {
+    color: DarkColors.accent,
   },
 
   mutedText: {

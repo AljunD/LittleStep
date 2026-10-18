@@ -8,12 +8,7 @@
     <p class="text-gray-400 text-lg font-light">Please sign in with your credentials</p>
 </div>
 
-{{-- Status Message (e.g. after password reset) --}}
-@if (session('status'))
-    <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-xl">
-        {{ session('status') }}
-    </div>
-@endif
+{{-- Status messages (e.g. after a password reset) come from <x-flash-messages /> in the layout. --}}
 
 <form method="POST" action="{{ route('auth.login.submit') }}" class="space-y-6" data-lock-submit>
     @csrf
@@ -57,10 +52,7 @@
 
     {{-- Submit --}}
     <div class="pt-4">
-        <button type="submit" data-submitting-text="Signing in..."
-            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
-            Sign in
-        </button>
+        <x-button type="submit" class="w-full" data-submitting-text="Signing in...">Sign in</x-button>
     </div>
 </form>
 @endsection

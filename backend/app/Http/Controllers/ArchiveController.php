@@ -23,7 +23,8 @@ class ArchiveController extends Controller
             ->with(['user' => function ($query) {
                 $query->withTrashed();
             }])
-            ->paginate(10, ['*'], 'guardians_page');
+            ->paginate(10, ['*'], 'guardians_page')
+            ->appends(['tab' => 'guardians']);
 
         $archivedChildren = Child::onlyTrashed()
             ->whereHas('progressRecords', function ($query) use ($teacher) {
@@ -32,9 +33,13 @@ class ArchiveController extends Controller
             ->with(['guardian' => function ($query) {
                 $query->withTrashed();
             }])
-            ->paginate(10, ['*'], 'children_page');
+            ->paginate(10, ['*'], 'children_page')
+            ->appends(['tab' => 'children']);
 
-        return view('archives.index', compact('archivedGuardians', 'archivedChildren'));
+        // Which list is open on load; pagination links and restores keep their own tab.
+        $activeTab = $request->query('tab') === 'children' ? 'children' : 'guardians';
+
+        return view('archives.index', compact('archivedGuardians', 'archivedChildren', 'activeTab'));
     }
 
     public function restore(Request $request, int $id)
@@ -84,7 +89,7 @@ class ArchiveController extends Controller
             recordLog('restored', 'Child', $child->id, 'Child restored: '.$child->first_name.' '.$child->last_name);
         }
 
-        return redirect()->route('archives.index')
+        return redirect()->route('archives.index', ['tab' => 'children'])
             ->with('success', 'Child record restored successfully.');
     }
 

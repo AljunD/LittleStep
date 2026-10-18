@@ -29,7 +29,7 @@ class AuthenticationSecurityTest extends TestCase
             'middle_name' => '',
             'last_name' => 'Teacher',
             'sex' => 'Female',
-            'contact_number' => '555-0100',
+            'contact_number' => '09170000100',
             'address' => 'Test address',
             'email' => '  TEACHER@example.com ',
             'password' => 'a-secure-test-password',
@@ -57,7 +57,7 @@ class AuthenticationSecurityTest extends TestCase
                 'first_name' => 'Taylor',
                 'last_name' => 'Teacher',
                 'sex' => 'Female',
-                'contact_number' => '555-0100',
+                'contact_number' => '09170000100',
                 'address' => 'Test address',
                 'email' => 'teacher@example.com',
                 'password' => $password,
@@ -161,7 +161,7 @@ class AuthenticationSecurityTest extends TestCase
             'middle_name' => null,
             'last_name' => 'Teacher',
             'sex' => 'Female',
-            'contact_number' => '555-0100',
+            'contact_number' => '09170000100',
             'address' => 'Test address',
         ]);
         ProgressRecord::create([

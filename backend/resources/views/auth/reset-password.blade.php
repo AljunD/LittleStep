@@ -13,18 +13,8 @@
         </p>
     </div>
 
-    {{-- Success / Error Alerts --}}
-    @if (session('status'))
-        <div class="bg-green-100 text-green-700 px-6 py-4 rounded-lg mb-6 shadow max-w-md w-full text-center">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-700 px-6 py-4 rounded-lg mb-6 shadow max-w-md w-full text-center">
-            {{ $errors->first() }}
-        </div>
-    @endif
+    {{-- Status messages come from <x-flash-messages /> in the layout. --}}
+    <x-validation-errors class="max-w-md w-full" />
 
     {{-- Reset Form --}}
     <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full">
@@ -51,10 +41,7 @@
             </div>
 
             {{-- Submit --}}
-            <button type="submit"
-                class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-3 rounded-lg transition shadow-md active:scale-95">
-                Reset Password
-            </button>
+            <x-button type="submit" class="w-full">Reset Password</x-button>
         </form>
     </div>
 

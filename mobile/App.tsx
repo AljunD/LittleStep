@@ -1,14 +1,23 @@
 
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { DarkTheme, DefaultTheme, NavigationContainer } from "@react-navigation/native";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  getStateFromPath,
+  LinkingOptions,
+  NavigationContainer,
+  ParamListBase,
+} from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import * as Linking from "expo-linking";
 
 import { DarkColors } from "./constants/theme";
 import { AppThemeProvider, useAppTheme } from "./hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
   GuardianProfile,
+  hasGuardianSession,
   restoreGuardianSession,
 } from "./services/guardianApi";
 import WelcomeScreen from "./screens/WelcomeScreen";
@@ -17,6 +26,7 @@ import SelectStudentScreen from "./screens/SelectStudentScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import ECCDChecklistScreen from "./screens/ECCDChecklistScreen";
 import DomainScreen from "./screens/DomainScreen";
+import InsightsScreen from "./screens/InsightsScreen";
 import ProfileScreen from "./screens/profile/ProfileScreen";
 import PersonalInformationScreen from "./screens/profile/PersonalInformationScreen";
 import ChildDetailsScreen from "./screens/ChildDetailsScreen";
@@ -25,6 +35,7 @@ import DisplayScreen from "./screens/DisplayScreen";
 import LanguageScreen from "./screens/profile/LanguageScreen";
 import ContactUsScreen from "./screens/profile/ContactUsScreen";
 import NotificationScreen from "./screens/profile/NotificationScreen";
+import ChangePasswordScreen from "./screens/profile/ChangePasswordScreen";
 
 const Stack = createStackNavigator();
 
@@ -37,6 +48,35 @@ const navigationDarkTheme = {
     card: DarkColors.surface,
     text: DarkColors.text,
     border: DarkColors.border,
+  },
+};
+
+/**
+ * Deep links. Only the Login link from the email-verification page is accepted
+ * (littlestep://login, or exp://<host>/--/login in Expo Go). Any other path is ignored, so links can't
+ * open protected screens, and only `verified=1` is read from the query: other parameters (e.g. a
+ * crafted `initialError` message) never reach the screen. A guardian who is already signed in stays where they are.
+ */
+const linking: LinkingOptions<ParamListBase> = {
+  prefixes: [Linking.createURL("/"), "littlestep://"],
+  config: {
+    screens: {
+      Login: "login",
+    },
+  },
+  getStateFromPath(path, options) {
+    if (hasGuardianSession()) {
+      return undefined;
+    }
+
+    const state = getStateFromPath(path, options);
+    const route = state?.routes.length === 1 ? state.routes[0] : undefined;
+    if (route?.name !== "Login") {
+      return undefined;
+    }
+
+    const verified = (route.params as Record<string, unknown> | undefined)?.verified === "1";
+    return { routes: [{ name: "Login", params: verified ? { verified: true } : {} }] };
   },
 };
 
@@ -93,7 +133,11 @@ function AppNavigator() {
   }
 
   return (
-    <NavigationContainer theme={isDark ? navigationDarkTheme : DefaultTheme}>
+    <NavigationContainer
+      theme={isDark ? navigationDarkTheme : DefaultTheme}
+      // Native only: on web, linking would rewrite the browser address for every screen.
+      linking={Platform.OS === "web" ? undefined : linking}
+    >
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
@@ -128,6 +172,11 @@ function AppNavigator() {
         <Stack.Screen
           name="Domain"
           component={DomainScreen}
+        />
+
+        <Stack.Screen
+          name="Insights"
+          component={InsightsScreen}
         />
 
         <Stack.Screen
@@ -168,6 +217,10 @@ function AppNavigator() {
         <Stack.Screen
           name="Notifications"
           component={NotificationScreen}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -9,6 +9,7 @@ Route::prefix('/v1')->group(function () {
 
     Route::middleware(['auth:sanctum', 'guardian', 'verified'])->group(function () {
         Route::post('/guardian/logout', [AuthController::class, 'logout']);
+        Route::put('/guardian/password', [AuthController::class, 'changePassword'])->middleware('throttle:5,1');
         Route::get('/guardian/profile', [GuardianController::class, 'profile']);
         Route::get('/guardian/contacts', [GuardianController::class, 'contacts']);
         Route::get('/guardian/views', [GuardianController::class, 'views']);
@@ -17,6 +18,8 @@ Route::prefix('/v1')->group(function () {
         Route::get('/guardian/children/{id}/dashboard', [GuardianController::class, 'dashboard'])
             ->whereNumber('id');
         Route::get('/guardian/children/{id}/photo', [GuardianController::class, 'photo'])
+            ->whereNumber('id');
+        Route::get('/guardian/children/{id}/insights', [GuardianController::class, 'insights'])
             ->whereNumber('id');
         Route::get('/guardian/children/{id}/domains/{domain}', [GuardianController::class, 'domain'])
             ->whereNumber('id')

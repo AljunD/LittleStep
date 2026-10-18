@@ -7,7 +7,13 @@ const REQUEST_TIMEOUT_MS = 15000;
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/gif"];
 
+const PASSWORD_CHANGE_KEY = "littlestep.guardian.must-change-password";
+
 let sessionToken: string | null = null;
+/** The guardian signed in with the default password and has not changed it yet. */
+let mustChangePassword = false;
+/** "Remind me later" was chosen; the reminder stays hidden until the next sign-in. */
+let passwordReminderDismissed = false;
 
 export type GuardianProfile = {
   id: number;
@@ -124,7 +130,66 @@ export type GuardianDomainRound = {
   date: string | null;
   raw_score: number | null;
   scaled_score: number | null;
+  /** Technical Manual Table 6 wording for the scaled score, e.g. "Average development". */
+  interpretation?: string | null;
   assessed_items: number;
+};
+
+export type GuardianSkillItem = {
+  id: number;
+  item_number: number | null;
+  activity: string;
+};
+
+/** Checklist items marked — (not yet present) in the latest round a domain was assessed. */
+export type GuardianSkillsGroup = {
+  label: string;
+  round: number;
+  items: GuardianSkillItem[];
+};
+
+export type GuardianExplanationDomain = {
+  label: string;
+  items_total: number;
+  items_answered: number;
+  items_present: number;
+  raw_score: number | null;
+  scaled_score: number | null;
+  interpretation: string | null;
+};
+
+/** The expert system's step-by-step account of one evaluation round ("Why this result?"). */
+export type GuardianExplanation = {
+  round: number;
+  evaluation_date: string | null;
+  age: {
+    label: string;
+    years: number;
+    months: number;
+    days: number;
+    band: string | null;
+    band_range: string | null;
+  } | null;
+  domains: Record<string, GuardianExplanationDomain>;
+  scored_domains: number;
+  sum_scaled_score: number | null;
+  standard_score: number | null;
+  overall: string | null;
+  interpretation_code: string | null;
+  steps: string[];
+  warnings: string[];
+};
+
+export type GuardianInsights = {
+  child: {
+    id: number;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+  };
+  latest_round: number | null;
+  rounds: GuardianExplanation[];
+  skills_to_practice: Record<string, GuardianSkillsGroup>;
 };
 
 export type GuardianDomainDetail = {
@@ -145,6 +210,7 @@ export type GuardianDomainDetail = {
     rounds: Record<number, GuardianDomainRound>;
   };
   items: GuardianDomainItem[];
+  skills_to_practice?: GuardianSkillsGroup | null;
 };
 
 export type GuardianPhotoSource = {
@@ -154,17 +220,26 @@ export type GuardianPhotoSource = {
 type ApiErrorPayload = {
   error?: unknown;
   message?: unknown;
+  errors?: unknown;
 };
 
 export class GuardianApiError extends Error {
   constructor(
     message: string,
     public readonly status?: number,
+    /** First validation message per field, from a 422 response (e.g. `{ current_password: "..." }`). */
+    public readonly fieldErrors: Record<string, string> = {},
   ) {
     super(message);
     this.name = "GuardianApiError";
   }
 }
+
+export type ChangePasswordInput = {
+  currentPassword: string;
+  password: string;
+  passwordConfirmation: string;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -300,16 +375,63 @@ async function saveAccessToken(token: string, rememberMe: boolean): Promise<void
 
 export async function clearAccessToken(): Promise<void> {
   sessionToken = null;
+  mustChangePassword = false;
+  passwordReminderDismissed = false;
 
   if (Platform.OS !== "web" && await SecureStore.isAvailableAsync()) {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(PASSWORD_CHANGE_KEY);
   }
+}
+
+/**
+ * Records whether the guardian still uses the default password. It is kept in secure storage next to the
+ * token only when the token itself is remembered, so the reminder survives an app restart.
+ */
+async function setMustChangePassword(value: boolean, persist: boolean): Promise<void> {
+  mustChangePassword = value;
+  passwordReminderDismissed = false;
+
+  if (Platform.OS === "web" || ! await SecureStore.isAvailableAsync()) {
+    return;
+  }
+
+  try {
+    if (value && persist) {
+      await SecureStore.setItemAsync(PASSWORD_CHANGE_KEY, "1", {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+    } else {
+      await SecureStore.deleteItemAsync(PASSWORD_CHANGE_KEY);
+    }
+  } catch {
+    // Losing the reminder flag is harmless; the in-memory value still applies to this session.
+  }
+}
+
+/** True while this app holds a sign-in token (loaded by restoreGuardianSession() or set by loginGuardian()). */
+export function hasGuardianSession(): boolean {
+  return sessionToken !== null;
+}
+
+/** True while the guardian is signed in with the default password. */
+export function isUsingDefaultPassword(): boolean {
+  return mustChangePassword;
+}
+
+/** Show the "change your password" reminder (signed in with the default password, not dismissed). */
+export function shouldShowPasswordReminder(): boolean {
+  return mustChangePassword && !passwordReminderDismissed;
+}
+
+export function dismissPasswordReminder(): void {
+  passwordReminderDismissed = true;
 }
 
 async function requestJson<T>(
   path: string,
   options: {
-    method?: "GET" | "POST";
+    method?: "GET" | "POST" | "PUT";
     body?: unknown;
     requiresAuth?: boolean;
     accessToken?: string;
@@ -364,6 +486,14 @@ async function requestJson<T>(
       }
 
       const errorPayload = payload as ApiErrorPayload | null;
+      const fieldErrors: Record<string, string> = {};
+      if (isRecord(errorPayload?.errors)) {
+        for (const [field, messages] of Object.entries(errorPayload.errors)) {
+          if (Array.isArray(messages) && typeof messages[0] === "string") {
+            fieldErrors[field] = messages[0];
+          }
+        }
+      }
       let message = "The request could not be completed.";
 
       if (typeof errorPayload?.error === "string") {
@@ -374,7 +504,7 @@ async function requestJson<T>(
         message = "Too many sign-in attempts. Please wait a moment and try again.";
       }
 
-      throw new GuardianApiError(message, response.status);
+      throw new GuardianApiError(message, response.status, fieldErrors);
     }
 
     return payload as T;
@@ -436,7 +566,29 @@ export async function loginGuardian(
     );
   }
 
+  await setMustChangePassword(response.must_change_password === true, rememberMe);
+
   return response.guardian;
+}
+
+/** Changes the signed-in guardian's password. The server keeps this session and signs out other devices. */
+export async function changeGuardianPassword(input: ChangePasswordInput): Promise<string> {
+  const response = await requestJson<unknown>("/api/v1/guardian/password", {
+    method: "PUT",
+    body: {
+      current_password: input.currentPassword,
+      password: input.password,
+      password_confirmation: input.passwordConfirmation,
+    },
+  });
+
+  if (!isRecord(response) || typeof response.message !== "string") {
+    throw new GuardianApiError("The server returned an invalid response.");
+  }
+
+  await setMustChangePassword(false, false);
+
+  return response.message;
 }
 
 export async function getGuardianProfile(): Promise<GuardianProfile> {
@@ -609,11 +761,76 @@ export async function getGuardianChildDomain(
     || !isRecord(detail.progress.rounds)
     || !Array.isArray(detail.items)
     || !detail.items.every(isGuardianDomainItem)
+    || (detail.skills_to_practice != null && !isGuardianSkillsGroup(detail.skills_to_practice))
   ) {
     throw new GuardianApiError("The server returned invalid domain data.");
   }
 
   return detail as GuardianDomainDetail;
+}
+
+function isNumberOrNull(value: unknown): value is number | null {
+  return value === null || typeof value === "number";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+function isGuardianSkillsGroup(value: unknown): value is GuardianSkillsGroup {
+  return isRecord(value)
+    && typeof value.label === "string"
+    && typeof value.round === "number"
+    && Array.isArray(value.items)
+    && value.items.every((item) => isRecord(item)
+      && typeof item.id === "number"
+      && isNumberOrNull(item.item_number)
+      && typeof item.activity === "string");
+}
+
+function isGuardianExplanationDomain(value: unknown): value is GuardianExplanationDomain {
+  return isRecord(value)
+    && typeof value.label === "string"
+    && typeof value.items_total === "number"
+    && typeof value.items_answered === "number"
+    && typeof value.items_present === "number"
+    && isNumberOrNull(value.raw_score)
+    && isNumberOrNull(value.scaled_score)
+    && isOptionalString(value.interpretation);
+}
+
+function isGuardianExplanation(value: unknown): value is GuardianExplanation {
+  return isRecord(value)
+    && typeof value.round === "number"
+    && isOptionalString(value.evaluation_date)
+    && (value.age === null || (isRecord(value.age) && typeof value.age.label === "string"))
+    && isRecord(value.domains)
+    && Object.values(value.domains).every(isGuardianExplanationDomain)
+    && typeof value.scored_domains === "number"
+    && isNumberOrNull(value.sum_scaled_score)
+    && isNumberOrNull(value.standard_score)
+    && isOptionalString(value.overall)
+    && isStringArray(value.steps)
+    && isStringArray(value.warnings);
+}
+
+/** "Why this result?": how each evaluation round was scored, plus skills to practise at home. */
+export async function getGuardianChildInsights(childId: number): Promise<GuardianInsights> {
+  const insights = await requestJson<unknown>(`/api/v1/guardian/children/${childId}/insights`);
+  if (
+    !isRecord(insights)
+    || !isRecord(insights.child)
+    || typeof insights.child.id !== "number"
+    || !isNumberOrNull(insights.latest_round)
+    || !Array.isArray(insights.rounds)
+    || !insights.rounds.every(isGuardianExplanation)
+    || !isRecord(insights.skills_to_practice)
+    || !Object.values(insights.skills_to_practice).every(isGuardianSkillsGroup)
+  ) {
+    throw new GuardianApiError("The server returned invalid results data.");
+  }
+
+  return insights as GuardianInsights;
 }
 
 export async function getGuardianChildPhotoSource(
@@ -720,7 +937,12 @@ export async function restoreGuardianSession(): Promise<GuardianProfile | null> 
   }
 
   try {
-    return await getGuardianProfile();
+    const profile = await getGuardianProfile();
+    if (Platform.OS !== "web" && await SecureStore.isAvailableAsync()) {
+      mustChangePassword = await SecureStore.getItemAsync(PASSWORD_CHANGE_KEY).catch(() => null) === "1";
+    }
+
+    return profile;
   } catch (error) {
     if (
       error instanceof GuardianApiError &&

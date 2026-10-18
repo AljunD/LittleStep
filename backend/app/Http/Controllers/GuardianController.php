@@ -6,39 +6,31 @@ use App\Models\Guardian;
 use App\Models\ProgressRecord;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\FormRules;
+use App\Support\SafeMail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\Rule;
 
 class GuardianController extends Controller
 {
     protected function validationMessages()
     {
-        return [
+        return array_merge([
             'first_name.required' => 'The first name field is required.',
-            'first_name.regex' => 'The first name must only contain letters and spaces.',
-            'middle_name.regex' => 'The middle name must only contain letters and spaces.',
             'last_name.required' => 'The last name field is required.',
-            'last_name.regex' => 'The last name must only contain letters and spaces.',
             'sex.required' => 'Please select the guardian\'s sex.',
             'sex.in' => 'The selected sex must be either Male or Female.',
             'contact_number.required' => 'The contact number field is required.',
-            'contact_number.regex' => 'The contact number must be exactly 11 digits starting with 09 (e.g., 09171234567).',
             'relationship_to_child.required' => 'The relationship to child field is required.',
-            'relationship_to_child.regex' => 'The relationship field must only contain letters and spaces.',
             'email.required' => 'The email address is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email address is already registered to another user account.',
-            'password.required' => 'The password is required.',
             'password.min' => 'The password must be at least 12 characters long.',
-            'password.confirmed' => 'The password confirmation does not match your new password.',
-            'barangay.max' => 'The barangay field must not exceed 255 characters.',
-            'municipality.max' => 'The municipality field must not exceed 255 characters.',
-            'province.max' => 'The province field must not exceed 255 characters.',
-            'region.max' => 'The region field must not exceed 255 characters.',
+            'password.confirmed' => 'The password confirmation does not match the password.',
 
             'child_first_name.required' => 'The child\'s first name is required.',
             'child_last_name.required' => 'The child\'s last name is required.',
@@ -46,7 +38,23 @@ class GuardianController extends Controller
             'child_date_of_birth.required' => 'The child\'s date of birth is required.',
             'child_handedness.required' => 'Please select child\'s handedness.',
             'photo.image' => 'The uploaded file must be an image.',
-            'photo.max' => 'The photo size must not exceed 2MB.',
+        ], FormRules::messages());
+    }
+
+    /** Guardian profile fields shared by registration (all required) and editing (blank keeps the current value). */
+    private function guardianRules(bool $required): array
+    {
+        return [
+            'first_name' => FormRules::name($required),
+            'middle_name' => FormRules::name(false),
+            'last_name' => FormRules::name($required),
+            'sex' => [$required ? 'required' : 'nullable', Rule::in(FormRules::SEXES)],
+            'contact_number' => FormRules::contactNumber($required),
+            'relationship_to_child' => FormRules::name($required),
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'region' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -54,7 +62,7 @@ class GuardianController extends Controller
     {
         $guardians = $this->currentTeacher($request)
             ->ownedGuardians()
-            ->with(['children' => function ($query) use ($request) {
+            ->with(['user', 'children' => function ($query) use ($request) {
                 $query->whereHas('progressRecords', function ($progressQuery) use ($request) {
                     $progressQuery->withTrashed()->where('teacher_id', $request->user()->teacher->id);
                 });
@@ -66,7 +74,9 @@ class GuardianController extends Controller
 
     public function create()
     {
-        return view('guardians.create');
+        return view('guardians.create', [
+            'defaultPassword' => config('littlestep.guardian_default_password'),
+        ]);
     }
 
     public function store(Request $request)
@@ -74,64 +84,31 @@ class GuardianController extends Controller
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
-        $validated = $request->validate([
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'confirmed', PasswordRule::min(12)],
-
-            'first_name' => ['required', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'middle_name' => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'last_name' => ['required', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'sex' => ['required', 'in:Male,Female'],
-            'contact_number' => ['required', 'regex:/^09[0-9]{9}$/'],
-            'relationship_to_child' => ['required', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'municipality' => ['nullable', 'string', 'max:255'],
-            'province' => ['nullable', 'string', 'max:255'],
-            'region' => ['nullable', 'string', 'max:255'],
-
-            'child_first_name' => ['required', 'string', 'max:255'],
-            'child_middle_name' => ['nullable', 'string', 'max:255'],
-            'child_last_name' => ['required', 'string', 'max:255'],
-            'child_sex' => ['required', 'in:Male,Female'],
-            'child_date_of_birth' => ['required', 'date'],
-            'child_barangay' => ['nullable', 'string', 'max:255'],
-            'child_municipality' => ['nullable', 'string', 'max:255'],
-            'child_province' => ['nullable', 'string', 'max:255'],
-            'child_region' => ['nullable', 'string', 'max:255'],
-            'child_handedness' => ['required', 'in:right,left,both,not_yet_established'],
-            'is_studying' => ['nullable'],
-            'school_name' => ['nullable', 'string', 'max:255'],
-            'fathers_name' => ['nullable', 'string', 'max:255'],
-            'fathers_age' => ['nullable', 'integer'],
-            'fathers_occupation' => ['nullable', 'string', 'max:255'],
-            'fathers_education' => ['nullable', 'string', 'max:255'],
-            'mothers_name' => ['nullable', 'string', 'max:255'],
-            'mothers_age' => ['nullable', 'integer'],
-            'mothers_occupation' => ['nullable', 'string', 'max:255'],
-            'mothers_education' => ['nullable', 'string', 'max:255'],
-            'number_of_siblings' => ['nullable', 'integer'],
-            'birth_order' => ['nullable', 'integer'],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'mimetypes:image/jpeg,image/png,image/gif', 'max:2048'],
-        ], $this->validationMessages());
+        $validated = $request->validate(array_merge(
+            [
+                'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+                // Optional: leaving it empty gives the account the configured default password.
+                'password' => FormRules::password(false),
+            ],
+            $this->guardianRules(true),
+            FormRules::childProfile('child_'),
+        ), $this->validationMessages());
 
         $teacher = $this->currentTeacher($request);
+        $usesDefaultPassword = empty($validated['password']);
+        $password = $usesDefaultPassword ? (string) config('littlestep.guardian_default_password') : $validated['password'];
+        $isStudying = (bool) ($validated['is_studying'] ?? false);
 
-        DB::transaction(function () use ($request, $validated, $teacher) {
+        $photoPath = $request->hasFile('photo')
+            ? $request->file('photo')->store('photos/children', 'local')
+            : null;
 
+        $user = DB::transaction(function () use ($validated, $teacher, $password, $isStudying, $photoPath) {
             $user = User::create([
-                'email' => strtolower(trim($validated['email'])),
-                'password' => Hash::make($validated['password']),
+                'email' => $validated['email'],
+                'password' => Hash::make($password),
                 'role' => 'guardian',
             ]);
-
-            event(new Registered($user));
-
-            $guardianAddress = implode(', ', array_filter([
-                $validated['barangay'] ?? null,
-                $validated['municipality'] ?? null,
-                $validated['province'] ?? null,
-                $validated['region'] ?? null,
-            ]));
 
             $guardian = Guardian::create([
                 'user_id' => $user->id,
@@ -140,21 +117,9 @@ class GuardianController extends Controller
                 'last_name' => $validated['last_name'],
                 'sex' => $validated['sex'],
                 'contact_number' => $validated['contact_number'],
-                'address' => $guardianAddress,
+                'address' => FormRules::joinAddress($validated),
                 'relationship_to_child' => $validated['relationship_to_child'],
             ]);
-
-            $childAddress = implode(', ', array_filter([
-                $validated['child_barangay'] ?? null,
-                $validated['child_municipality'] ?? null,
-                $validated['child_province'] ?? null,
-                $validated['child_region'] ?? null,
-            ]));
-
-            $photoPath = null;
-            if ($request->hasFile('photo')) {
-                $photoPath = $request->file('photo')->store('children_photos', 'local');
-            }
 
             $child = $guardian->children()->create([
                 'first_name' => $validated['child_first_name'],
@@ -162,10 +127,10 @@ class GuardianController extends Controller
                 'last_name' => $validated['child_last_name'],
                 'sex' => $validated['child_sex'],
                 'date_of_birth' => $validated['child_date_of_birth'],
-                'address' => $childAddress,
+                'address' => FormRules::joinAddress($validated, 'child_'),
                 'handedness' => $validated['child_handedness'],
-                'is_studying' => $request->has('is_studying') && $request->is_studying == '1',
-                'school_name' => $validated['school_name'] ?? null,
+                'is_studying' => $isStudying,
+                'school_name' => $isStudying ? ($validated['school_name'] ?? null) : null,
                 'fathers_name' => $validated['fathers_name'] ?? null,
                 'fathers_age' => $validated['fathers_age'] ?? null,
                 'fathers_occupation' => $validated['fathers_occupation'] ?? null,
@@ -189,12 +154,22 @@ class GuardianController extends Controller
                 'status' => 'pending',
             ]);
 
-            if (function_exists('recordLog')) {
-                recordLog('created', 'Guardian', $guardian->id, 'Guardian and child registered: '.$guardian->first_name.' '.$guardian->last_name);
-            }
+            recordLog('created', 'Guardian', $guardian->id, 'Guardian and child registered: '.$guardian->first_name.' '.$guardian->last_name);
+
+            return $user;
         });
 
-        return redirect()->route('guardians.create')->with('registration_success', true);
+        // Sent after the commit so a rolled-back registration never emails a verification link.
+        $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
+
+        $message = 'Guardian and child registered successfully.';
+        if ($usesDefaultPassword) {
+            $message .= ' No password was entered, so the account uses the default password. Ask the guardian to change it after signing in.';
+        }
+
+        return redirect()->route('guardians.index')
+            ->with('success', $message)
+            ->with('error', $verificationSent ? null : SafeMail::VERIFICATION_FAILED);
     }
 
     public function show(Request $request, $id)
@@ -239,61 +214,79 @@ class GuardianController extends Controller
             $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
         }
 
-        $userId = $guardian->user ? $guardian->user->id : 'NULL';
+        $data = $request->validate(array_merge($this->guardianRules(false), [
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($guardian->user_id)],
+            'password' => FormRules::password(false),
+        ]), $this->validationMessages());
 
-        $data = $request->validate([
-            'first_name' => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'middle_name' => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'last_name' => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'sex' => ['nullable', 'in:Male,Female'],
-            'contact_number' => ['nullable', 'regex:/^09[0-9]{9}$/'],
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'municipality' => ['nullable', 'string', 'max:255'],
-            'province' => ['nullable', 'string', 'max:255'],
-            'region' => ['nullable', 'string', 'max:255'],
-            'relationship_to_child' => ['nullable', 'regex:/^[A-Za-z\s]+$/', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email,'.$userId],
-            'password' => ['nullable', 'string', 'confirmed', PasswordRule::min(12)],
-        ], $this->validationMessages());
-
+        // Blank profile fields keep their current value; the address is replaced by what was entered.
+        $profile = [];
         foreach (['first_name', 'middle_name', 'last_name', 'sex', 'contact_number', 'relationship_to_child'] as $field) {
-            $data[$field] = (! isset($data[$field]) || $data[$field] === '') ? $guardian->{$field} : $data[$field];
+            $profile[$field] = ($data[$field] ?? null) ?? $guardian->{$field};
         }
+        $profile['address'] = FormRules::joinAddress($data);
 
-        $data['address'] = implode(', ', array_filter([
-            $request->barangay,
-            $request->municipality,
-            $request->province,
-            $request->region,
-        ]));
+        $user = $guardian->user;
+        $emailChanged = $user && ! empty($data['email']) && $data['email'] !== $user->email;
 
-        unset($data['barangay'], $data['municipality'], $data['province'], $data['region']);
+        DB::transaction(function () use ($guardian, $user, $profile, $data, $emailChanged) {
+            $guardian->update($profile);
 
-        $guardian->update($data);
+            if (! $user) {
+                return;
+            }
 
-        if ($guardian->user) {
-            $newEmail = ! empty($data['email']) ? $data['email'] : $guardian->user->email;
-            $guardian->user->update(['email' => $newEmail]);
+            if ($emailChanged) {
+                // A new address must be confirmed before the guardian can sign in with it again.
+                $user->forceFill(['email' => $data['email'], 'email_verified_at' => null])->save();
+            }
 
             if (! empty($data['password'])) {
-                $guardian->user->update(['password' => Hash::make($data['password'])]);
-                $guardian->user->tokens()->delete();
+                $user->forceFill(['password' => Hash::make($data['password'])])->save();
             }
-        }
 
-        if (function_exists('recordLog')) {
-            recordLog('updated', 'Guardian', $guardian->id, 'Guardian updated');
-        }
+            if ($emailChanged || ! empty($data['password'])) {
+                $user->tokens()->delete();
+            }
+        });
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Guardian records updated successfully.',
-            ]);
+        $verificationSent = $emailChanged && SafeMail::attempt(fn () => $user->sendEmailVerificationNotification());
+
+        recordLog('updated', 'Guardian', $guardian->id, match (true) {
+            ! $emailChanged => 'Guardian updated',
+            $verificationSent => 'Guardian updated; email changed and re-verification sent.',
+            default => 'Guardian updated; email changed but the verification email could not be sent.',
+        });
+
+        $message = 'Guardian updated successfully.';
+        if ($verificationSent) {
+            $message .= ' A verification link was sent to the new email address; the guardian must verify it before signing in.';
         }
 
         return redirect()->route('guardians.index')
-            ->with('success', 'Guardian updated successfully.');
+            ->with('success', $message)
+            ->with('error', $emailChanged && ! $verificationSent ? SafeMail::VERIFICATION_FAILED : null);
+    }
+
+    /** Sends a new verification link to a guardian who has not verified their email yet. */
+    public function resendVerification(Request $request, $id)
+    {
+        $guardian = $this->currentTeacher($request)->ownedGuardians()->with('user')->findOrFail($id);
+        $user = $guardian->user;
+
+        if (! $user || $user->hasVerifiedEmail()) {
+            return redirect()->route('guardians.index')
+                ->with('success', 'This guardian\'s email address is already verified.');
+        }
+
+        if (! SafeMail::attempt(fn () => $user->sendEmailVerificationNotification())) {
+            return redirect()->route('guardians.index')->with('error', SafeMail::VERIFICATION_FAILED);
+        }
+
+        recordLog('verification_resent', 'Guardian', $guardian->id, 'Verification email sent again.');
+
+        return redirect()->route('guardians.index')
+            ->with('success', 'A new verification link was sent to '.$user->email.'.');
     }
 
     public function destroy(Request $request, $id)
@@ -328,15 +321,6 @@ class GuardianController extends Controller
             recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: '.$guardian->first_name.' '.$guardian->last_name);
         }
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => $guardianArchived
-                    ? 'Guardian and assigned children archived successfully.'
-                    : 'Assigned children archived successfully; the guardian still has other active linked children.',
-            ]);
-        }
-
         return redirect()->route('guardians.index')
             ->with('success', $guardianArchived
                 ? 'Guardian and assigned children archived successfully.'
@@ -355,46 +339,19 @@ class GuardianController extends Controller
         $teacher = $this->currentTeacher($request);
         $guardian = $teacher->ownedGuardians()->findOrFail($id);
 
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'middle_name' => ['nullable', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'sex' => ['required', 'in:Male,Female'],
-            'date_of_birth' => ['required', 'date'],
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'municipality' => ['nullable', 'string', 'max:255'],
-            'province' => ['nullable', 'string', 'max:255'],
-            'region' => ['nullable', 'string', 'max:255'],
-            'handedness' => ['required', 'in:right,left,both,not_yet_established'],
-            'is_studying' => ['nullable', 'boolean'],
-            'school_name' => ['nullable', 'string', 'max:255'],
-            'fathers_name' => ['nullable', 'string', 'max:255'],
-            'fathers_age' => ['nullable', 'integer'],
-            'fathers_occupation' => ['nullable', 'string', 'max:255'],
-            'fathers_education' => ['nullable', 'string', 'max:255'],
-            'mothers_name' => ['nullable', 'string', 'max:255'],
-            'mothers_age' => ['nullable', 'integer'],
-            'mothers_occupation' => ['nullable', 'string', 'max:255'],
-            'mothers_education' => ['nullable', 'string', 'max:255'],
-            'number_of_siblings' => ['nullable', 'integer'],
-            'birth_order' => ['nullable', 'integer'],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'mimetypes:image/jpeg,image/png,image/gif', 'max:2048'],
-        ]);
+        $data = $request->validate(FormRules::childProfile(), FormRules::messages());
 
-        $data['address'] = implode(', ', array_filter([
-            $request->barangay,
-            $request->municipality,
-            $request->province,
-            $request->region,
-        ]));
-
-        unset($data['barangay'], $data['municipality'], $data['province'], $data['region']);
+        $data['address'] = FormRules::joinAddress($data);
+        unset($data['barangay'], $data['municipality'], $data['province'], $data['region'], $data['photo']);
 
         if ($request->hasFile('photo')) {
-            $data['photo_path'] = $request->file('photo')->store('children_photos', 'local');
+            $data['photo_path'] = $request->file('photo')->store('photos/children', 'local');
         }
 
-        $data['is_studying'] = (bool) ($request->is_studying ?? false);
+        $data['is_studying'] = (bool) ($data['is_studying'] ?? false);
+        if (! $data['is_studying']) {
+            $data['school_name'] = null;
+        }
 
         $assessmentDate = now()->toDateString();
         $child = DB::transaction(function () use ($guardian, $data, $teacher, $assessmentDate) {
@@ -433,10 +390,13 @@ class GuardianController extends Controller
             recordLog('deleted', 'Child', $child->id, 'Child archived: '.$child->first_name.' '.$child->last_name);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Child profile archived successfully.',
-        ]);
+        // Once the last active child is archived the guardian leaves ownedGuardians(), so return to the list instead.
+        $hasActiveChildren = $teacher->ownedChildren()->where('guardian_id', $guardian->id)->exists();
+        $redirect = $hasActiveChildren
+            ? redirect()->route('guardians.archive-child', $guardian->id)
+            : redirect()->route('guardians.index');
+
+        return $redirect->with('success', 'Child profile archived successfully.');
     }
 
     public function archiveChild(Request $request, $id)

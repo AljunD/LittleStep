@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Models\User;
+use App\Support\FormRules;
+use App\Support\SafeMail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -33,25 +35,15 @@ class AuthController extends Controller
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'sex' => 'required|string|in:Male,Female',
-            'contact_number' => 'required|string|max:20',
+            'first_name' => FormRules::name(),
+            'middle_name' => FormRules::name(false),
+            'last_name' => FormRules::name(),
+            'sex' => ['required', Rule::in(FormRules::SEXES)],
+            'contact_number' => FormRules::contactNumber(),
             'address' => 'required|string|max:500',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                PasswordRule::min(12)->max(72),
-                static function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 72) {
-                        $fail('The password may not exceed 72 bytes.');
-                    }
-                },
-            ],
-        ]);
+            'password' => FormRules::password(),
+        ], FormRules::messages());
 
         $cleanEmail = Str::lower(trim($request->email));
 
@@ -75,14 +67,15 @@ class AuthController extends Controller
             return [$user, $teacher];
         });
 
-        event(new Registered($user));
+        $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
         Auth::login($user);
         $request->session()->regenerate();
 
         recordLog('registered', 'Teacher', $teacher->id, 'Teacher account registered.', $user->id);
 
         return redirect()->route('verification.notice')
-            ->with('success', 'Registration successful! Please verify your email.');
+            ->with('success', 'Registration successful! Please verify your email.')
+            ->with('error', $verificationSent ? null : 'The verification email could not be sent because the mail server could not be reached. Try "Resend" once the connection is back.');
     }
 
     public function showLoginForm()
@@ -121,8 +114,11 @@ class AuthController extends Controller
                 $request->session()->regenerateToken();
                 recordLog('login_denied', 'User', $user->id, 'Unverified email attempted web login.', $user->id);
 
-                return redirect()->route('verification.notice')
-                    ->withErrors(['email' => 'You must verify your email before logging in.']);
+                // Back to the login form: the verification notice requires a session,
+                // so redirecting there would bounce to login and drop this message.
+                return back()->withErrors([
+                    'email' => 'You must verify your email before logging in. Check your inbox for the verification link.',
+                ])->onlyInput('email');
             }
 
             recordLog('login', 'User', $user->id, 'Teacher logged in.', $user->id);
@@ -164,7 +160,8 @@ class AuthController extends Controller
 
         $email = Str::lower(trim($request->email));
 
-        Password::sendResetLink(['email' => $email]);
+        // The reply stays the same whether or not the email went out, so it never reveals which addresses have accounts.
+        SafeMail::attempt(fn () => Password::sendResetLink(['email' => $email]));
 
         return back()->with(['success' => 'If an account exists for that email, a password reset link will be sent.']);
     }
@@ -179,17 +176,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                PasswordRule::min(12)->max(72),
-                static function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 72) {
-                        $fail('The password may not exceed 72 bytes.');
-                    }
-                },
-            ],
+            'password' => FormRules::password(),
         ]);
 
         $status = Password::reset(
@@ -225,18 +212,20 @@ class AuthController extends Controller
             abort(403, 'Invalid verification link.');
         }
 
+        // Re-opening an old link must not send the "verified" email again.
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
+
+            // A courtesy email; the account is verified even if it can't be sent.
+            SafeMail::attempt(fn () => Mail::send('emails.account-details', [
+                'user' => $user,
+            ], function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Your LittleStep Account Is Verified');
+            }));
+
+            recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
         }
-
-        Mail::send('emails.account-details', [
-            'user' => $user,
-        ], function ($message) use ($user) {
-            $message->to($user->email)
-                ->subject('Your LittleStep Account Is Verified');
-        });
-
-        recordLog('email_verified', 'User', $user->id, 'User email address verified.', $user->id);
 
         if ($user->role === 'teacher') {
             return redirect()->route('login')->with('status', 'Your email has been verified successfully. You may now log in.');

@@ -15,14 +15,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { PasswordReminder } from "../components/password-reminder";
 import { DarkColors, Layout } from "../constants/theme";
 import { useAppTheme } from "../hooks/use-app-theme";
 import {
+  dismissPasswordReminder,
   getGuardianApiErrorMessage,
   getGuardianChildren,
   getGuardianChildPhotoSource,
   GuardianChild,
   GuardianPhotoSource,
+  shouldShowPasswordReminder,
 } from "../services/guardianApi";
 
 async function fetchStudentData(): Promise<{
@@ -54,6 +58,22 @@ export default function SelectStudentScreen({ navigation }: any) {
   const [photoSources, setPhotoSources] = useState<Record<number, GuardianPhotoSource>>({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showPasswordReminder, setShowPasswordReminder] = useState(false);
+
+  // Signed in with the default password: remind the guardian to change it (re-checked when returning here).
+  useFocusEffect(
+    useCallback(() => {
+      setShowPasswordReminder(shouldShowPasswordReminder());
+    }, []),
+  );
+
+  const closePasswordReminder = (openChangePassword: boolean) => {
+    dismissPasswordReminder();
+    setShowPasswordReminder(false);
+    if (openChangePassword) {
+      navigation.navigate("ChangePassword");
+    }
+  };
 
   const loadStudents = useCallback(async () => {
     setLoading(true);
@@ -205,6 +225,12 @@ export default function SelectStudentScreen({ navigation }: any) {
           </ScrollView>
         </SafeAreaView>
       </ImageBackground>
+
+      <PasswordReminder
+        visible={showPasswordReminder}
+        onChangePassword={() => closePasswordReminder(true)}
+        onRemindLater={() => closePasswordReminder(false)}
+      />
     </View>
   );
 }

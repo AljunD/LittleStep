@@ -23,30 +23,6 @@
             </p>
         </div>
 
-        <div id="success-message" class="hidden p-8 md:p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="mb-6 bg-green-100 text-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Complete</h3>
-                <p class="text-gray-600 mb-8 text-sm">The child record has been successfully archived.</p>
-                <a href="{{ route('guardians.archive-child', $guardian->id) }}" 
-                   class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95 text-sm">
-                    Done
-                </a>
-            </div>
-        </div>
-
-        <div id="failed-message" class="hidden p-8 md:p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="mb-6 bg-red-100 text-red-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✕</div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive Failed</h3>
-                <p class="text-gray-600 mb-8 text-sm">Something went wrong while archiving the child record. Please try again.</p>
-                <a href="{{ route('guardians.archive-child', $guardian->id) }}" 
-                   class="inline-block w-full px-8 py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition transform active:scale-95 text-sm">
-                    Try Again
-                </a>
-            </div>
-        </div>
-
         <div id="child-list" class="p-6 md:p-8">
             <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -67,11 +43,14 @@
                                     {{ ucfirst($child->sex) }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <button type="button" 
-                                            data-url="{{ route('guardians.unlink-child', ['guardianId' => $guardian->id, 'childId' => $child->id]) }}"
-                                            class="archive-btn px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg shadow hover:bg-red-700 transition transform active:scale-95">
-                                        Archive Child
-                                    </button>
+                                    <x-action-menu label="Actions for {{ $child->first_name }} {{ $child->last_name }}">
+                                        <form action="{{ route('guardians.unlink-child', ['guardianId' => $guardian->id, 'childId' => $child->id]) }}" method="POST"
+                                              data-confirm="Are you sure you want to archive this child record?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-action-menu.item icon="archive" variant="danger">Archive Child</x-action-menu.item>
+                                        </form>
+                                    </x-action-menu>
                                 </td>
                             </tr>
                         @empty
@@ -87,56 +66,4 @@
         </div>
     </div>
 </div>
-
-<script nonce="{{ request()->attributes->get('cspNonce') }}">
-document.addEventListener('DOMContentLoaded', () => {
-    const childList = document.getElementById('child-list');
-    const successMessage = document.getElementById('success-message');
-    const failedMessage = document.getElementById('failed-message');
-    const csrfToken = '{{ csrf_token() }}';
-
-    document.querySelectorAll('.archive-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const endpointUrl = btn.getAttribute('data-url');
-
-            const confirmed = confirm("Are you sure you want to archive this child record?");
-            if (!confirmed) return;
-
-            btn.disabled = true;
-            btn.innerText = "Archiving...";
-
-            try {
-                const response = await fetch(endpointUrl, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    childList?.classList.add('hidden');
-                    successMessage?.classList.remove('hidden');
-                    failedMessage?.classList.add('hidden');
-                } else {
-                    childList?.classList.add('hidden');
-                    failedMessage?.classList.remove('hidden');
-                    successMessage?.classList.add('hidden');
-                }
-            } catch (error) {
-                console.error("Archive error:", error);
-                childList?.classList.add('hidden');
-                failedMessage?.classList.remove('hidden');
-                successMessage?.classList.add('hidden');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Archive Child";
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-});
-</script>
 @endsection

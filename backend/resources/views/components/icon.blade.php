@@ -1,0 +1,29 @@
+{{--
+    Outline icons (24 × 24, stroke) used by <x-button> and <x-action-menu.item>, so every action shows the same icon everywhere.
+--}}
+@props(['name'])
+@php
+    $paths = [
+        'view' => ['M15 12a3 3 0 11-6 0 3 3 0 016 0z', 'M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'],
+        'edit' => ['M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.5V20z'],
+        'plus' => ['M12 4v16m8-8H4'],
+        'download' => ['M12 4v12m0 0l-4-4m4 4l4-4M4 20h16'],
+        'archive' => ['M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
+        'restore' => ['M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
+        'link' => ['M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
+        'unlink' => ['M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6'],
+        'evaluate' => ['M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+        'observation' => ['M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z'],
+        'save' => ['M5 13l4 4L19 7'],
+        'mail' => ['M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+        'filter' => ['M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z'],
+        'back' => ['M15 19l-7-7 7-7'],
+        'next' => ['M9 5l7 7-7 7'],
+        'dots' => ['M12 5h.01M12 12h.01M12 19h.01'],
+    ];
+@endphp
+<svg {{ $attributes->merge(['class' => 'h-4 w-4 shrink-0']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    @foreach ($paths[$name] ?? [] as $path)
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="{{ $name === 'dots' ? 3 : 2 }}" d="{{ $path }}"></path>
+    @endforeach
+</svg>

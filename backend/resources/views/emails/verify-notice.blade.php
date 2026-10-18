@@ -13,12 +13,7 @@
         </p>
     </div>
 
-    {{-- Success Alert --}}
-    @if (session('success'))
-        <div class="bg-green-100 text-green-700 px-6 py-4 rounded-lg mb-6 shadow max-w-md w-full text-center">
-            {{ session('success') }}
-        </div>
-    @endif
+    {{-- Success messages come from <x-flash-messages /> in the layout. --}}
 
     {{-- Resend Form --}}
     <div class="bg-white p-6 rounded-xl shadow-md max-w-sm w-full text-center">
