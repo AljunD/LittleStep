@@ -11,9 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 const GuardianDetailsScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
   const student = route?.params?.student ?? {};
 
   const guardianName =
@@ -23,9 +26,9 @@ const GuardianDetailsScreen = ({ navigation, route }: any) => {
 
   const Field = ({ label, value }: { label: string; value: string }) => (
     <View style={styles.fieldContainer}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, isDark && darkStyles.label]}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, isDark && darkStyles.input]}
         value={String(value ?? "")}
         editable={false}
         selectTextOnFocus={false}
@@ -34,19 +37,22 @@ const GuardianDetailsScreen = ({ navigation, route }: any) => {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, isDark && darkStyles.container]}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
+      />
 
       {/* Page Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, isDark && darkStyles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={25} color="#24483D" />
+          <Ionicons name="chevron-back" size={25} color={isDark ? DarkColors.text : "#24483D"} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Guardian Profile</Text>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>Guardian Profile</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -59,7 +65,7 @@ const GuardianDetailsScreen = ({ navigation, route }: any) => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Guardian Information</Text>
+        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Guardian Information</Text>
 
         <Field label="Full Name" value={guardianName} />
 
@@ -158,5 +164,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#263B32",
     backgroundColor: "#FAFCFB",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+  header: {
+    backgroundColor: DarkColors.surface,
+    borderBottomColor: DarkColors.border,
+  },
+  text: {
+    color: DarkColors.text,
+  },
+  label: {
+    color: DarkColors.textMuted,
+  },
+  input: {
+    borderColor: DarkColors.border,
+    color: DarkColors.text,
+    backgroundColor: DarkColors.surface,
   },
 });

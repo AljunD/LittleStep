@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -10,40 +10,51 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { DisplayMode, useAppTheme } from "../hooks/use-app-theme";
 
-const displayOptions = [
+const displayOptions: {
+  mode: DisplayMode;
+  title: string;
+  description: string;
+  icon: "sunny-outline" | "moon-outline" | "phone-portrait-outline";
+}[] = [
   {
+    mode: "light",
     title: "Light",
     description: "Use a light appearance",
-    icon: "sunny-outline" as const,
+    icon: "sunny-outline",
   },
   {
+    mode: "dark",
     title: "Dark",
     description: "Use a dark appearance",
-    icon: "moon-outline" as const,
+    icon: "moon-outline",
   },
   {
+    mode: "system",
     title: "System",
     description: "Follow your device settings",
-    icon: "phone-portrait-outline" as const,
+    icon: "phone-portrait-outline",
   },
 ];
 
 export default function DisplayScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { mode, setMode, isDark } = useAppTheme();
 
-  const [selectedOption, setSelectedOption] = useState("Light");
   const student = route?.params?.student;
+  const navIconColor = isDark ? DarkColors.textMuted : "#89918F";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFFFFF"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -52,11 +63,11 @@ export default function DisplayScreen({ navigation, route }: any) {
           <Ionicons
             name="chevron-back"
             size={26}
-            color="#263447"
+            color={isDark ? DarkColors.text : "#263447"}
           />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Display</Text>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>Display</Text>
 
         <View style={styles.headerRight} />
       </View>
@@ -66,38 +77,40 @@ export default function DisplayScreen({ navigation, route }: any) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Appearance</Text>
+        <Text style={[styles.pageTitle, isDark && darkStyles.text]}>Appearance</Text>
 
-        <Text style={styles.pageDescription}>
+        <Text style={[styles.pageDescription, isDark && darkStyles.mutedText]}>
           Choose how LittleStep looks on your device.
         </Text>
 
         {/* Display Options */}
-        <View style={styles.optionsCard}>
+        <View style={[styles.optionsCard, isDark && darkStyles.optionsCard]}>
           {displayOptions.map((option, index) => {
-            const selected = selectedOption === option.title;
+            const selected = mode === option.mode;
 
             return (
-              <React.Fragment key={option.title}>
+              <React.Fragment key={option.mode}>
                 <TouchableOpacity
                   style={styles.optionRow}
                   activeOpacity={0.7}
-                  onPress={() => setSelectedOption(option.title)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
+                  onPress={() => setMode(option.mode)}
                 >
-                  <View style={styles.optionIcon}>
+                  <View style={[styles.optionIcon, isDark && darkStyles.optionIcon]}>
                     <Ionicons
                       name={option.icon}
                       size={22}
-                      color="#365C55"
+                      color={isDark ? DarkColors.icon : "#365C55"}
                     />
                   </View>
 
                   <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>
+                    <Text style={[styles.optionTitle, isDark && darkStyles.text]}>
                       {option.title}
                     </Text>
 
-                    <Text style={styles.optionDescription}>
+                    <Text style={[styles.optionDescription, isDark && darkStyles.mutedText]}>
                       {option.description}
                     </Text>
                   </View>
@@ -106,17 +119,19 @@ export default function DisplayScreen({ navigation, route }: any) {
                   <View
                     style={[
                       styles.radioOuter,
+                      isDark && darkStyles.radioOuter,
                       selected && styles.radioOuterSelected,
+                      selected && isDark && darkStyles.radioOuterSelected,
                     ]}
                   >
                     {selected && (
-                      <View style={styles.radioInner} />
+                      <View style={[styles.radioInner, isDark && darkStyles.radioInner]} />
                     )}
                   </View>
                 </TouchableOpacity>
 
                 {index < displayOptions.length - 1 && (
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, isDark && darkStyles.divider]} />
                 )}
               </React.Fragment>
             );
@@ -129,6 +144,7 @@ export default function DisplayScreen({ navigation, route }: any) {
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           { paddingBottom: Math.max(insets.bottom, 10) },
         ]}
       >
@@ -142,9 +158,9 @@ export default function DisplayScreen({ navigation, route }: any) {
           <Ionicons
             name="home-outline"
             size={23}
-            color="#89918F"
+            color={navIconColor}
           />
-          <Text style={styles.navText}>Home</Text>
+          <Text style={[styles.navText, isDark && darkStyles.navText]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -157,9 +173,9 @@ export default function DisplayScreen({ navigation, route }: any) {
           <Ionicons
             name="clipboard-outline"
             size={23}
-            color="#89918F"
+            color={navIconColor}
           />
-          <Text style={styles.navText}>ECCD Checklist</Text>
+          <Text style={[styles.navText, isDark && darkStyles.navText]}>ECCD Checklist</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -172,14 +188,62 @@ export default function DisplayScreen({ navigation, route }: any) {
           <Ionicons
             name="person-outline"
             size={23}
-            color="#89918F"
+            color={navIconColor}
           />
-          <Text style={styles.navText}>Profile</Text>
+          <Text style={[styles.navText, isDark && darkStyles.navText]}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  optionsCard: {
+    backgroundColor: DarkColors.surface,
+    borderColor: DarkColors.border,
+  },
+
+  optionIcon: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  radioOuter: {
+    borderColor: DarkColors.border,
+  },
+
+  radioOuterSelected: {
+    borderColor: DarkColors.accent,
+  },
+
+  radioInner: {
+    backgroundColor: DarkColors.accent,
+  },
+
+  divider: {
+    backgroundColor: DarkColors.border,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  navText: {
+    color: DarkColors.accent,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

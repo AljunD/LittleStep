@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   View,
   Text,
@@ -12,7 +13,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { logoutGuardian } from "../services/guardianApi";
+import {
+  getGuardianApiErrorMessage,
+  getGuardianChildPhotoSource,
+  getGuardianDashboard,
+  GuardianDashboard,
+  GuardianPhotoSource,
+  logoutGuardian,
+} from "../services/guardianApi";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 export default function DashboardScreen({
   navigation,
@@ -20,32 +30,81 @@ export default function DashboardScreen({
 }: any) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const { isDark } = useAppTheme();
 
   // Automatically reduce spacing on shorter phones
   const compact = height < 760;
   const small = width < 360;
 
-  const student = route?.params?.student ?? {
-    firstName: "Juan",
-    lastName: "Dela Cruz",
-    name: "Juan Dela Cruz",
-    age: "4 years old",
-    image: require("../assets/images/juan.jpg"),
-  };
+  const student = route?.params?.student;
+  const studentId = student?.id;
+  const [dashboard, setDashboard] = useState<GuardianDashboard | null>(null);
+  const [photo, setPhoto] = useState<{
+    childId: number;
+    source: GuardianPhotoSource;
+  } | null>(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const photoSource = photo && photo.childId === studentId ? photo.source : null;
 
-  const studentName =
-    student.name ??
-    [student.firstName, student.lastName]
-      .filter(Boolean)
-      .join(" ") ??
-    "Juan Dela Cruz";
+  useEffect(() => {
+    let isMounted = true;
 
-  const studentImage =
-    typeof student.image === "number"
-      ? student.image
-      : student.image
-      ? student.image
-      : require("../assets/images/juan.jpg");
+    if (typeof studentId === "number") {
+      const requestedStudentId = studentId;
+      getGuardianDashboard(studentId)
+        .then((data) => {
+          if (!isMounted) {
+            return;
+          }
+
+          setDashboard(data);
+
+          if (!data.child.photo_url) {
+            return;
+          }
+
+          setPhotoLoading(true);
+          getGuardianChildPhotoSource(data.child.photo_url)
+            .then((source) => {
+              if (isMounted && source) {
+                setPhoto({ childId: requestedStudentId, source });
+              }
+            })
+            .catch(() => {
+              // Keep the placeholder; the rest of the dashboard is still usable.
+            })
+            .finally(() => {
+              if (isMounted) {
+                setPhotoLoading(false);
+              }
+            });
+        })
+        .catch((error: unknown) => {
+          if (isMounted) {
+            Alert.alert("Unable to load dashboard", getGuardianApiErrorMessage(error));
+          }
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [studentId]);
+
+  const currentDashboard = dashboard?.child.id === studentId ? dashboard : null;
+  const studentName = currentDashboard?.child
+    ? [
+        currentDashboard.child.first_name,
+        currentDashboard.child.middle_name,
+        currentDashboard.child.last_name,
+      ].filter(Boolean).join(" ")
+    : student?.name
+      ?? [student?.firstName, student?.lastName].filter(Boolean).join(" ")
+      ?? "";
+
+  const latestRoundData = currentDashboard?.progress.latest_round
+    ? currentDashboard.progress.rounds[currentDashboard.progress.latest_round]
+    : null;
 
   const handleLogout = async () => {
     try {
@@ -67,24 +126,28 @@ export default function DashboardScreen({
     {
       title: "Physical Movement",
       subtitle: "Gross Motor",
+      domainKey: "gross_motor",
       icon: "body-outline",
       color: "#F9C96B",
     },
     {
       title: "Hand & Finger Skills",
       subtitle: "Fine Motor",
+      domainKey: "fine_motor",
       icon: "hand-left-outline",
       color: "#A8D8B9",
     },
     {
       title: "Thinking & Learning",
       subtitle: "Cognitive",
+      domainKey: "cognitive",
       icon: "bulb-outline",
       color: "#B9C9F8",
     },
     {
       title: "View Full",
       subtitle: "ECCD Checklist",
+      domainKey: null,
       icon: "clipboard-outline",
       color: "#F3B9C7",
     },
@@ -119,16 +182,17 @@ export default function DashboardScreen({
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, isDark && darkStyles.screen]}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFFFFF"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
       {/* FIXED HEADER */}
       <View
         style={[
           styles.header,
+          isDark && darkStyles.header,
           {
             paddingTop: Math.max(insets.top, 8),
             paddingHorizontal: small ? 16 : 22,
@@ -136,29 +200,18 @@ export default function DashboardScreen({
         ]}
       >
         <View style={styles.headerTextContainer}>
-          <Text style={[styles.headerTitle, compact && styles.compactHeaderTitle]}>
+          <Text style={[styles.headerTitle, compact && styles.compactHeaderTitle, isDark && darkStyles.text]}>
             Dashboard
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => navigation.navigate("Profile", { student })}
-          activeOpacity={0.75}
-        >
-          <Ionicons
-            name="person-outline"
-            size={23}
-            color="#337D73"
-          />
-        </TouchableOpacity>
       </View>
 
       {/* FIXED CONTENT: NO SCROLLVIEW */}
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
-        imageStyle={styles.backgroundImage}
+        imageStyle={[styles.backgroundImage, isDark && darkStyles.backgroundImage]}
         resizeMode="cover"
       >
         <View
@@ -176,23 +229,44 @@ export default function DashboardScreen({
             style={[
               styles.studentCard,
               compact && styles.compactStudentCard,
+              isDark && darkStyles.surface,
             ]}
           >
-            <Image
-              source={studentImage}
-              style={[
-                styles.studentImage,
-                compact && styles.compactStudentImage,
-              ]}
-              resizeMode="cover"
-            />
+            {photoSource ? (
+              <Image
+                source={photoSource}
+                style={[
+                  styles.studentImage,
+                  compact && styles.compactStudentImage,
+                ]}
+                resizeMode="cover"
+                accessibilityLabel={`Photo of ${studentName}`}
+                onError={() => setPhoto(null)}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.studentImage,
+                  compact && styles.compactStudentImage,
+                  styles.studentPhotoPlaceholder,
+                  isDark && darkStyles.surfaceMuted,
+                ]}
+              >
+                {photoLoading ? (
+                  <ActivityIndicator size="small" color={isDark ? DarkColors.icon : "#6F9A8F"} />
+                ) : (
+                  <Ionicons name="person" size={compact ? 23 : 28} color={isDark ? DarkColors.icon : "#6F9A8F"} />
+                )}
+              </View>
+            )}
 
             <View style={styles.studentInfo}>
-              <Text style={styles.studentLabel}>CURRENT STUDENT</Text>
+              <Text style={[styles.studentLabel, isDark && darkStyles.mutedText]}>CURRENT STUDENT</Text>
               <Text
                 style={[
                   styles.studentName,
                   compact && styles.compactStudentName,
+                  isDark && darkStyles.text,
                 ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
@@ -201,11 +275,6 @@ export default function DashboardScreen({
               </Text>
             </View>
 
-            <Ionicons
-              name="chevron-forward"
-              size={21}
-              color="#6C9B91"
-            />
           </View>
 
           {/* RECENT ACTIVITIES */}
@@ -215,6 +284,7 @@ export default function DashboardScreen({
                 style={[
                   styles.sectionTitle,
                   compact && styles.compactSectionTitle,
+                  isDark && darkStyles.text,
                 ]}
               >
                 Recent Activities
@@ -262,7 +332,10 @@ export default function DashboardScreen({
                       {activity.title}
                     </Text>
                     <Text style={styles.activitySubtitle}>
-                      {activity.subtitle}
+                      {activity.domainKey && latestRoundData?.domains[activity.domainKey]?.raw_score !== null
+                        && latestRoundData?.domains[activity.domainKey]?.raw_score !== undefined
+                        ? `${activity.subtitle} · ${latestRoundData.domains[activity.domainKey].raw_score}`
+                        : activity.subtitle}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -277,6 +350,7 @@ export default function DashboardScreen({
                 style={[
                   styles.sectionTitle,
                   compact && styles.compactSectionTitle,
+                  isDark && darkStyles.text,
                 ]}
               >
                 Quick Actions
@@ -323,6 +397,7 @@ export default function DashboardScreen({
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           {
             paddingBottom: Math.max(insets.bottom, 8),
           },
@@ -333,8 +408,8 @@ export default function DashboardScreen({
           onPress={() => navigation.navigate("Dashboard", { student })}
           activeOpacity={0.7}
         >
-          <Ionicons name="home" size={23} color="#337D73" />
-          <Text style={[styles.navText, styles.activeNavText]}>
+          <Ionicons name="home" size={23} color={isDark ? DarkColors.accent : "#337D73"} />
+          <Text style={[styles.navText, styles.activeNavText, isDark && darkStyles.activeNavText]}>
             Home
           </Text>
         </TouchableOpacity>
@@ -349,9 +424,9 @@ export default function DashboardScreen({
           <Ionicons
             name="clipboard-outline"
             size={23}
-            color="#8A9692"
+            color={isDark ? DarkColors.textMuted : "#8A9692"}
           />
-          <Text style={styles.navText}>ECCD Checklist</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>ECCD Checklist</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -362,9 +437,9 @@ export default function DashboardScreen({
           <Ionicons
             name="person-outline"
             size={23}
-            color="#8A9692"
+            color={isDark ? DarkColors.textMuted : "#8A9692"}
           />
-          <Text style={styles.navText}>Profile</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -408,16 +483,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  profileButton: {
-    width: 43,
-    height: 43,
-    borderRadius: 22,
-    backgroundColor: "#E9F4F0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 12,
-  },
-
   background: {
     flex: 1,
   },
@@ -456,6 +521,11 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 14,
     backgroundColor: "#E7EFEB",
+  },
+
+  studentPhotoPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   compactStudentImage: {
@@ -632,5 +702,45 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: "#337D73",
     fontWeight: "800",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  screen: {
+    backgroundColor: DarkColors.background,
+  },
+
+  header: {
+    backgroundColor: DarkColors.surface,
+    borderBottomColor: DarkColors.border,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  backgroundImage: {
+    opacity: 0.08,
+  },
+
+  surface: {
+    backgroundColor: DarkColors.surface,
+  },
+
+  surfaceMuted: {
+    backgroundColor: DarkColors.surfaceMuted,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  activeNavText: {
+    color: DarkColors.accent,
   },
 });

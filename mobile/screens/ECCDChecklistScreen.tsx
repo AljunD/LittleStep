@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 const categories = [
   {
@@ -57,22 +59,24 @@ export default function ECCDChecklistScreen({
 }: any) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
 
   const compact = height < 760;
   const small = width < 360;
   const student = route?.params?.student;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, isDark && darkStyles.container]}>
       <StatusBar
-        backgroundColor="#FFFFFF"
-        barStyle="dark-content"
+        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
+        barStyle={isDark ? "light-content" : "dark-content"}
       />
 
       {/* FIXED HEADER */}
       <View
         style={[
           styles.header,
+          isDark && darkStyles.header,
           {
             paddingTop: Math.max(insets.top, 8),
             paddingHorizontal: small ? 16 : 22,
@@ -87,7 +91,7 @@ export default function ECCDChecklistScreen({
           <Ionicons
             name="chevron-back"
             size={25}
-            color="#284F47"
+            color={isDark ? DarkColors.text : "#284F47"}
           />
         </TouchableOpacity>
 
@@ -95,6 +99,7 @@ export default function ECCDChecklistScreen({
           style={[
             styles.headerTitle,
             compact && styles.compactHeaderTitle,
+          isDark && darkStyles.text,
           ]}
         >
           ECCD Checklist
@@ -107,7 +112,7 @@ export default function ECCDChecklistScreen({
       <ImageBackground
         source={require("../assets/images/back.jpg")}
         style={styles.background}
-        imageStyle={styles.backgroundImage}
+        imageStyle={[styles.backgroundImage, isDark && darkStyles.backgroundImage]}
         resizeMode="cover"
       >
         <ScrollView
@@ -126,12 +131,13 @@ export default function ECCDChecklistScreen({
             style={[
               styles.sectionTitle,
               compact && styles.compactSectionTitle,
+            isDark && darkStyles.text,
             ]}
           >
             Development Areas
           </Text>
 
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, isDark && darkStyles.mutedText]}>
             Choose an area to view developmental skills.
           </Text>
 
@@ -195,6 +201,7 @@ export default function ECCDChecklistScreen({
       <View
         style={[
           styles.bottomNav,
+          isDark && darkStyles.bottomNav,
           {
             paddingBottom: Math.max(insets.bottom, 8),
           },
@@ -210,9 +217,9 @@ export default function ECCDChecklistScreen({
           <Ionicons
             name="home-outline"
             size={23}
-            color="#8A9692"
+            color={isDark ? DarkColors.textMuted : "#8A9692"}
           />
-          <Text style={styles.navText}>Home</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -222,9 +229,9 @@ export default function ECCDChecklistScreen({
           <Ionicons
             name="clipboard"
             size={23}
-            color="#337D73"
+            color={isDark ? DarkColors.accent : "#337D73"}
           />
-          <Text style={[styles.navText, styles.activeNavText]}>
+          <Text style={[styles.navText, styles.activeNavText, isDark && darkStyles.activeNavText]}>
             ECCD Checklist
           </Text>
         </TouchableOpacity>
@@ -239,9 +246,9 @@ export default function ECCDChecklistScreen({
           <Ionicons
             name="person-outline"
             size={23}
-            color="#8A9692"
+            color={isDark ? DarkColors.textMuted : "#8A9692"}
           />
-          <Text style={styles.navText}>Profile</Text>
+          <Text style={[styles.navText, isDark && darkStyles.mutedText]}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -410,5 +417,37 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: "#337D73",
     fontWeight: "800",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  header: {
+    backgroundColor: DarkColors.surface,
+    borderBottomColor: DarkColors.border,
+  },
+
+  text: {
+    color: DarkColors.text,
+  },
+
+  mutedText: {
+    color: DarkColors.textMuted,
+  },
+
+  backgroundImage: {
+    opacity: 0.08,
+  },
+
+  bottomNav: {
+    backgroundColor: DarkColors.surface,
+    borderTopColor: DarkColors.border,
+  },
+
+  activeNavText: {
+    color: DarkColors.accent,
   },
 });

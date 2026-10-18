@@ -11,9 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 
 const ChildDetailsScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppTheme();
   const student = route?.params?.student ?? {};
 
   const childName =
@@ -24,9 +27,9 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
 
   const Field = ({ label, value }: { label: string; value: string }) => (
     <View style={styles.fieldContainer}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, isDark && darkStyles.label]}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, isDark && darkStyles.input]}
         value={String(value ?? "")}
         editable={false}
         selectTextOnFocus={false}
@@ -35,19 +38,22 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, isDark && darkStyles.container]}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
+      />
 
       {/* Page Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, isDark && darkStyles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={25} color="#24483D" />
+          <Ionicons name="chevron-back" size={25} color={isDark ? DarkColors.text : "#24483D"} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Child Profile</Text>
+        <Text style={[styles.headerTitle, isDark && darkStyles.text]}>Child Profile</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -60,7 +66,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Student Information</Text>
+        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Student Information</Text>
 
         <Field label="Full Name" value={childName} />
 
@@ -92,7 +98,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
           value={student.birthday || "January 1, 2024"}
         />
 
-        <Text style={styles.sectionTitle}>School Information</Text>
+        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>School Information</Text>
 
         <Field
           label="School Name"
@@ -101,7 +107,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
           }
         />
 
-        <Text style={styles.sectionTitle}>Family Information</Text>
+        <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Family Information</Text>
 
         <Field
           label="Father's Name"
@@ -206,5 +212,26 @@ const styles = StyleSheet.create({
   },
   halfField: {
     flex: 1,
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+  header: {
+    backgroundColor: DarkColors.surface,
+    borderBottomColor: DarkColors.border,
+  },
+  text: {
+    color: DarkColors.text,
+  },
+  label: {
+    color: DarkColors.textMuted,
+  },
+  input: {
+    borderColor: DarkColors.border,
+    color: DarkColors.text,
+    backgroundColor: DarkColors.surface,
   },
 });

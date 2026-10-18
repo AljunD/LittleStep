@@ -1,58 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# LittleStep — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 (PHP 8.3) backend for LittleStep, an ECCD (Early Childhood Care and Development) progress-tracking system.
 
-## About Laravel
+It serves two audiences:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Audience  | Interface                          | Auth                         | Routes            |
+|-----------|------------------------------------|------------------------------|-------------------|
+| Teachers  | Server-rendered Blade web app      | Session + verified email     | `routes/web.php`  |
+| Guardians | JSON API used by the `mobile/` app | Sanctum bearer token (12 h)  | `routes/api.php` → `/api/v1/...` |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Teachers register guardians and children, record ECCD checklist assessments over up to three evaluation rounds, write observation notes, and download PDF progress reports. Guardians have read-only access to their own children's profiles and progress.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP 8.3+ and Composer
+- Node.js + npm (Vite / Tailwind CSS v4)
+- MySQL (Laragon) or SQLite
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cd backend
+composer setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`composer setup` installs PHP and JS dependencies, creates `.env` from `.env.example`, generates the app key, runs migrations, and builds front-end assets.
 
-## Contributing
+Next, edit `.env` for your environment:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- **Database:** `.env.example` defaults to SQLite (`database/database.sqlite`). For Laragon MySQL, set `DB_CONNECTION=mysql` and fill in the `DB_*` values.
+- **Mail:** `MAIL_MAILER=log` writes emails, including verification links, to `storage/logs/laravel.log`. Configure SMTP to send real mail.
+- **`SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=database`:** these need the database to be reachable.
 
-## Code of Conduct
+Seed the ECCD checklist and the development data:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan migrate:fresh --seed
+```
 
-## Security Vulnerabilities
+`DatabaseSeeder` always seeds the ECCD checklist items. Outside production, it also creates a sample teacher, guardian, child, and progress record. See `database/seeders/DatabaseSeeder.php` for the accounts. Seeded users are **not** email-verified, and both the web dashboard and the guardian API require a verified email. Verify them through the emailed link or by setting `email_verified_at` (e.g. in `php artisan tinker`).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Running
 
-## License
+With Laragon, the app is served at `http://localhost/LittleStep/backend/public`. Run `npm run dev` for hot-reloaded assets, or `npm run build` once.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Without Laragon:
+
+```bash
+composer dev   # artisan serve + queue worker + log tail (pail) + Vite, together
+```
+
+## Testing and formatting
+
+```bash
+composer test                                            # full suite
+php artisan test tests/Feature/ProgressObservationTest.php
+php artisan test --filter=test_guardian_mobile_login_requires_email_verification
+vendor/bin/pint                                          # format PHP
+```
+
+Tests use in-memory SQLite (configured in `phpunit.xml`), so no database server is needed.
+
+## Project structure
+
+```
+app/
+  Http/Controllers/          Teacher web controllers (Guardian, Children, Progress, Archive, Logs, ...)
+  Http/Controllers/Api/V1/   Guardian mobile API (AuthController, GuardianController)
+  Http/Middleware/           ApiAuthenticate, TeacherMiddleware, GuardianMiddleware, SecurityHeaders
+  Models/                    User, Teacher, Guardian, Child, ProgressRecord, Domain*, EccdChecklistItem, Log
+  Services/EccdExpertSystem.php   ECCD scoring engine
+  helpers.php                recordLog() audit helper (autoloaded)
+database/migrations/         Single migration defining all tables
+resources/views/             Blade views, incl. progress/pdf/report (DomPDF)
+```
+
+## Key concepts
+
+**Users and roles.** There is one `users` table with a `role` of `teacher` or `guardian`. Profile details live in `teachers` / `guardians`. The `teacher` and `guardian` middleware aliases are registered in `bootstrap/app.php`. Teachers self-register at `/auth/register`. Guardian accounts are created by teachers.
+
+**Ownership.** A teacher owns a child through that child's progress record (`progress_records.teacher_id`). Scope teacher queries with `Teacher::ownedChildren()` / `ownedGuardians()`. Scope guardian API queries with `$user->guardian->children()`.
+
+**ECCD scoring.** `EccdExpertSystem` takes the checklist results for a round across 7 domains (gross motor, fine motor, self-help, receptive language, expressive language, cognitive, social-emotional). From the child's age at the test date it computes raw, scaled, and standard scores and an interpretation, then stores them in `domain_scores`.
+
+**Archiving.** Most models use soft deletes. "Archive" in the UI soft-deletes a record, and `/archive` restores it.
+
+**Audit log.** Teacher actions call `recordLog($action, $entityType, $entityId, $details)`. Entries are listed at `/logs`.
+
+**Security.**
+- `SecurityHeaders` adds a nonce-based Content-Security-Policy, so inline `<script>`/`<style>` tags need `nonce="{{ request()->attributes->get('cspNonce') }}"`. In production it also redirects to HTTPS and sends HSTS.
+- Login, registration, and password-reset POSTs are throttled to 5 per minute.
+- Child photos are stored on the private `local` disk and served only through authenticated, ownership-checked routes.
+
+## Guardian API (v1)
+
+All endpoints are under `/api/v1`. Everything except login requires `Authorization: Bearer <token>` and a verified guardian account.
+
+| Method | Path                                      | Description                              |
+|--------|-------------------------------------------|------------------------------------------|
+| POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at }` |
+| POST   | `/guardian/logout`                        | Revokes the current token                |
+| GET    | `/guardian/profile`                       | Guardian's name                          |
+| GET    | `/guardian/views`                         | Guardian with children, progress records, domains and scores |
+| GET    | `/guardian/children`                      | Guardian's children                      |
+| GET    | `/guardian/children/{id}`                 | Child details                            |
+| GET    | `/guardian/children/{id}/dashboard`       | Progress summary and scores per round    |
+| GET    | `/guardian/children/{id}/photo`           | Child photo (authenticated image)        |

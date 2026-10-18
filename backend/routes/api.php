@@ -13,6 +13,10 @@ Route::prefix('/v1')->group(function () {
         Route::get('/guardian/views', [GuardianController::class, 'views']);
         Route::get('/guardian/children', [GuardianController::class, 'children']);
         Route::get('/guardian/children/{id}', [GuardianController::class, 'showChild']);
-        Route::get('/guardian/children/{id}/photo', [GuardianController::class, 'photo']);
+        Route::get('/guardian/children/{id}/dashboard', [GuardianController::class, 'dashboard'])
+            ->whereNumber('id');
+        Route::get('/guardian/children/{id}/photo', [GuardianController::class, 'photo'])
+            ->whereNumber('id');
     });
+
 });

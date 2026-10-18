@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { DarkColors } from "../constants/theme";
+import { useAppTheme } from "../hooks/use-app-theme";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 const { width, height } = Dimensions.get("window");
@@ -30,23 +32,25 @@ type Props = {
 };
 
 export default function WelcomeScreen({ navigation }: Props) {
+  const { isDark } = useAppTheme();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle="dark-content"
+        barStyle={isDark ? "light-content" : "dark-content"}
       />
 
       <ImageBackground
         source={require("../assets/images/back.jpg")}
-        style={styles.background}
+        style={[styles.background, isDark && darkStyles.container]}
+        imageStyle={isDark ? darkStyles.backgroundImage : undefined}
         resizeMode="cover"
       >
         <SafeAreaView style={styles.safeArea}>
           <Image
             source={require("../assets/images/logo.png")}
-            style={styles.logo}
+            style={[styles.logo, isDark && darkStyles.logoBadge]}
             resizeMode="contain"
           />
 
@@ -115,5 +119,20 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: DarkColors.background,
+  },
+
+  backgroundImage: {
+    opacity: 0.3,
+  },
+
+  logoBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 20,
   },
 });

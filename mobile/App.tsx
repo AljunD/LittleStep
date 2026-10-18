@@ -1,9 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { DarkTheme, DefaultTheme, NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+import { DarkColors } from "./constants/theme";
+import { AppThemeProvider, useAppTheme } from "./hooks/use-app-theme";
 import {
   getGuardianApiErrorMessage,
   GuardianProfile,
@@ -23,7 +25,28 @@ import LanguageScreen from "./screens/LanguageScreen";
 
 const Stack = createStackNavigator();
 
+const navigationDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: DarkColors.accent,
+    background: DarkColors.background,
+    card: DarkColors.surface,
+    text: DarkColors.text,
+    border: DarkColors.border,
+  },
+};
+
 export default function App() {
+  return (
+    <AppThemeProvider>
+      <AppNavigator />
+    </AppThemeProvider>
+  );
+}
+
+function AppNavigator() {
+  const { isDark } = useAppTheme();
   const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [initialRoute, setInitialRoute] = useState("Welcome");
   const [guardian, setGuardian] = useState<GuardianProfile | null>(null);
@@ -60,14 +83,14 @@ export default function App() {
 
   if (isRestoringSession) {
     return (
-      <View style={styles.loadingScreen}>
+      <View style={[styles.loadingScreen, isDark && styles.loadingScreenDark]}>
         <ActivityIndicator color="#0BA8BD" size="large" />
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={isDark ? navigationDarkTheme : DefaultTheme}>
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
@@ -141,5 +164,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFFFF",
+  },
+
+  loadingScreenDark: {
+    backgroundColor: DarkColors.background,
   },
 });

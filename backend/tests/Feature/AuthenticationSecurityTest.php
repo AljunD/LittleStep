@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Guardian;
 use App\Models\Child;
+use App\Models\ProgressRecord;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
@@ -120,6 +122,8 @@ class AuthenticationSecurityTest extends TestCase
 
     public function test_verified_guardian_can_log_in_get_scoped_children_and_revoke_their_token(): void
     {
+        Storage::fake('local');
+
         $user = User::factory()->create([
             'email' => 'guardian@example.com',
             'password' => Hash::make('Password123@'),
@@ -132,7 +136,7 @@ class AuthenticationSecurityTest extends TestCase
             'contact_number' => '09171234567',
             'address' => 'Test guardian address',
         ]);
-        Child::create([
+        $child = Child::create([
             'guardian_id' => $guardian->id,
             'first_name' => 'Jordan',
             'middle_name' => null,
@@ -142,7 +146,52 @@ class AuthenticationSecurityTest extends TestCase
             'address' => 'Private address',
             'handedness' => 'right',
             'is_studying' => false,
-            'photo_path' => 'private/photo.jpg',
+            'photo_path' => 'private/photo.png',
+        ]);
+        $photo = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jN7sAAAAASUVORK5CYII=',
+            true
+        );
+        $this->assertNotFalse($photo);
+        Storage::disk('local')->put('private/photo.png', $photo);
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'first_name' => 'Taylor',
+            'middle_name' => null,
+            'last_name' => 'Teacher',
+            'sex' => 'Female',
+            'contact_number' => '555-0100',
+            'address' => 'Test address',
+        ]);
+        ProgressRecord::create([
+            'child_id' => $child->id,
+            'teacher_id' => $teacher->id,
+            'evaluation_date' => '2026-10-17',
+            'evaluation_date_round_1' => '2026-10-17',
+            'evaluation_number' => 1,
+            'status' => 'in_progress',
+        ]);
+        $otherGuardian = Guardian::factory()->create([
+            'user_id' => User::factory()->create([
+                'role' => 'guardian',
+                'email_verified_at' => now(),
+            ])->id,
+            'sex' => 'Female',
+            'contact_number' => '09171234568',
+            'address' => 'Other guardian address',
+        ]);
+        $otherChild = Child::create([
+            'guardian_id' => $otherGuardian->id,
+            'first_name' => 'Other',
+            'middle_name' => null,
+            'last_name' => 'Child',
+            'sex' => 'Male',
+            'date_of_birth' => '2021-04-12',
+            'address' => 'Other private address',
+            'handedness' => 'right',
+            'is_studying' => false,
+            'photo_path' => null,
         ]);
 
         $loginResponse = $this->postJson('/api/v1/guardian/login', [
@@ -165,8 +214,33 @@ class AuthenticationSecurityTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1)
             ->assertJsonPath('0.first_name', 'Jordan')
+            ->assertJsonPath('0.photo_url', 'api/v1/guardian/children/'.$child->id.'/photo')
             ->assertJsonMissingPath('0.photo_path')
             ->assertJsonMissingPath('0.address');
+
+        $dashboardResponse = $this->getJson(
+            '/api/v1/guardian/children/'.$child->id.'/dashboard',
+            $headers
+        );
+        $dashboardResponse
+            ->assertOk()
+            ->assertJsonPath('child.id', $child->id)
+            ->assertJsonPath('child.photo_url', 'api/v1/guardian/children/'.$child->id.'/photo')
+            ->assertJsonPath('progress.status', 'in_progress')
+            ->assertJsonPath('progress.latest_round', 1)
+            ->assertJsonPath('progress.rounds.1.completed_domains', 0)
+            ->assertJsonPath('progress.rounds.1.domains.gross_motor.label', 'Gross Motor')
+            ->assertJsonPath('progress.rounds.1.domains.gross_motor.raw_score', null);
+
+        $this->getJson('/api/v1/guardian/children/'.$otherChild->id.'/dashboard', $headers)
+            ->assertNotFound();
+
+        $this->get('/api/v1/guardian/children/'.$child->id.'/photo', $headers)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->get('/api/v1/guardian/children/'.$otherChild->id.'/photo', $headers)
+            ->assertNotFound();
 
         $this->postJson('/api/v1/guardian/logout', [], $headers)
             ->assertOk()
