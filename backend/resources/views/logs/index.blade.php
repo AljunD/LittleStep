@@ -9,10 +9,7 @@
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">System Logs</h1>
             <p class="text-sm text-gray-500">View actions recorded from your account.</p>
         </div>
-        <a href="{{ route('dashboard') }}" 
-           class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow hover:bg-blue-700 transition transform active:scale-95">
-            Back to Dashboard
-        </a>
+        <x-button variant="secondary" icon="back" :href="route('dashboard')">Back to Dashboard</x-button>
     </div>
 
     <form method="GET" class="flex flex-wrap gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -43,9 +40,7 @@
 
         <input type="text" name="search" placeholder="Search details..." value="{{ request('search') }}" class="border rounded px-3 py-2 text-sm flex-1">
 
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">
-            Filter
-        </button>
+        <x-button type="submit" icon="filter">Filter</x-button>
     </form>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

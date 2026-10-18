@@ -60,29 +60,14 @@
                             </td>
 
                             <td class="px-6 py-5 whitespace-nowrap text-right">
-                                <div class="flex justify-end space-x-2">
+                                <x-action-menu label="Actions for {{ $child->first_name }} {{ $child->last_name }}">
                                     @if($latestRecord)
-                                        <a href="{{ route('progress.show', $latestRecord->id) }}"
-                                           class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
-                                            View
-                                        </a>
-
-                                        <a href="{{ route('progress.edit', $latestRecord->id) }}"
-                                           class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-semibold hover:bg-amber-200 transition">
-                                            Edit
-                                        </a>
+                                        <x-action-menu.item :href="route('progress.show', $latestRecord->id)" icon="view">View Record</x-action-menu.item>
+                                        <x-action-menu.item :href="route('progress.edit', $latestRecord->id)" icon="edit">Edit Record</x-action-menu.item>
                                     @endif
-
-                                    <a href="{{ route('progress.select-domain', ['child_id' => $child->id]) }}"
-                                       class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold hover:bg-purple-200 transition">
-                                        + Add Evaluation
-                                    </a>
-
-                                    <a href="{{ route('progress.add-observation', ['child_id' => $child->id]) }}"
-                                       class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold hover:bg-indigo-200 transition">
-                                        + Add Observation
-                                    </a>
-                                </div>
+                                    <x-action-menu.item :href="route('progress.select-domain', ['child_id' => $child->id])" icon="evaluate">Add Evaluation</x-action-menu.item>
+                                    <x-action-menu.item :href="route('progress.add-observation', ['child_id' => $child->id])" icon="observation">Add Observation</x-action-menu.item>
+                                </x-action-menu>
                             </td>
                         </tr>
                     @empty
@@ -102,29 +87,7 @@
                 <p class="text-gray-500">
                     Showing page {{ $children->currentPage() }} of {{ $children->lastPage() }}
                 </p>
-                <div class="flex space-x-2">
-                    @if ($children->onFirstPage())
-                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-400 cursor-not-allowed" disabled>
-                            Previous
-                        </button>
-                    @else
-                        <a href="{{ $children->previousPageUrl() }}"
-                           class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition">
-                            Previous
-                        </a>
-                    @endif
-
-                    @if ($children->hasMorePages())
-                        <a href="{{ $children->nextPageUrl() }}"
-                           class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition">
-                            Next
-                        </a>
-                    @else
-                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-400 cursor-not-allowed" disabled>
-                            Next
-                        </button>
-                    @endif
-                </div>
+                <x-pagination-buttons :paginator="$children" />
             </div>
         @endif
     </div>

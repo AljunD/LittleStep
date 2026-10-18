@@ -123,6 +123,18 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
 
 `tests/Feature/FlashMessagesTest.php` follows each main action through its redirects and checks that its message appears exactly once on the page the teacher lands on. Run `npm run build` after changing these components so Tailwind picks up their classes.
 
+**Buttons and action menus.** Every button in the teacher portal and on the sign-in pages comes from a shared Blade component, so all buttons are the same size and style. Each is 40px tall with the same corners, font and keyboard focus ring.
+
+- **`<x-button>`:** a button, or a link when it has `href`. Pass `type="submit"` inside forms.
+  - Variants: `primary` (save or main action), `secondary` (cancel, back, neutral) and `danger`.
+  - An optional `icon` adds one of the icons from `<x-icon>`.
+- **`<x-action-menu>`:** a ⋮ button that keeps a row's or record's actions out of sight until it is clicked. The menu holds `<x-action-menu.item>` links, or submit items placed inside their form (archive/restore forms keep `data-confirm`).
+  - **Where it's used:** list rows on Guardians, Children, Progress Records and Archives, plus the Unlink Child page, and the record actions on the guardian profile, child profile and progress record pages.
+  - **How it behaves:** the layout script opens one menu at a time next to its button, so tables that scroll sideways can't clip it. It follows the button when the page scrolls and closes on an outside click, Escape or Tab. Arrow keys move through the items.
+- **`<x-pagination-buttons :paginator>`:** the Previous/Next buttons.
+
+Form actions (Save/Cancel, wizard steps, Filter, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
+
 **Forms and validation.** The teacher forms share their rules through `App\Support\FormRules`, so a field is accepted or rejected the same way everywhere:
 
 - **Names** (people, parents, relationship): letters including ñ and accents, spaces, periods, apostrophes and hyphens, up to 255 characters, e.g. `Ma. Peña-O'Neil`.

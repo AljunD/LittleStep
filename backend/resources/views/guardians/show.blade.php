@@ -30,22 +30,10 @@
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Guardian Profile</h1>
         </div>
         
-        <div class="flex items-center gap-3">
-            <a href="{{ route('guardians.edit', $guardian->id) }}" 
-               class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center">
-                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                </svg>
-                Edit Details
-            </a>
-            <a href="{{ route('guardians.create-child', $guardian->id) }}" 
-               class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition shadow-sm flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Link Child
-            </a>
-        </div>
+        <x-action-menu label="Guardian actions">
+            <x-action-menu.item :href="route('guardians.edit', $guardian->id)" icon="edit">Edit Details</x-action-menu.item>
+            <x-action-menu.item :href="route('guardians.create-child', $guardian->id)" icon="link">Link Child</x-action-menu.item>
+        </x-action-menu>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

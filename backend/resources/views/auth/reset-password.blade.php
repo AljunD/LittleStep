@@ -41,10 +41,7 @@
             </div>
 
             {{-- Submit --}}
-            <button type="submit"
-                class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-3 rounded-lg transition shadow-md active:scale-95">
-                Reset Password
-            </button>
+            <x-button type="submit" class="w-full">Reset Password</x-button>
         </form>
     </div>
 

@@ -178,13 +178,9 @@
                     </div>
                 </div>
 
-                <div class="pt-8 flex justify-end space-x-4">
-                    <a href="{{ route('guardians.index') }}" 
-                       class="px-8 py-4 text-gray-600 font-bold hover:text-gray-900 transition">Cancel</a>
-                    <button type="submit" id="saveBtn"
-                            class="px-12 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition transform active:scale-95">
-                        Save Child
-                    </button>
+                <div class="pt-8 flex flex-wrap justify-end gap-3">
+                    <x-button variant="secondary" :href="route('guardians.index')">Cancel</x-button>
+                    <x-button type="submit" icon="save" id="saveBtn">Save Child</x-button>
                 </div>
             </form>
         </div>

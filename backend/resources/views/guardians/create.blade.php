@@ -141,9 +141,7 @@
                     </div>
 
                     <div class="pt-6 flex justify-end">
-                        <button type="button" id="next1" class="px-10 py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition transform active:scale-95 text-sm">
-                            Next Step
-                        </button>
+                        <x-button id="next1">Next Step <x-icon name="next" /></x-button>
                     </div>
                 </div>
 
@@ -318,12 +316,8 @@
                     </div>
 
                     <div class="pt-8 flex justify-between items-center">
-                        <button type="button" id="back2" class="px-6 py-3.5 text-gray-600 font-bold hover:text-gray-900 transition text-sm">
-                            Go Back
-                        </button>
-                        <button type="button" id="next2" class="px-10 py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition transform active:scale-95 text-sm">
-                            Preview Summary
-                        </button>
+                        <x-button variant="secondary" icon="back" id="back2">Go Back</x-button>
+                        <x-button id="next2">Preview Summary <x-icon name="next" /></x-button>
                     </div>
                 </div>
 
@@ -424,12 +418,8 @@
                     </div>
 
                     <div class="pt-8 flex justify-between items-center">
-                        <button type="button" id="back3" class="px-6 py-3.5 text-gray-600 font-bold hover:text-gray-900 transition text-sm">
-                            Edit Details
-                        </button>
-                        <button type="button" id="saveBtn" class="px-12 py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition transform active:scale-95 text-sm">
-                            Confirm & Save
-                        </button>
+                        <x-button variant="secondary" icon="back" id="back3">Edit Details</x-button>
+                        <x-button icon="save" id="saveBtn">Confirm & Save</x-button>
                     </div>
                 </div>
             </div>

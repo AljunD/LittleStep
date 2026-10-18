@@ -9,10 +9,7 @@
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Guardians</h1>
             <p class="text-sm text-gray-500">Manage and view all registered child guardians.</p>
         </div>
-        <a href="{{ route('guardians.create') }}" 
-           class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow hover:bg-blue-700 transition transform active:scale-95 text-center">
-            + Add Guardian
-        </a>
+        <x-button :href="route('guardians.create')" icon="plus">Add Guardian</x-button>
     </div>
 
     {{-- Success / error banners come from <x-flash-messages /> in the layout. --}}
@@ -73,35 +70,18 @@
                             </div>
                         </td>
                         <td class="px-6 py-5 whitespace-nowrap text-right">
-                            <div class="flex justify-end items-center gap-1.5 flex-wrap">
-                                <a href="{{ route('guardians.show', $guardian->id) }}" 
-                                   class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200 transition">
-                                    View
-                                </a>
-                                <a href="{{ route('guardians.edit', $guardian->id) }}" 
-                                   class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-200 transition">
-                                    Edit
-                                </a>
-                                <a href="{{ route('guardians.create-child', $guardian->id) }}" 
-                                   class="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold hover:bg-purple-200 transition">
-                                    Link Child
-                                </a>
-                                
-                                <a href="{{ route('guardians.archive-child', $guardian->id) }}" 
-                                   class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-200 transition">
-                                    Unlink Child
-                                </a>
-
-                                <form action="{{ route('guardians.destroy', $guardian->id) }}" method="POST" class="inline-block"
+                            <x-action-menu label="Actions for {{ $guardian->first_name }} {{ $guardian->last_name }}">
+                                <x-action-menu.item :href="route('guardians.show', $guardian->id)" icon="view">View</x-action-menu.item>
+                                <x-action-menu.item :href="route('guardians.edit', $guardian->id)" icon="edit">Edit</x-action-menu.item>
+                                <x-action-menu.item :href="route('guardians.create-child', $guardian->id)" icon="link">Link Child</x-action-menu.item>
+                                <x-action-menu.item :href="route('guardians.archive-child', $guardian->id)" icon="unlink">Unlink Child</x-action-menu.item>
+                                <form action="{{ route('guardians.destroy', $guardian->id) }}" method="POST"
                                       data-confirm="Are you sure you want to archive {{ $guardian->first_name }} {{ $guardian->last_name }} and all linked children records?">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit"
-                                            class="px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-lg text-xs font-semibold hover:bg-yellow-200 transition">
-                                        Archive
-                                    </button>
+                                    <x-action-menu.item icon="archive" variant="danger">Archive</x-action-menu.item>
                                 </form>
-                            </div>
+                            </x-action-menu>
                         </td>
                     </tr>
                     @empty

@@ -24,10 +24,7 @@
                 <label for="email" class="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
                 <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="username@gmail.com" maxlength="255" autocomplete="email" autocapitalize="none" spellcheck="false" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition" required>
             </div>
-            <button type="submit"
-                class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-3 rounded-lg transition shadow-md active:scale-95">
-                Send Reset Link
-            </button>
+            <x-button type="submit" class="w-full">Send Reset Link</x-button>
         </form>
     </div>
 

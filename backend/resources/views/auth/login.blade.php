@@ -52,10 +52,7 @@
 
     {{-- Submit --}}
     <div class="pt-4">
-        <button type="submit" data-submitting-text="Signing in..."
-            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
-            Sign in
-        </button>
+        <x-button type="submit" class="w-full" data-submitting-text="Signing in...">Sign in</x-button>
     </div>
 </form>
 @endsection

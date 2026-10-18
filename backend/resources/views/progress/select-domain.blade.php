@@ -79,10 +79,7 @@
                             </td>
 
                             <td class="px-6 py-5 text-right">
-                                <a href="{{ route('progress.create', ['child_id' => $childId]) }}?domain={{ $domain['key'] }}"
-                                   class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
-                                    Evaluate
-                                </a>
+                                <x-button variant="secondary" icon="evaluate" :href="route('progress.create', ['child_id' => $childId, 'domain' => $domain['key']])">Evaluate</x-button>
                             </td>
                         </tr>
                     @endforeach

@@ -23,25 +23,13 @@
                 </h1>
                 <p class="text-sm text-gray-500 font-medium">Early Childhood Care and Development (ECCD) Checklist</p>
             </div>
-            <div class="flex flex-col items-start sm:items-end gap-3">
+            <div class="flex items-start gap-3">
                 <x-progress-status class="sm:text-right" :status="$roundProgress['status']" :completed="$roundProgress['completed']" :round="$roundProgress['round']" />
                 @if($progressRecord)
-                    <div class="flex flex-wrap gap-2 sm:justify-end">
-                        <a href="{{ route('progress.edit', $progressRecord->id) }}"
-                           class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.5V20z"></path>
-                            </svg>
-                            Edit Record
-                        </a>
-                        <a href="{{ route('progress.download-pdf', $progressRecord->id) }}"
-                           class="inline-flex items-center gap-2 rounded-lg bg-[#001f5b] px-4 py-2 text-sm font-bold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"></path>
-                            </svg>
-                            Download PDF Report
-                        </a>
-                    </div>
+                    <x-action-menu label="Progress record actions">
+                        <x-action-menu.item :href="route('progress.edit', $progressRecord->id)" icon="edit">Edit Record</x-action-menu.item>
+                        <x-action-menu.item :href="route('progress.download-pdf', $progressRecord->id)" icon="download">Download PDF Report</x-action-menu.item>
+                    </x-action-menu>
                 @endif
             </div>
         </div>

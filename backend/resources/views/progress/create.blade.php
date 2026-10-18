@@ -244,13 +244,11 @@
             <p class="text-[10px] italic text-gray-500">
                 Only the current evaluation round is editable. Previous rounds show the saved answers (read-only).
             </p>
-            <div class="flex space-x-4">
-                <a href="{{ route('progress.select-domain', ['child_id' => $child?->id]) }}"
-                   class="px-8 py-3 text-gray-600 font-bold hover:text-black transition">Cancel</a>
-                <button type="submit"
-                        class="px-12 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
+            <div class="flex flex-wrap gap-3">
+                <x-button variant="secondary" :href="route('progress.select-domain', ['child_id' => $child?->id])">Cancel</x-button>
+                <x-button type="submit" icon="save">
                     Save {{ $currentRound }}{{ $currentRound == 1 ? 'st' : ($currentRound == 2 ? 'nd' : 'rd') }} Evaluation
-                </button>
+                </x-button>
             </div>
         </div>
     </form>

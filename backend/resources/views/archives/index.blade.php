@@ -17,12 +17,12 @@
         <div class="flex space-x-2 bg-gray-100 p-1.5 rounded-xl self-start" role="tablist" aria-label="Archive lists">
             <button type="button" role="tab" id="archive-tab-guardians" data-archive-tab="guardians"
                     aria-controls="archive-panel-guardians" aria-selected="{{ $activeTab === 'guardians' ? 'true' : 'false' }}"
-                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all {{ $activeTab === 'guardians' ? $activeTabClass : $inactiveTabClass }}">
+                    class="inline-flex h-10 items-center px-4 text-sm font-semibold rounded-xl transition-all {{ $activeTab === 'guardians' ? $activeTabClass : $inactiveTabClass }}">
                 Archived Guardians ({{ $archivedGuardians->total() }})
             </button>
             <button type="button" role="tab" id="archive-tab-children" data-archive-tab="children"
                     aria-controls="archive-panel-children" aria-selected="{{ $activeTab === 'children' ? 'true' : 'false' }}"
-                    class="px-5 py-2.5 text-sm font-bold rounded-lg transition-all {{ $activeTab === 'children' ? $activeTabClass : $inactiveTabClass }}">
+                    class="inline-flex h-10 items-center px-4 text-sm font-semibold rounded-xl transition-all {{ $activeTab === 'children' ? $activeTabClass : $inactiveTabClass }}">
                 Archived Children ({{ $archivedChildren->total() }})
             </button>
         </div>
@@ -58,20 +58,14 @@
                                     {{ $guardian->deleted_at ? $guardian->deleted_at->format('M d, Y H:i') : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap text-right">
-                                    <div class="flex justify-end space-x-2">
-                                        <a href="{{ route('guardians.show', $guardian->id) }}" 
-                                           class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
-                                            View
-                                        </a>
-                                        <form action="{{ route('guardians.restore', $guardian->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to restore this guardian and linked user account?">
+                                    <x-action-menu label="Actions for {{ $guardian->first_name }} {{ $guardian->last_name }}">
+                                        <x-action-menu.item :href="route('guardians.show', $guardian->id)" icon="view">View</x-action-menu.item>
+                                        <form action="{{ route('guardians.restore', $guardian->id) }}" method="POST" data-confirm="Are you sure you want to restore this guardian and linked user account?">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit"
-                                                    class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold hover:bg-green-200 transition">
-                                                Restore
-                                            </button>
+                                            <x-action-menu.item icon="restore" variant="success">Restore</x-action-menu.item>
                                         </form>
-                                    </div>
+                                    </x-action-menu>
                                 </td>
                             </tr>
                         @empty
@@ -126,16 +120,13 @@
                                     {{ $child->deleted_at ? $child->deleted_at->format('M d, Y H:i') : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-5 whitespace-nowrap text-right">
-                                    <div class="flex justify-end space-x-2">
-                                        <form action="{{ route('children.restore', $child->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to restore this child record?">
+                                    <x-action-menu label="Actions for {{ $child->first_name }} {{ $child->last_name }}">
+                                        <form action="{{ route('children.restore', $child->id) }}" method="POST" data-confirm="Are you sure you want to restore this child record?">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit"
-                                                    class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold hover:bg-green-200 transition">
-                                                Restore
-                                            </button>
+                                            <x-action-menu.item icon="restore" variant="success">Restore</x-action-menu.item>
                                         </form>
-                                    </div>
+                                    </x-action-menu>
                                 </td>
                             </tr>
                         @empty

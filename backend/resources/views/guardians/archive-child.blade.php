@@ -43,15 +43,14 @@
                                     {{ ucfirst($child->sex) }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <form action="{{ route('guardians.unlink-child', ['guardianId' => $guardian->id, 'childId' => $child->id]) }}" method="POST"
-                                          class="inline-block" data-confirm="Are you sure you want to archive this child record?">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg shadow hover:bg-red-700 transition transform active:scale-95">
-                                            Archive Child
-                                        </button>
-                                    </form>
+                                    <x-action-menu label="Actions for {{ $child->first_name }} {{ $child->last_name }}">
+                                        <form action="{{ route('guardians.unlink-child', ['guardianId' => $guardian->id, 'childId' => $child->id]) }}" method="POST"
+                                              data-confirm="Are you sure you want to archive this child record?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-action-menu.item icon="archive" variant="danger">Archive Child</x-action-menu.item>
+                                        </form>
+                                    </x-action-menu>
                                 </td>
                             </tr>
                         @empty

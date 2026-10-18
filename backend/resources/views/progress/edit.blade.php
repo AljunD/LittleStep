@@ -12,10 +12,7 @@
                 <span class="text-gray-400">| Record #{{ $progressRecord->id }}</span>
             </p>
         </div>
-        <a href="{{ route('progress.show', $progressRecord->id) }}"
-           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-            Back to record
-        </a>
+        <x-button variant="secondary" icon="back" :href="route('progress.show', $progressRecord->id)">Back to Record</x-button>
     </div>
 
     <x-validation-errors />
@@ -157,14 +154,8 @@
         </section>
 
         <div class="flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-5">
-            <a href="{{ route('progress.show', $progressRecord->id) }}"
-               class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700">
-                Save changes
-            </button>
+            <x-button variant="secondary" :href="route('progress.show', $progressRecord->id)">Cancel</x-button>
+            <x-button type="submit" icon="save">Save Changes</x-button>
         </div>
     </form>
 </div>

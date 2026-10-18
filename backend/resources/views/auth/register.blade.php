@@ -114,10 +114,7 @@
     </div>
 
     {{-- Submit --}}
-    <button type="submit" data-submitting-text="Registering..."
-        class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95">
-        Register
-    </button>
+    <x-button type="submit" class="w-full" data-submitting-text="Registering...">Register</x-button>
 </form>
 
 <div class="text-center mt-6">

@@ -79,15 +79,9 @@
                 </div>
             </div>
 
-            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-100 print:hidden">
-                <a href="{{ route('progress.index') }}"
-                   class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition font-sans">
-                    Cancel
-                </a>
-                <button type="submit" id="save-button"
-                        class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-700 transition shadow-sm font-sans">
-                    Save Observations
-                </button>
+            <div class="flex flex-wrap justify-end gap-3 pt-6 border-t border-gray-100 print:hidden font-sans">
+                <x-button variant="secondary" :href="route('progress.index')">Cancel</x-button>
+                <x-button type="submit" icon="save" id="save-button">Save Observations</x-button>
             </div>
         </form>
     </div>
