@@ -144,6 +144,15 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 
 **Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. On large screens the right panel scrolls on its own, so long tabs such as Profile don't scroll the whole page. Phones keep the normal page scroll. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
 
+**Edit profile (Profile tab).** The Profile tab's Edit Profile button opens `settings.profile.edit`, which saves through `PUT /settings/profile` (`settings.profile.update`).
+
+- **Fields:** first, middle and last name, sex, contact number and address. They are validated by `UpdateTeacherProfileRequest` with `FormRules::teacherProfile()`, the same rules teacher registration uses.
+- **Email:** shown read-only and never submitted. Any email value sent to the endpoint is ignored.
+- **Saving:** a real change is logged as `updated` on the `Teacher`, listing the changed field names, and shows "Your profile has been updated." Saving without changes logs nothing and shows "No changes to save."
+- **Shared field component:** the form fields use `<x-settings-field>`: label, input, `textarea`, or select with `:options`, plus a hint, the validation message and `aria-invalid`. It never renders a value for a password field.
+
+**Help & About tab.** `settings.help` gives a short description of LittleStep and the 7 ECCD domains, read from `EccdExpertSystem::DOMAIN_LABELS`. It has collapsible guides (plain `<details>`, no script) on registering guardians, recording evaluations, how scores are computed, reports, archiving, and account privacy, plus who to contact for help. The scoring guide follows `EccdExpertSystem::explain()` and doesn't list interpretation bands; the progress record page's "How Was This Computed?" section shows those for each child.
+
 **Change password (Profile tab).** The Change Password form sends `PUT /settings/password` (`settings.password.update`), throttled to 5 per minute like the auth forms.
 
 - **Validation:** `UpdatePasswordRequest` requires the correct current password (`current_password` rule). The new password follows `FormRules::password()` (12–72 characters, confirmed) and must differ from the current one.

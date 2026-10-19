@@ -27,7 +27,6 @@
         ['name' => 'password', 'label' => 'New Password', 'autocomplete' => 'new-password', 'minlength' => 12, 'maxlength' => 72],
         ['name' => 'password_confirmation', 'label' => 'Confirm New Password', 'autocomplete' => 'new-password', 'minlength' => 12, 'maxlength' => 72],
     ];
-    $inputClass = 'mt-1 h-10 w-full rounded-xl border bg-gray-50/60 px-3 text-sm text-gray-800 transition focus:bg-white focus:outline-none focus:ring-4';
 @endphp
 
 @section('settings')
@@ -35,9 +34,12 @@
     <div class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white">
         <div class="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center">
             <x-person :name="$fullName" :subtitle="$user->email" class="[&>span]:h-14 [&>span]:w-14 [&>span]:text-base" />
-            <x-badge :color="$user->hasVerifiedEmail() ? 'green' : 'amber'" dot class="sm:ml-auto">
-                {{ $user->hasVerifiedEmail() ? 'Email verified' : 'Email not verified' }}
-            </x-badge>
+            <div class="flex flex-wrap items-center gap-3 sm:ml-auto">
+                <x-badge :color="$user->hasVerifiedEmail() ? 'green' : 'amber'" dot>
+                    {{ $user->hasVerifiedEmail() ? 'Email verified' : 'Email not verified' }}
+                </x-badge>
+                <x-button variant="secondary" icon="edit" :href="route('settings.profile.edit')">Edit Profile</x-button>
+            </div>
         </div>
 
         <div class="divide-y divide-gray-100">
@@ -78,19 +80,8 @@
 
             <div class="grid grid-cols-1 gap-4 sm:max-w-md">
                 @foreach($passwordFields as $field)
-                    @php
-                        $hasError = $errors->has($field['name']);
-                    @endphp
-                    <div>
-                        <label for="{{ $field['name'] }}" class="text-sm font-semibold text-gray-700">{{ $field['label'] }}</label>
-                        <input type="password" id="{{ $field['name'] }}" name="{{ $field['name'] }}" autocomplete="{{ $field['autocomplete'] }}"
-                               @if($field['minlength']) minlength="{{ $field['minlength'] }}" @endif maxlength="{{ $field['maxlength'] }}" required
-                               @if($hasError) aria-invalid="true" aria-describedby="{{ $field['name'] }}-error" @endif
-                               class="{{ $inputClass }} {{ $hasError ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/10' }}">
-                        @error($field['name'])
-                            <p id="{{ $field['name'] }}-error" class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <x-settings-field type="password" :name="$field['name']" :label="$field['label']"
+                                      :autocomplete="$field['autocomplete']" :minlength="$field['minlength']" :maxlength="$field['maxlength']" required />
                 @endforeach
             </div>
         </div>

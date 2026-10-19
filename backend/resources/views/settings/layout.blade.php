@@ -3,8 +3,9 @@
 {{-- Settings shell: tab list on the left, the selected tab's content (section "settings") on the right. Add new tabs to $settingsTabs. --}}
 @php
     $settingsTabs = [
-        ['route' => 'settings.profile', 'icon' => 'fa-user', 'label' => 'Profile', 'description' => 'Your personal and account details'],
-        ['route' => 'settings.display', 'icon' => 'fa-circle-half-stroke', 'label' => 'Display', 'description' => 'Light, dark, or system theme'],
+        ['route' => 'settings.profile', 'match' => 'settings.profile*', 'icon' => 'fa-user', 'label' => 'Profile', 'description' => 'Your personal and account details'],
+        ['route' => 'settings.display', 'match' => 'settings.display*', 'icon' => 'fa-circle-half-stroke', 'label' => 'Display', 'description' => 'Light, dark, or system theme'],
+        ['route' => 'settings.help', 'match' => 'settings.help', 'icon' => 'fa-circle-question', 'label' => 'Help & About', 'description' => 'Guides and information'],
     ];
 @endphp
 
@@ -16,7 +17,7 @@
         <nav class="h-fit space-y-1 rounded-2xl border border-gray-200/70 bg-white p-2" aria-label="Settings">
             @foreach($settingsTabs as $tab)
                 @php
-                    $active = request()->routeIs($tab['route']);
+                    $active = request()->routeIs($tab['match']);
                 @endphp
                 <a href="{{ route($tab['route']) }}"
                    @if($active) aria-current="page" @endif

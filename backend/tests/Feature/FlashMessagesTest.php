@@ -156,6 +156,36 @@ class FlashMessagesTest extends TestCase
         $this->assertFlashShownOnce($response, 'success', 'Child record restored successfully.');
     }
 
+    public function test_profile_update_success_is_shown_on_the_profile_tab(): void
+    {
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->put(route('settings.profile.update'), [
+                'first_name' => 'Morgan',
+                'last_name' => 'Teacher',
+                'sex' => 'Female',
+                'contact_number' => '09170000000',
+                'address' => 'Teacher address',
+            ]);
+
+        $this->assertFlashShownOnce($response, 'success', 'Your profile has been updated.');
+    }
+
+    public function test_profile_validation_errors_keep_the_edit_form_visible(): void
+    {
+        $this->actingAs($this->teacherUser)->from(route('settings.profile.edit'))->followingRedirects()
+            ->put(route('settings.profile.update'), [
+                'first_name' => '',
+                'last_name' => 'Teacher',
+                'sex' => 'Female',
+                'contact_number' => '09170000000',
+                'address' => 'Teacher address',
+            ])
+            ->assertOk()
+            ->assertSee('data-validation-errors', false)
+            ->assertSee('The first name field is required.')
+            ->assertSee('id="editTeacherProfileForm"', false);
+    }
+
     public function test_password_change_success_is_shown_on_the_profile_tab(): void
     {
         $response = $this->actingAs($this->teacherUser)->followingRedirects()

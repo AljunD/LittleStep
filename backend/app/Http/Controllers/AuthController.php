@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -29,12 +28,7 @@ class AuthController extends Controller
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
         $request->validate([
-            'first_name' => FormRules::name(),
-            'middle_name' => FormRules::name(false),
-            'last_name' => FormRules::name(),
-            'sex' => ['required', Rule::in(FormRules::SEXES)],
-            'contact_number' => FormRules::contactNumber(),
-            'address' => 'required|string|max:500',
+            ...FormRules::teacherProfile(),
             'email' => 'required|string|email|max:255|unique:users',
             'password' => FormRules::password(),
         ], FormRules::messages());

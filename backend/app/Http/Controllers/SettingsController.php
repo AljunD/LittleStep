@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateDisplayRequest;
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateTeacherProfileRequest;
+use App\Models\Teacher;
 use App\Notifications\PasswordChangedNotification;
 use App\Services\TeacherPasswordService;
 use App\Support\DisplayTheme;
@@ -14,11 +16,41 @@ class SettingsController extends Controller
 {
     public function profile(Request $request)
     {
-        $user = $request->user();
-        $teacher = $user?->teacher;
-        abort_unless($teacher, 403, 'A teacher profile is required.');
+        return view('settings.profile', [
+            'user' => $request->user(),
+            'teacher' => $this->currentTeacher($request),
+        ]);
+    }
 
-        return view('settings.profile', compact('user', 'teacher'));
+    public function editProfile(Request $request)
+    {
+        return view('settings.profile-edit', [
+            'user' => $request->user(),
+            'teacher' => $this->currentTeacher($request),
+        ]);
+    }
+
+    public function updateProfile(UpdateTeacherProfileRequest $request)
+    {
+        $teacher = $this->currentTeacher($request)->fill($request->validated());
+
+        if (! $teacher->isDirty()) {
+            return redirect()->route('settings.profile')->with('status', 'No changes to save.');
+        }
+
+        $changedFields = collect(array_keys($teacher->getDirty()))
+            ->map(fn ($field) => str_replace('_', ' ', $field))
+            ->implode(', ');
+        $teacher->save();
+
+        recordLog('updated', 'Teacher', $teacher->id, 'Teacher updated their profile: '.$changedFields.'.');
+
+        return redirect()->route('settings.profile')->with('success', 'Your profile has been updated.');
+    }
+
+    public function help()
+    {
+        return view('settings.help');
     }
 
     public function updatePassword(UpdatePasswordRequest $request, TeacherPasswordService $passwords)
@@ -58,5 +90,13 @@ class SettingsController extends Controller
         return redirect()->route('settings.display')
             ->withCookie(cookie()->forever(DisplayTheme::COOKIE, $theme))
             ->with('success', 'Display preference saved.');
+    }
+
+    private function currentTeacher(Request $request): Teacher
+    {
+        $teacher = $request->user()?->teacher;
+        abort_unless($teacher, 403, 'A teacher profile is required.');
+
+        return $teacher;
     }
 }

@@ -43,6 +43,19 @@ final class FormRules
         ];
     }
 
+    /** The teacher's own details, shared by registration and the Settings profile form. Email is managed separately. */
+    public static function teacherProfile(): array
+    {
+        return [
+            'first_name' => self::name(),
+            'middle_name' => self::name(false),
+            'last_name' => self::name(),
+            'sex' => ['required', Rule::in(self::SEXES)],
+            'contact_number' => self::contactNumber(),
+            'address' => ['required', 'string', 'max:500'],
+        ];
+    }
+
     public static function childProfile(string $prefix = '', array $currentEducation = []): array
     {
         $educationLevels = array_values(array_unique(array_filter(
