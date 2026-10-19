@@ -74,28 +74,112 @@
             @endif
         </section>
 
-        <section class="space-y-4 rounded-2xl border border-gray-200/70 bg-white p-6 lg:col-span-2">
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-base font-extrabold text-gray-900">Recent Activity</h2>
-                    <p class="text-sm text-gray-500">Recent changes made from your account.</p>
-                </div>
-                <a href="{{ route('logs.index') }}" class="text-sm font-bold text-blue-600 hover:text-blue-700">View all</a>
+        <section class="space-y-5 rounded-2xl border border-gray-200/70 bg-white p-6 lg:col-span-2" data-dashboard-insights>
+            <div>
+                <h2 class="text-base font-extrabold text-gray-900">Class Insights</h2>
+                <p class="text-sm text-gray-500">
+                    @if($insights['scored_children'] > 0)
+                        Based on the latest scored evaluation of {{ $insights['scored_children'] }} {{ Str::plural('child', $insights['scored_children']) }}.
+                    @else
+                        Insights appear here once you save a child's first evaluation.
+                    @endif
+                </p>
             </div>
 
-            <ul class="divide-y divide-gray-100">
-                @forelse($recentLogs as $log)
-                    <li class="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                        <div class="flex min-w-0 items-center gap-3">
-                            <x-log-action :action="$log->action" />
-                            <p class="truncate text-sm text-gray-600">{{ $log->details ?? $log->entity_type.' #'.$log->entity_id }}</p>
+            @if($insights['scored_children'] === 0)
+                <div class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-200 py-10 text-center">
+                    <i class="fas fa-chart-simple text-2xl text-gray-300" aria-hidden="true"></i>
+                    <p class="text-sm text-gray-500">No scored evaluations yet.</p>
+                </div>
+            @else
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400">Overall Development</h3>
+                    <div class="flex h-3 overflow-hidden rounded-full bg-gray-100" role="img"
+                         aria-label="{{ collect($insights['overall'])->map(fn ($band) => $band['label'].': '.$band['count'])->implode(', ') }}">
+                        @foreach($insights['overall'] as $band)
+                            @if($band['count'] > 0)
+                                <span class="{{ $band['bar'] }}" @style(['width: '.$band['percent'].'%'])></span>
+                            @endif
+                        @endforeach
+                    </div>
+                    <ul class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                        @foreach($insights['overall'] as $band)
+                            <li class="rounded-xl bg-gray-50 px-3 py-2">
+                                <p class="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                                    <span class="h-2 w-2 shrink-0 rounded-full {{ $band['bar'] }}" aria-hidden="true"></span>{{ $band['label'] }}
+                                </p>
+                                <p class="text-lg font-extrabold text-gray-900">{{ $band['count'] }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400">Domains to Focus On</h3>
+                        <ul class="space-y-3">
+                            @foreach($insights['domains'] as $domain)
+                                <li>
+                                    <div class="flex items-center justify-between gap-3 text-sm">
+                                        <span class="font-semibold text-gray-800">{{ $domain['label'] }}</span>
+                                        @if($domain['needs_support'] > 0)
+                                            <x-badge color="amber">{{ $domain['needs_support'] }} of {{ $domain['scored'] }} need support</x-badge>
+                                        @elseif($domain['scored'] > 0)
+                                            <span class="text-xs text-gray-400">On track</span>
+                                        @else
+                                            <span class="text-xs text-gray-400">No scores</span>
+                                        @endif
+                                    </div>
+                                    <div class="mt-1.5 flex items-center gap-2">
+                                        <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                                            <div @class(['h-full rounded-full', 'bg-amber-400' => $domain['needs_support'] > 0, 'bg-emerald-400' => $domain['needs_support'] === 0])
+                                                 @style(['width: '.round(($domain['average'] ?? 0) / 19 * 100).'%'])></div>
+                                        </div>
+                                        <span class="w-16 text-right text-xs text-gray-500">avg {{ $domain['average'] ?? '—' }}</span>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <p class="text-xs text-gray-400">Average scaled score (1–19). A score of {{ \App\Services\EccdExpertSystem::DELAY_MAX_SCALED_SCORE }} or below suggests a delay.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400">Monitoring Schedule</h3>
+                            @if($insights['follow_ups_total'] > $insights['follow_ups']->count())
+                                <span class="text-xs text-gray-400">{{ $insights['follow_ups']->count() }} of {{ $insights['follow_ups_total'] }}</span>
+                            @endif
                         </div>
-                        <span class="whitespace-nowrap text-xs text-gray-400">{{ $log->created_at->diffForHumans() }}</span>
-                    </li>
-                @empty
-                    <li class="py-8 text-center text-sm text-gray-400">No recent activity yet.</li>
-                @endforelse
-            </ul>
+                        <ul class="space-y-2">
+                            @forelse($insights['follow_ups'] as $followUp)
+                                <li>
+                                    <a href="{{ route('progress.show', $followUp->record_id) }}"
+                                       class="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 hover:bg-gray-100">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-bold text-gray-900">{{ $followUp->child_name }}</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ \App\Services\DashboardInsightsService::OVERALL[$followUp->interpretation_code]['label'] }} · re-check in {{ $followUp->months }} months
+                                            </p>
+                                        </div>
+                                        @if($followUp->due_on === null)
+                                            <x-badge>No date</x-badge>
+                                        @elseif($followUp->overdue)
+                                            <x-badge color="red" dot>Overdue · {{ $followUp->due_on->format('M d, Y') }}</x-badge>
+                                        @else
+                                            <x-badge color="sky">Due {{ $followUp->due_on->format('M d, Y') }}</x-badge>
+                                        @endif
+                                    </a>
+                                </li>
+                            @empty
+                                <li class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-200 py-8 text-center">
+                                    <i class="fas fa-face-smile text-2xl text-emerald-400" aria-hidden="true"></i>
+                                    <p class="text-sm text-gray-500">No child currently needs a monitoring re-check.</p>
+                                </li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+            @endif
         </section>
     </div>
 

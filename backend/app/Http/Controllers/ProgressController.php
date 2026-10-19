@@ -361,7 +361,7 @@ class ProgressController extends Controller
 
         $maxAllowedRound = $this->getMaxAllowedRound($childId);
         if ($currentRound > $maxAllowedRound) {
-            return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
+            return back()->with('error', 'You cannot start this evaluation yet. Finish the previous evaluation for all 7 domains first.');
         }
 
         $responseErrors = [];
@@ -472,14 +472,14 @@ class ProgressController extends Controller
                 'saved',
                 'ProgressRecord',
                 $progressRecord->id,
-                "Assessment results saved for domain {$domainKey}, round {$currentRound}."
+                "Assessment results saved for domain {$domainKey}, evaluation {$currentRound}."
             );
 
             DB::commit();
 
             $message = $filledCount === $totalItems
-                ? "Evaluation (Round {$currentRound}) completed and saved successfully!"
-                : "Evaluation (Round {$currentRound}) saved successfully! ({$filledCount}/{$totalItems} items filled)";
+                ? "Evaluation {$currentRound} completed and saved successfully!"
+                : "Evaluation {$currentRound} saved successfully! ({$filledCount}/{$totalItems} items filled)";
 
             return redirect()
                 ->route('progress.select-domain', ['child_id' => $childId])

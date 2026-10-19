@@ -9,7 +9,7 @@ It serves two audiences:
 | Teachers  | Server-rendered Blade web app      | Session + verified email     | `routes/web.php`  |
 | Guardians | JSON API used by the `mobile/` app | Sanctum bearer token (12 h)  | `routes/api.php` → `/api/v1/...` |
 
-Teachers register guardians and children, record ECCD checklist assessments over up to three evaluation rounds, write observation notes, and download PDF progress reports. Guardians have read-only access to their own children's profiles and progress.
+Teachers register guardians and children, record ECCD checklist assessments over up to three evaluations (1st, 2nd and 3rd), write observation notes, and download PDF progress reports. Guardians have read-only access to their own children's profiles and progress.
 
 ## Requirements
 
@@ -95,7 +95,7 @@ resources/pdf/childs-record-2/  Official Child's Record 2 pages used as the PDF 
   - **Teachers:** the progress record page has a **How Was This Computed?** section for every round with a date.
   - **Guardians:** `GET /guardian/children/{id}/insights`, shown on the mobile **Why This Result?** screen.
 - **Skills to practise:** `skillsToPractice()` lists the official checklist items marked — in the latest round of each domain.
-  - **Teachers:** shown as **Focus Items for the Next Round**.
+  - **Teachers:** shown as **Focus Items for the Next Evaluation**.
   - **Guardians:** shown as "Things to try at home".
 - **Live preview:** while a teacher marks ✓/— on the evaluation form, `POST /progress/preview` re-scores the page without saving anything.
   - The page shows the domain's answered items, raw score, scaled score and interpretation, the standard score once all 7 domains are scored, and the warnings.
@@ -143,6 +143,14 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 - **`<x-table :columns :paginator empty>`:** the shared table card. Rows go in the slot, and a right-aligned actions column is added unless `:actions="false"`. It shows the `empty` message when there are no rows, and the pagination footer when a paginator is passed.
 - **Pagination:** `AppServiceProvider` sets `pagination.littlestep` as the default view, so every `$paginator->links()` renders the same "Showing 1–10 of 23" summary with numbered pages. Index paginators use `withQueryString()`, so search and filters survive page changes.
 - **`<x-person name subtitle>`**, **`<x-badge color>`**, **`<x-status-badge status>`** (Pending / In Progress / Completed), **`<x-log-action action>`:** the name cell with initials, and the shared colored badges.
+
+**Dashboard insights.** Next to Needs Attention, the dashboard's Class Insights card (built by `App\Services\DashboardInsightsService`) summarizes the saved `domain_scores` of each child's **latest scored round**. Only the teacher's own records are included, and archived records and children are left out.
+
+- **Overall Development:** how many children fall in each interpretation code (`monitor_3m` … `highly_advanced`), shown as a stacked bar with counts.
+- **Domains to Focus On:** for each of the 7 domains, the average scaled score and how many children score in the delay range (`EccdExpertSystem::scaledScoreSuggestsDelay()`, scaled ≤ 6, as in Table 6). The domains with the most children needing support are listed first.
+- **Monitoring Schedule:** children whose latest result is `monitor_3m` or `monitor_6m`, with the re-check date (3 or 6 months after that round's evaluation date). Overdue checks are flagged and listed first. Each row links to the progress record. The 5 most urgent are shown.
+
+Recent account activity is on the System Logs page (`/logs`), not the dashboard.
 
 **Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. On large screens the right panel scrolls on its own, so long tabs such as Profile don't scroll the whole page. Phones keep the normal page scroll. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
 

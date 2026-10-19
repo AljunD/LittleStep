@@ -19,7 +19,7 @@
             'steps' => [
                 'Open Progress and use the ⋮ menu on a child to choose Add Evaluation, then pick a domain.',
                 'Mark each checklist item ✓ when the child shows the skill and — when they do not yet. The live preview shows the scores as you go.',
-                'Each child can be evaluated in up to 3 rounds. Use Add Observation for notes about the child and their home environment.',
+                'Each child can be evaluated up to 3 times (1st, 2nd and 3rd Evaluation). Use Add Observation for notes about the child and their home environment.',
             ],
         ],
         [

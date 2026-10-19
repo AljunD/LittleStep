@@ -250,7 +250,7 @@ class ExpertSystemInsightsTest extends TestCase
             ->assertOk()
             ->assertSee('How Was This Computed?')
             ->assertSee('every month counted as 30 days')
-            ->assertSee('Focus Items for the Next Round')
+            ->assertSee('Focus Items for the Next Evaluation')
             ->assertSee('gross_motor activity 2');
     }
 

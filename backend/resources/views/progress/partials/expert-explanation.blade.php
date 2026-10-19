@@ -78,7 +78,7 @@
     @endforelse
 
     <div class="mt-10" data-focus-items>
-        <h3 class="text-2xl font-black text-[#001f5b] text-center mb-2">Focus Items for the Next Round</h3>
+        <h3 class="text-2xl font-black text-[#001f5b] text-center mb-2">Focus Items for the Next Evaluation</h3>
         <p class="text-xs text-gray-700 mb-6 text-center">
             Checklist items marked — (not yet present) in the latest evaluation of each domain.
         </p>

@@ -235,8 +235,8 @@ class EccdExpertSystem
 
         $steps = [];
         if ($age === null) {
-            $steps[] = 'No assessment date is set for this round yet, so the child\'s age at test cannot be computed.';
-            $warnings[] = 'Set the assessment date for this round to compute the scores.';
+            $steps[] = 'No assessment date is set for this evaluation yet, so the child\'s age at test cannot be computed.';
+            $warnings[] = 'Set the assessment date for this evaluation to compute the scores.';
         } else {
             $steps[] = sprintf(
                 'Age at test: %d years %d months %d days, counted from the birth date (%s) to the test date (%s) with every month counted as 30 days.',
@@ -259,7 +259,7 @@ class EccdExpertSystem
             : 'Standard score: available once the sum of scaled scores is known.';
 
         if ($answeredTotal === 0) {
-            $warnings[] = 'No checklist results have been recorded for this round yet.';
+            $warnings[] = 'No checklist results have been recorded for this evaluation yet.';
         } elseif ($incomplete !== []) {
             $warnings[] = 'Not all items are answered yet: '.implode(', ', $incomplete).'.';
         }
@@ -399,7 +399,7 @@ class EccdExpertSystem
     private function validateRound(int $round): void
     {
         if ($round < 1 || $round > 3) {
-            throw new InvalidArgumentException('ECCD evaluation round must be 1, 2, or 3.');
+            throw new InvalidArgumentException('ECCD evaluation number must be 1, 2, or 3.');
         }
     }
 
@@ -591,11 +591,19 @@ class EccdExpertSystem
         ];
     }
 
+    /** Scaled scores at or below this suggest a slight or significant delay in the domain (Table 6). */
+    public const DELAY_MAX_SCALED_SCORE = 6;
+
+    public function scaledScoreSuggestsDelay(int $scaled): bool
+    {
+        return $scaled <= self::DELAY_MAX_SCALED_SCORE;
+    }
+
     public function interpretScaledScore(int $scaled): string
     {
         return match (true) {
             $scaled <= 3  => 'Suggest significant delay',
-            $scaled <= 6  => 'Suggest slight delay',
+            $scaled <= self::DELAY_MAX_SCALED_SCORE => 'Suggest slight delay',
             $scaled <= 13 => 'Average development',
             $scaled <= 16 => 'Suggest slightly advanced development',
             default       => 'Suggest highly advanced development',

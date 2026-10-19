@@ -35,7 +35,7 @@
             The <strong>3rd Evaluation</strong> column is disabled until you complete the 
             <strong>2nd Evaluation of all 7 domains</strong>.
         @else
-            All evaluation rounds are now available.
+            All three evaluations are now available.
         @endif
     </div>
 
@@ -240,7 +240,7 @@
 
         <div class="flex justify-between items-center mt-10">
             <p class="text-[10px] italic text-gray-500">
-                Only the current evaluation round is editable. Previous rounds show the saved answers (read-only).
+                Only the current evaluation is editable. Previous evaluations show the saved answers (read-only).
             </p>
             <div class="flex flex-wrap gap-3">
                 <x-button variant="secondary" :href="route('progress.select-domain', ['child_id' => $child?->id])">Cancel</x-button>
@@ -327,8 +327,8 @@
                     setText('preview-interpretation', domain.interpretation ?? 'Answer every item to score this domain');
                     setText('preview-standard', explanation.standard_score);
                     setText('preview-overall', explanation.standard_score !== null
-                        ? `Overall (round ${data.round}): ${explanation.overall}`
-                        : `${explanation.scored_domains} of 7 domains scored in round ${data.round}. The standard score appears once all 7 are scored.`);
+                        ? `Overall (Evaluation ${data.round}): ${explanation.overall}`
+                        : `${explanation.scored_domains} of 7 domains scored in Evaluation ${data.round}. The standard score appears once all 7 are scored.`);
                     renderList('preview-warnings', explanation.warnings);
                     renderList('preview-steps', explanation.steps);
                     setText('preview-status', savedHint);

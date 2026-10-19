@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
+use App\Services\DashboardInsightsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, DashboardInsightsService $insightsService)
     {
         $teacher = $request->user()?->teacher;
         if (! $teacher) {
@@ -107,23 +107,6 @@ class DashboardController extends Controller
             ];
         });
 
-        $rawLogs = DB::table('logs')
-            ->where('user_id', $request->user()->id)
-            ->whereNull('deleted_at')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        $recentLogs = $rawLogs->map(function ($log) {
-            return (object) [
-                'action' => $log->action,
-                'entity_type' => $log->entity_type,
-                'entity_id' => $log->entity_id,
-                'details' => $log->details,
-                'created_at' => Carbon::parse($log->created_at),
-            ];
-        });
-
         $rawRegistry = DB::table('progress_records')
             ->join('children', 'progress_records.child_id', '=', 'children.id')
             ->join('teachers', 'progress_records.teacher_id', '=', 'teachers.id')
@@ -165,6 +148,8 @@ class DashboardController extends Controller
             ];
         });
 
+        $insights = $insightsService->for($teacher);
+
         return view('dashboard', compact(
             'guardiansCount',
             'childrenCount',
@@ -172,8 +157,8 @@ class DashboardController extends Controller
             'unfinishedRecordsCount',
             'urgentAlertRecord',
             'incompleteTasksQueue',
-            'recentLogs',
-            'registryRecords'
+            'registryRecords',
+            'insights'
         ));
     }
 }

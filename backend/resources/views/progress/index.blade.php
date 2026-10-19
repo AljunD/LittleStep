@@ -17,7 +17,7 @@
                     <x-person :name="$child->first_name.' '.$child->last_name" />
                 </td>
                 <td class="whitespace-nowrap font-semibold text-gray-800">
-                    {{ $child->current_evaluation_round ? 'Round '.$child->current_evaluation_round.' of 3' : '—' }}
+                    {{ $child->current_evaluation_round ? 'Evaluation '.$child->current_evaluation_round.' of 3' : '—' }}
                 </td>
                 <td class="whitespace-nowrap">{{ $child->current_round_date ?? '—' }}</td>
                 <td class="whitespace-nowrap">
