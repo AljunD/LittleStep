@@ -61,6 +61,8 @@ class TeacherPortalLayoutTest extends TestCase
             ->assertSee('Jordan Child')
             ->assertSee('Action required')
             ->assertDontSee('KidWatch')
+            ->assertSee('<img src="'.asset('images/littlestep-logo.png').'" alt="LittleStep"', false)
+            ->assertSee('<link rel="icon" type="image/png" href="'.asset('images/littlestep-mark.png').'">', false)
             ->getContent();
 
         $this->assertMatchesRegularExpression('/href="'.preg_quote(route('dashboard'), '/').'"\s+aria-current="page"/', $html);

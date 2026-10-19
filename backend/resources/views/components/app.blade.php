@@ -18,6 +18,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>@hasSection('title')@yield('title') · @endif LittleStep</title>
+  <link rel="icon" type="image/png" href="{{ asset('images/littlestep-mark.png') }}">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -37,14 +38,12 @@
            class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-gray-200/70 bg-white
                   transition-transform duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0">
 
-      <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-6 py-7">
-        <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white" aria-hidden="true">
-          <i class="fas fa-shoe-prints -rotate-90"></i>
+      <a href="{{ route('dashboard') }}" class="block px-6 pb-5 pt-6">
+        {{-- The logo's navy wordmark needs a light badge on the dark theme. --}}
+        <span class="inline-block dark:rounded-2xl dark:bg-[#ffffff] dark:px-3 dark:py-2">
+          <img src="{{ asset('images/littlestep-logo.png') }}" alt="LittleStep" width="612" height="408" class="h-auto w-36">
         </span>
-        <span>
-          <span class="block text-lg font-extrabold leading-tight tracking-tight text-gray-900">LittleStep</span>
-          <span class="block text-xs font-semibold text-gray-400">Teacher Portal</span>
-        </span>
+        <span class="mt-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Teacher Portal</span>
       </a>
 
       @auth
@@ -105,7 +104,10 @@
         <button type="button" id="sidebar-toggle" aria-label="Open navigation menu" class="-ml-1 rounded-xl p-2 text-gray-700 hover:bg-gray-100">
           <i class="fas fa-bars text-xl" aria-hidden="true"></i>
         </button>
-        <span class="text-base font-extrabold tracking-tight text-gray-900">LittleStep</span>
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+          <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-8 w-8 dark:rounded-lg dark:bg-[#ffffff]">
+          <span class="text-base font-extrabold tracking-tight text-gray-900">LittleStep</span>
+        </a>
         @auth
         <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700" aria-hidden="true">
           {{ $userInitials }}

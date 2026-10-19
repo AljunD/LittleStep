@@ -62,8 +62,8 @@
 <div class="space-y-6">
     <section class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white">
         <div class="flex items-center gap-4 border-b border-gray-100 p-6">
-            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white" aria-hidden="true">
-                <i class="fas fa-shoe-prints -rotate-90"></i>
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-[#ffffff]">
+                <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-12 w-12">
             </span>
             <div>
                 <h2 class="text-base font-extrabold text-gray-900">About LittleStep</h2>
