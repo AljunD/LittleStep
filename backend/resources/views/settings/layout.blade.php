@@ -32,7 +32,9 @@
             @endforeach
         </nav>
 
-        <div class="min-w-0">
+        {{-- On large screens the tab content scrolls inside the viewport, so the header and tab list stay in place. --}}
+        <div data-settings-panel
+             class="min-w-0 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:[scrollbar-width:thin]">
             @yield('settings')
         </div>
     </div>

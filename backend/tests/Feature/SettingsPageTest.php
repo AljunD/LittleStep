@@ -44,6 +44,8 @@ class SettingsPageTest extends TestCase
             ->assertDontSee($user->password)
             ->getContent();
 
+        $this->assertMatchesRegularExpression('/data-settings-panel\s+class="[^"]*lg:overflow-y-auto/', $html);
+
         $profileLink = preg_quote(route('settings.profile'), '/');
         $sidebarLink = preg_quote(route('settings.index'), '/');
         $this->assertMatchesRegularExpression('/href="'.$profileLink.'"\s+aria-current="page"/', $html);
