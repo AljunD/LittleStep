@@ -91,7 +91,7 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold text-gray-700">Contact Number</label>
-                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number', $guardian->contact_number ?? '') }}" 
+                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" data-digits-only pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number', $guardian->contact_number ?? '') }}" 
                                 class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border">
                             @error('contact_number') <p class="text-xs font-semibold text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>

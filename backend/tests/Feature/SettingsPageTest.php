@@ -23,7 +23,7 @@ class SettingsPageTest extends TestCase
             'last_name' => 'Teacher',
             'sex' => 'Female',
             'contact_number' => '09170000000',
-            'address' => 'Teacher address',
+            'address' => 'Balite, Rodriguez, Rizal, CALABARZON',
         ]);
 
         return $user;
@@ -37,7 +37,10 @@ class SettingsPageTest extends TestCase
             'last_name' => 'Reyes',
             'sex' => 'Male',
             'contact_number' => '09281234567',
-            'address' => 'Balite, Rodriguez, Rizal',
+            'barangay' => 'San Jose',
+            'municipality' => 'Antipolo',
+            'province' => 'Rizal',
+            'region' => 'CALABARZON',
         ], $overrides);
     }
 
@@ -48,7 +51,10 @@ class SettingsPageTest extends TestCase
             ->assertSee('id="editTeacherProfileForm"', false)
             ->assertSee('value="Taylor"', false)
             ->assertSee('value="09170000000"', false)
-            ->assertSee('Teacher address')
+            ->assertSee('value="Balite"', false)
+            ->assertSee('value="Rodriguez"', false)
+            ->assertSee('value="Rizal"', false)
+            ->assertSee('value="CALABARZON"', false)
             ->assertSee('<option value="Female" selected>Female</option>', false)
             ->getContent();
 
@@ -68,7 +74,7 @@ class SettingsPageTest extends TestCase
             ->assertSessionHas('success', 'Your profile has been updated.');
 
         $teacher = $user->teacher->refresh();
-        $this->assertSame(['Morgan', null, 'Reyes', 'Male', '09281234567', 'Balite, Rodriguez, Rizal'], [
+        $this->assertSame(['Morgan', null, 'Reyes', 'Male', '09281234567', 'San Jose, Antipolo, Rizal, CALABARZON'], [
             $teacher->first_name, $teacher->middle_name, $teacher->last_name, $teacher->sex, $teacher->contact_number, $teacher->address,
         ]);
         $this->assertSame('taylor@example.com', $user->refresh()->email);
@@ -90,7 +96,10 @@ class SettingsPageTest extends TestCase
             'last_name' => 'Teacher',
             'sex' => 'Female',
             'contact_number' => '09170000000',
-            'address' => 'Teacher address',
+            'barangay' => 'Balite',
+            'municipality' => 'Rodriguez',
+            'province' => 'Rizal',
+            'region' => 'CALABARZON',
         ])
             ->assertRedirect(route('settings.profile'))
             ->assertSessionHas('status', 'No changes to save.');
@@ -106,7 +115,10 @@ class SettingsPageTest extends TestCase
             'last_name' => ['last_name' => ''],
             'sex' => ['sex' => 'Unknown'],
             'contact_number' => ['contact_number' => '12345'],
-            'address' => ['address' => str_repeat('a', 501)],
+            'barangay' => ['barangay' => ''],
+            'municipality' => ['municipality' => str_repeat('a', 256)],
+            'province' => ['province' => ''],
+            'region' => ['region' => ''],
         ];
 
         foreach ($invalidInputs as $field => $overrides) {
@@ -147,7 +159,7 @@ class SettingsPageTest extends TestCase
             ->assertSee('Taylor Quinn Teacher')
             ->assertSee('taylor@example.com')
             ->assertSee('09170000000')
-            ->assertSee('Teacher address')
+            ->assertSee('Balite, Rodriguez, Rizal, CALABARZON')
             ->assertDontSee($user->password)
             ->getContent();
 
@@ -167,8 +179,9 @@ class SettingsPageTest extends TestCase
         $this->put(route('settings.display.update'), ['theme' => 'dark'])->assertRedirect(route('login'));
         $this->put(route('settings.profile.update'), $this->validProfile())->assertRedirect(route('login'));
 
+        /** @var User $guardian */
         $guardian = User::factory()->create(['role' => 'guardian']);
-        foreach (['settings.profile.edit', 'settings.display', 'settings.help'] as $route) {
+        foreach (['settings.profile', 'settings.profile.edit', 'settings.display', 'settings.help'] as $route) {
             $this->actingAs($guardian)->get(route($route))->assertForbidden();
         }
         $this->put(route('settings.display.update'), ['theme' => 'dark'])->assertForbidden();

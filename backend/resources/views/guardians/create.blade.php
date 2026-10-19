@@ -80,7 +80,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label for="guardianContact" class="text-sm font-semibold text-gray-700">Contact Number <span class="text-red-500">*</span></label>
-                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="09171234567">
+                            <input type="tel" id="guardianContact" name="contact_number" maxlength="11" data-digits-only pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" value="{{ old('contact_number') }}" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm" placeholder="09171234567">
                             @error('contact_number') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="space-y-2">

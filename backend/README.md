@@ -133,7 +133,7 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
   - **How it behaves:** the layout script opens one menu at a time next to its button, so tables that scroll sideways can't clip it. It follows the button when the page scrolls and closes on an outside click, Escape or Tab. Arrow keys move through the items.
 Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
 
-**Logo.** `public/images/littlestep-logo.png` is the mobile app's `assets/images/logo.png` (full logo with the wordmark), shown at the top of the sidebar. `public/images/littlestep-mark.png` is a 256×256 crop of just the footprint-and-clipboard mark, used as the browser-tab icon, in the mobile top bar and on Help & About. In dark mode the logos sit on a white badge so the navy parts stay visible. If the app logo changes, replace both files. `public/images/logo.png` is the Barangay Balite seal on the sign-in page, not the LittleStep logo.
+**Logo.** `public/images/littlestep-logo.png` is the mobile app's `assets/images/logo.png` (full logo with the wordmark), shown at the top of the sidebar and above the form on the sign-in, registration and password pages (`components/auth.blade.php`). `public/images/littlestep-mark.png` is a 256×256 crop of just the footprint-and-clipboard mark, used as the browser-tab icon, in the mobile top bar and on Help & About. In dark mode the logos sit on a white badge so the navy parts stay visible. If the app logo changes, replace both files. `public/images/logo.png` is the Barangay Balite seal on the sign-in page, not the LittleStep logo.
 
 **Teacher portal design.** The portal uses a light, minimal look with the Nunito font, a white sidebar (pastel icon per section, active section highlighted) and white rounded cards on a warm off-white background. Index pages (Guardians, Children, Progress Records, Archives, System Logs) and the dashboard are built from the same components, so they look and behave the same:
 
@@ -185,7 +185,8 @@ To add a tab, add its route under the `settings` prefix (same `auth`, `verified`
 **Forms and validation.** The teacher forms share their rules through `App\Support\FormRules`, so a field is accepted or rejected the same way everywhere:
 
 - **Names** (people, parents, relationship): letters including ñ and accents, spaces, periods, apostrophes and hyphens, up to 255 characters, e.g. `Ma. Peña-O'Neil`.
-- **Contact numbers** (teacher and guardian): 11 digits starting with `09`.
+- **Contact numbers** (teacher and guardian): 11 digits starting with `09`. Every contact field has `data-digits-only`, and the script in `resources/js/app.js` (loaded by both layouts) blocks letters and symbols as they're typed and strips them from pasted or autofilled text. The server still validates the format.
+- **Teacher addresses** (registration and Settings → Edit Profile): Barangay, Municipality / City, Province and Region are each required, like the address fields on the guardian and child forms. `FormRules::teacherProfile()` validates them and `FormRules::teacherAttributes()` joins them into the `address` column as "Barangay, Municipality, Province, Region". `FormRules::splitAddress()` splits it back to fill the edit form. Addresses saved before this change get split on their commas, so check the fields when editing them.
 - **Passwords:** 12–72 characters.
 - **Child profile:**
   - The date of birth can't be in the future.

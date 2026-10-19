@@ -14,6 +14,15 @@ class TeacherPortalLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_login_and_register_pages_show_the_littlestep_logo(): void
+    {
+        foreach (['login', 'auth.register.form'] as $route) {
+            $this->get(route($route))
+                ->assertOk()
+                ->assertSee('<img src="'.asset('images/littlestep-logo.png').'" alt="LittleStep"', false);
+        }
+    }
+
     public function test_dashboard_renders_records_and_marks_the_active_sidebar_link(): void
     {
         $teacherUser = User::factory()->create(['role' => 'teacher']);

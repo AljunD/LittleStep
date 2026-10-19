@@ -44,10 +44,14 @@
                 </div>
                 <x-settings-field type="tel" name="contact_number" label="Contact Number" :value="old('contact_number', $teacher->contact_number)"
                                   hint="11 digits starting with 09, e.g. 09171234567" maxlength="11" pattern="09[0-9]{9}"
-                                  inputmode="numeric" autocomplete="tel" required />
+                                  inputmode="numeric" data-digits-only autocomplete="tel" required />
             </div>
-            <x-settings-field type="textarea" name="address" label="Address" :value="old('address', $teacher->address)"
-                              rows="3" maxlength="500" autocomplete="street-address" required />
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <x-settings-field name="barangay" label="Barangay" :value="old('barangay', $address['barangay'])" maxlength="255" required />
+                <x-settings-field name="municipality" label="Municipality / City" :value="old('municipality', $address['municipality'])" maxlength="255" required />
+                <x-settings-field name="province" label="Province" :value="old('province', $address['province'])" maxlength="255" required />
+                <x-settings-field name="region" label="Region" :value="old('region', $address['region'])" maxlength="255" required />
+            </div>
         </section>
     </div>
 

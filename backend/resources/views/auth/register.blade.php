@@ -2,107 +2,104 @@
 
 @section('title', 'Teacher Registration')
 
+@php
+    $fieldClass = 'w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition';
+    $labelClass = 'block text-sm font-semibold text-gray-600 mb-2';
+    $sectionClass = 'text-xs font-bold uppercase tracking-widest text-gray-400';
+    $addressFields = [
+        'barangay' => ['label' => 'Barangay', 'placeholder' => 'Balite'],
+        'municipality' => ['label' => 'Municipality / City', 'placeholder' => 'Rodriguez'],
+        'province' => ['label' => 'Province', 'placeholder' => 'Rizal'],
+        'region' => ['label' => 'Region', 'placeholder' => 'CALABARZON'],
+    ];
+@endphp
+
 @section('content')
 <div class="mb-10 text-center">
     <h1 class="text-4xl font-bold text-gray-900 mb-2 tracking-tighter">Teacher Registration</h1>
     <p class="text-gray-400 text-lg font-light">Fill in your details to create an account</p>
 </div>
 
-<form method="POST" action="{{ route('auth.register.submit') }}" class="space-y-6" data-lock-submit>
+<form method="POST" action="{{ route('auth.register.submit') }}" class="space-y-8" data-lock-submit>
     @csrf
 
-    <div>
-        <label for="first_name" class="block text-sm font-semibold text-gray-600 mb-2">First Name</label>
-        <input type="text" id="first_name" name="first_name" placeholder="Juan"
-               value="{{ old('first_name') }}"
-               maxlength="255" autocomplete="given-name" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('first_name')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
+    <section class="space-y-4">
+        <h2 class="{{ $sectionClass }}">Personal Information</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="first_name" class="{{ $labelClass }}">First Name</label>
+                <input type="text" id="first_name" name="first_name" placeholder="Juan" value="{{ old('first_name') }}"
+                       maxlength="255" autocomplete="given-name" required class="{{ $fieldClass }}">
+                @error('first_name') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="middle_name" class="{{ $labelClass }}">Middle Name <span class="font-normal text-gray-400">(optional)</span></label>
+                <input type="text" id="middle_name" name="middle_name" placeholder="Santos" value="{{ old('middle_name') }}"
+                       maxlength="255" autocomplete="additional-name" class="{{ $fieldClass }}">
+                @error('middle_name') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="last_name" class="{{ $labelClass }}">Last Name</label>
+                <input type="text" id="last_name" name="last_name" placeholder="Dela Cruz" value="{{ old('last_name') }}"
+                       maxlength="255" autocomplete="family-name" required class="{{ $fieldClass }}">
+                @error('last_name') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="sex" class="{{ $labelClass }}">Sex</label>
+                <select id="sex" name="sex" required class="{{ $fieldClass }}">
+                    <option value="" disabled @selected(! old('sex'))>Select sex</option>
+                    @foreach (\App\Support\FormRules::SEXES as $sex)
+                        <option value="{{ $sex }}" @selected(old('sex') === $sex)>{{ $sex }}</option>
+                    @endforeach
+                </select>
+                @error('sex') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+        </div>
+    </section>
 
-    <div>
-        <label for="middle_name" class="block text-sm font-semibold text-gray-600 mb-2">Middle Name</label>
-        <input type="text" id="middle_name" name="middle_name" placeholder="Santos"
-               value="{{ old('middle_name') }}"
-               maxlength="255" autocomplete="additional-name"
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('middle_name')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
+    <section class="space-y-4">
+        <h2 class="{{ $sectionClass }}">Contact and Address</h2>
+        <div>
+            <label for="contact_number" class="{{ $labelClass }}">Contact Number</label>
+            <input type="tel" id="contact_number" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" data-digits-only
+                   title="11 digits starting with 09, e.g. 09171234567" placeholder="09171234567" value="{{ old('contact_number') }}"
+                   autocomplete="tel" required class="{{ $fieldClass }}">
+            @error('contact_number') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            @foreach ($addressFields as $name => $field)
+                <div>
+                    <label for="{{ $name }}" class="{{ $labelClass }}">{{ $field['label'] }}</label>
+                    <input type="text" id="{{ $name }}" name="{{ $name }}" placeholder="{{ $field['placeholder'] }}" value="{{ old($name) }}"
+                           maxlength="255" required class="{{ $fieldClass }}">
+                    @error($name) <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+                </div>
+            @endforeach
+        </div>
+    </section>
 
-    <div>
-        <label for="last_name" class="block text-sm font-semibold text-gray-600 mb-2">Last Name</label>
-        <input type="text" id="last_name" name="last_name" placeholder="Dela Cruz"
-               value="{{ old('last_name') }}"
-               maxlength="255" autocomplete="family-name" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('last_name')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label for="sex" class="block text-sm font-semibold text-gray-600 mb-2">Sex</label>
-        <select id="sex" name="sex" required
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-            <option value="" disabled {{ old('sex') ? '' : 'selected' }}>Select sex</option>
-            <option value="Male" {{ old('sex') == 'Male' ? 'selected' : '' }}>Male</option>
-            <option value="Female" {{ old('sex') == 'Female' ? 'selected' : '' }}>Female</option>
-        </select>
-        @error('sex')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-
-    <div>
-        <label for="contact_number" class="block text-sm font-semibold text-gray-600 mb-2">Contact Number</label>
-        <input type="text" id="contact_number" name="contact_number" maxlength="11" pattern="09[0-9]{9}" inputmode="numeric" title="11 digits starting with 09, e.g. 09171234567" placeholder="09123456789"
-               value="{{ old('contact_number') }}"
-               autocomplete="tel" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('contact_number')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label for="address" class="block text-sm font-semibold text-gray-600 mb-2">Address</label>
-        <textarea id="address" name="address" rows="3" maxlength="500" autocomplete="street-address" placeholder="123 Barangay Street, Quezon City" required
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">{{ old('address') }}</textarea>
-        @error('address')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label for="email" class="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="teacher@example.com"
-               value="{{ old('email') }}"
-               maxlength="255" autocomplete="email" autocapitalize="none" spellcheck="false" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('email')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label for="password" class="block text-sm font-semibold text-gray-600 mb-2">Password</label>
-        <input type="password" id="password" name="password" minlength="12" maxlength="72" autocomplete="new-password" placeholder="12-72 characters" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-        @error('password')
-            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label for="password_confirmation" class="block text-sm font-semibold text-gray-600 mb-2">Confirm Password</label>
-        <input type="password" id="password_confirmation" name="password_confirmation" minlength="12" maxlength="72" autocomplete="new-password" placeholder="12-72 characters" required
-               class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 focus:border-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition">
-    </div>
+    <section class="space-y-4">
+        <h2 class="{{ $sectionClass }}">Account</h2>
+        <div>
+            <label for="email" class="{{ $labelClass }}">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="teacher@example.com" value="{{ old('email') }}"
+                   maxlength="255" autocomplete="email" autocapitalize="none" spellcheck="false" required class="{{ $fieldClass }}">
+            @error('email') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="password" class="{{ $labelClass }}">Password</label>
+                <input type="password" id="password" name="password" minlength="12" maxlength="72" autocomplete="new-password"
+                       placeholder="12-72 characters" required class="{{ $fieldClass }}">
+                @error('password') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="password_confirmation" class="{{ $labelClass }}">Confirm Password</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" minlength="12" maxlength="72"
+                       autocomplete="new-password" placeholder="12-72 characters" required class="{{ $fieldClass }}">
+            </div>
+        </div>
+    </section>
 
     <x-button type="submit" class="w-full" data-submitting-text="Registering...">Register</x-button>
 </form>

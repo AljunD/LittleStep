@@ -9,6 +9,7 @@ use App\Models\Teacher;
 use App\Notifications\PasswordChangedNotification;
 use App\Services\TeacherPasswordService;
 use App\Support\DisplayTheme;
+use App\Support\FormRules;
 use App\Support\SafeMail;
 use Illuminate\Http\Request;
 
@@ -24,15 +25,18 @@ class SettingsController extends Controller
 
     public function editProfile(Request $request)
     {
+        $teacher = $this->currentTeacher($request);
+
         return view('settings.profile-edit', [
             'user' => $request->user(),
-            'teacher' => $this->currentTeacher($request),
+            'teacher' => $teacher,
+            'address' => FormRules::splitAddress($teacher->address),
         ]);
     }
 
     public function updateProfile(UpdateTeacherProfileRequest $request)
     {
-        $teacher = $this->currentTeacher($request)->fill($request->validated());
+        $teacher = $this->currentTeacher($request)->fill(FormRules::teacherAttributes($request->validated()));
 
         if (! $teacher->isDirty()) {
             return redirect()->route('settings.profile')->with('status', 'No changes to save.');

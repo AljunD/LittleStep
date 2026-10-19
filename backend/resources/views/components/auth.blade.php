@@ -36,6 +36,8 @@
 
         <div class="w-full md:w-1/2 overflow-y-auto custom-scrollbar bg-white">
             <div class="min-h-full flex flex-col justify-center p-8 md:p-12 lg:p-16">
+                <img src="{{ asset('images/littlestep-logo.png') }}" alt="LittleStep" width="612" height="408"
+                     class="mx-auto mb-6 h-auto w-40">
                 <x-flash-messages />
                 @yield('content')
             </div>
