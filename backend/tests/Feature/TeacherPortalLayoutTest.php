@@ -17,14 +17,23 @@ class TeacherPortalLayoutTest extends TestCase
     public function test_login_and_register_pages_show_the_littlestep_logo(): void
     {
         foreach (['login', 'auth.register.form'] as $route) {
-            $this->get(route($route))
+            $html = $this->get(route($route))
                 ->assertOk()
-                ->assertSee('<img src="'.asset('images/littlestep-logo.png').'" alt="LittleStep"', false);
+                ->assertSee('<img src="'.asset('images/littlestep-logo.png').'" alt="LittleStep"', false)
+                ->assertSee('class="auth-backdrop', false)
+                ->getContent();
+
+            // The blurred page background is set in the nonced style block, so it never depends on the Tailwind build.
+            $this->assertMatchesRegularExpression(
+                '/<style nonce="[^"]+">.*\.auth-backdrop \{\s*background-image: url\(\''.preg_quote(asset('images/background.png'), '/').'\'\);/s',
+                $html
+            );
         }
     }
 
     public function test_dashboard_renders_records_and_marks_the_active_sidebar_link(): void
     {
+        /** @var User $teacherUser */
         $teacherUser = User::factory()->create(['role' => 'teacher']);
         $teacher = Teacher::create([
             'user_id' => $teacherUser->id,

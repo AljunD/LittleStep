@@ -26,11 +26,16 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #d1d5db;
         }
+        /* Set here, not as a Tailwind bg-[url(...)] class: the URL comes from asset() at runtime,
+           so Tailwind never sees the class name and the background would be missing from the build. */
+        .auth-backdrop {
+            background-image: url('{{ asset('images/background.png') }}');
+        }
     </style>
 </head>
-<body class="h-full w-full flex items-center justify-center bg-black font-[Inter] antialiased">
+<body class="h-full w-full flex items-center justify-center overflow-hidden bg-black font-[Inter] antialiased">
 
-    <div class="absolute inset-0 bg-[url('{{ asset('images/background.png') }}')] bg-cover bg-center blur-md scale-110"></div>
+    <div class="auth-backdrop absolute inset-0 bg-cover bg-center blur-md scale-110" aria-hidden="true"></div>
 
     <div class="relative z-10 bg-white w-full max-w-6xl h-full md:h-[min(800px,95vh)] md:max-h-[800px] md:rounded-3xl shadow-2xl flex flex-col md:flex-row border border-gray-200 overflow-hidden">
 
