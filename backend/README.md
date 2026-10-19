@@ -131,9 +131,56 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
 - **`<x-action-menu>`:** a ⋮ button that keeps a row's or record's actions out of sight until it is clicked. The menu holds `<x-action-menu.item>` links, or submit items placed inside their form (archive/restore forms keep `data-confirm`).
   - **Where it's used:** list rows on Guardians, Children, Progress Records and Archives, plus the Unlink Child page, and the record actions on the guardian profile, child profile and progress record pages.
   - **How it behaves:** the layout script opens one menu at a time next to its button, so tables that scroll sideways can't clip it. It follows the button when the page scrolls and closes on an outside click, Escape or Tab. Arrow keys move through the items.
-- **`<x-pagination-buttons :paginator>`:** the Previous/Next buttons.
+Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
 
-Form actions (Save/Cancel, wizard steps, Filter, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
+**Logo.** `public/images/littlestep-logo.png` is the mobile app's `assets/images/logo.png` (full logo with the wordmark), shown at the top of the sidebar. `public/images/littlestep-mark.png` is a 256×256 crop of just the footprint-and-clipboard mark, used as the browser-tab icon, in the mobile top bar and on Help & About. In dark mode the logos sit on a white badge so the navy parts stay visible. If the app logo changes, replace both files. `public/images/logo.png` is the Barangay Balite seal on the sign-in page, not the LittleStep logo.
+
+**Teacher portal design.** The portal uses a light, minimal look with the Nunito font, a white sidebar (pastel icon per section, active section highlighted) and white rounded cards on a warm off-white background. Index pages (Guardians, Children, Progress Records, Archives, System Logs) and the dashboard are built from the same components, so they look and behave the same:
+
+- **`<x-page-header title description>`:** page title and subtitle. Header actions (e.g. Add Guardian) go in the slot.
+- **`<x-search-bar placeholder :keep>`:** a GET search form with a Search button and a Clear link when filters are active. Filter controls go in its slot. `:keep` carries query values across searches (Archives keeps `tab`).
+- **`<x-filter-field name label>`:** a select when given `:options` (it submits on change), otherwise an input such as `type="date"`.
+- **`<x-table :columns :paginator empty>`:** the shared table card. Rows go in the slot, and a right-aligned actions column is added unless `:actions="false"`. It shows the `empty` message when there are no rows, and the pagination footer when a paginator is passed.
+- **Pagination:** `AppServiceProvider` sets `pagination.littlestep` as the default view, so every `$paginator->links()` renders the same "Showing 1–10 of 23" summary with numbered pages. Index paginators use `withQueryString()`, so search and filters survive page changes.
+- **`<x-person name subtitle>`**, **`<x-badge color>`**, **`<x-status-badge status>`** (Pending / In Progress / Completed), **`<x-log-action action>`:** the name cell with initials, and the shared colored badges.
+
+**Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. On large screens the right panel scrolls on its own, so long tabs such as Profile don't scroll the whole page. Phones keep the normal page scroll. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
+
+**Edit profile (Profile tab).** The Profile tab's Edit Profile button opens `settings.profile.edit`, which saves through `PUT /settings/profile` (`settings.profile.update`).
+
+- **Fields:** first, middle and last name, sex, contact number and address. They are validated by `UpdateTeacherProfileRequest` with `FormRules::teacherProfile()`, the same rules teacher registration uses.
+- **Email:** shown read-only and never submitted. Any email value sent to the endpoint is ignored.
+- **Saving:** a real change is logged as `updated` on the `Teacher`, listing the changed field names, and shows "Your profile has been updated." Saving without changes logs nothing and shows "No changes to save."
+- **Shared field component:** the form fields use `<x-settings-field>`: label, input, `textarea`, or select with `:options`, plus a hint, the validation message and `aria-invalid`. It never renders a value for a password field.
+
+**Help & About tab.** `settings.help` gives a short description of LittleStep and the 7 ECCD domains, read from `EccdExpertSystem::DOMAIN_LABELS`. It has collapsible guides (plain `<details>`, no script) on registering guardians, recording evaluations, how scores are computed, reports, archiving, and account privacy, plus who to contact for help. The scoring guide follows `EccdExpertSystem::explain()` and doesn't list interpretation bands; the progress record page's "How Was This Computed?" section shows those for each child.
+
+**Change password (Profile tab).** The Change Password form sends `PUT /settings/password` (`settings.password.update`), throttled to 5 per minute like the auth forms.
+
+- **Validation:** `UpdatePasswordRequest` requires the correct current password (`current_password` rule). The new password follows `FormRules::password()` (12–72 characters, confirmed) and must differ from the current one.
+- **Password fields:** they are never refilled after an error, and Laravel does not flash password inputs.
+- **What happens on save:** `App\Services\TeacherPasswordService` saves the new hash and rotates the remember token, which voids "remember me" cookies. It revokes the account's API tokens and, with the database session driver (the Laragon default), deletes the account's other sessions. The current session gets a new ID and stays signed in.
+- **Afterwards:** the change is logged as `password_changed`, and the teacher sees a success message on the Profile tab.
+- **Confirmation email:** `PasswordChangedNotification` (view `emails/password-changed`) emails the teacher the time of the change and a "Reset Password" link to the forgot-password page. The link is built from `APP_URL`, and the email never contains the password. It is sent through `SafeMail::attempt()`, so if the mail server is unreachable, the new password stays saved and a red warning appears instead of a 500 error.
+
+To add a tab, add its route under the `settings` prefix (same `auth`, `verified`, `teacher` middleware), add it to `$settingsTabs` in the layout, and create a view that extends `settings.layout`.
+
+**Display (light / dark theme).** The Display tab (`settings.display`) lets the teacher choose Light (the default), Dark or System. Saving is a plain `PUT settings.display.update`, validated by `UpdateDisplayRequest`. It stores the choice in the encrypted `littlestep_theme` cookie for this browser, logs `updated`, and flashes "Display preference saved." `App\Support\DisplayTheme` holds the cookie name and options and reads the current value, falling back to Light for unknown values.
+
+- **How it applies:** `components/app.blade.php` renders `<html class="dark">` for Dark. For System, a small nonce'd head script toggles `.dark` from `prefers-color-scheme` and follows device changes. The sign-in pages always stay light.
+- **How the styles work:** `resources/css/theme-dark.css` redefines Tailwind's color variables under `.dark`. White becomes the card surface, the gray scale inverts, and light tints become translucent with lighter text, so every page switches without `dark:` classes. `dark:` utilities are also available for one-off fixes, and `.text-white` stays white on colored buttons.
+- **Keep the official form light:** add `keep-light` to content that must match the printed form. The progress record page (Child's Record 2) uses it, so it stays light in dark mode.
+- **Adding a color family:** the values in `theme-dark.css` were copied from `node_modules/tailwindcss/theme.css`. To use a new family, add its lines in both blocks with the same pattern. Under `.dark`, shades 50/100/200 become translucent mixes of its 500 shade and 700/800/900 take its 300/200/100 values. Under `.keep-light` they get their original values. Run `npm run build` afterwards.
+
+**Search and filters.** Searching runs on the server through `App\Support\Search::apply($query, $term, $columns)`. Every word of the term has to match one of the columns, so "casey guardian" finds Casey Guardian. `relation.column` searches a related model, and `%`/`_` are matched literally. Queries stay scoped through `Teacher::ownedChildren()` / `ownedGuardians()`. Input is validated by `App\Http\Requests\IndexSearchRequest` (`search`, max 100 characters), with `ChildIndexRequest` adding `sex` and `LogIndexRequest` adding the log filters.
+
+| Page | Searches | Filters |
+| --- | --- | --- |
+| Guardians | name, email, contact number, relationship | — |
+| Children | child name, guardian name | sex |
+| Progress Records | child name | — |
+| Archives | guardian and child names, guardian email | active tab is kept |
+| System Logs | details | action, entity, from/to date (actions and entities listed from your own logs) |
 
 **Forms and validation.** The teacher forms share their rules through `App\Support\FormRules`, so a field is accepted or rejected the same way everywhere:
 

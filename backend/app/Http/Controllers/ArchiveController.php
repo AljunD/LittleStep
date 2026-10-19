@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexSearchRequest;
 use App\Models\Child;
 use App\Models\Guardian;
 use App\Models\Teacher;
+use App\Support\Search;
 use Illuminate\Http\Request;
 
 class ArchiveController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexSearchRequest $request)
     {
         $teacher = $this->currentTeacher($request);
+        $search = $request->search();
 
-        $archivedGuardians = Guardian::onlyTrashed()
+        $archivedGuardians = Search::apply(Guardian::onlyTrashed(), $search, ['first_name', 'middle_name', 'last_name', 'user.email'])
             ->whereHas('children', function ($query) use ($teacher) {
                 $query->withTrashed()
                     ->whereHas('progressRecords', function ($progressQuery) use ($teacher) {
@@ -23,17 +26,21 @@ class ArchiveController extends Controller
             ->with(['user' => function ($query) {
                 $query->withTrashed();
             }])
+            ->latest('deleted_at')
             ->paginate(10, ['*'], 'guardians_page')
+            ->withQueryString()
             ->appends(['tab' => 'guardians']);
 
-        $archivedChildren = Child::onlyTrashed()
+        $archivedChildren = Search::apply(Child::onlyTrashed(), $search, ['first_name', 'middle_name', 'last_name'])
             ->whereHas('progressRecords', function ($query) use ($teacher) {
                 $query->withTrashed()->where('teacher_id', $teacher->id);
             })
             ->with(['guardian' => function ($query) {
                 $query->withTrashed();
             }])
+            ->latest('deleted_at')
             ->paginate(10, ['*'], 'children_page')
+            ->withQueryString()
             ->appends(['tab' => 'children']);
 
         $activeTab = $request->query('tab') === 'children' ? 'children' : 'guardians';

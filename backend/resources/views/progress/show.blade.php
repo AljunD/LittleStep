@@ -3,7 +3,7 @@
 @section('title', 'Progress Record - View')
 
 @section('content')
-<div class="max-w-6xl mx-auto my-10 px-4">
+<div class="keep-light max-w-6xl mx-auto my-10 px-4">
     <div class="mb-6">
         <a href="{{ route('progress.index') }}" 
            class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition">

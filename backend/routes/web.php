@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\SettingsController;
 use App\Support\GuardianAppLink;
 use App\Support\SafeMail;
 use Illuminate\Http\Request;
@@ -150,3 +151,16 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
 Route::get('/logs', [LogsController::class, 'index'])
     ->middleware(['auth', 'verified', 'teacher'])
     ->name('logs.index');
+
+Route::prefix('settings')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::redirect('/', '/settings/profile')->name('settings.index');
+    Route::get('/profile', [SettingsController::class, 'profile'])->name('settings.profile');
+    Route::get('/profile/edit', [SettingsController::class, 'editProfile'])->name('settings.profile.edit');
+    Route::put('/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::get('/help', [SettingsController::class, 'help'])->name('settings.help');
+    Route::put('/password', [SettingsController::class, 'updatePassword'])
+        ->middleware('throttle:5,1')
+        ->name('settings.password.update');
+    Route::get('/display', [SettingsController::class, 'display'])->name('settings.display');
+    Route::put('/display', [SettingsController::class, 'updateDisplay'])->name('settings.display.update');
+});

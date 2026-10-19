@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexSearchRequest;
 use App\Models\Domain;
 use App\Models\DomainResult;
 use App\Models\EccdChecklistItem;
 use App\Models\ProgressRecord;
 use App\Services\ChildsRecord2Report;
 use App\Services\EccdExpertSystem;
+use App\Support\Search;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -128,14 +130,15 @@ class ProgressController extends Controller
         );
     }
 
-    public function index()
+    public function index(IndexSearchRequest $request)
     {
-        $teacher = Auth::user()?->teacher;
+        $teacher = $request->user()?->teacher;
         abort_unless($teacher, 403, 'A teacher profile is required.');
-        $children = $teacher->ownedChildren()
+        $children = Search::apply($teacher->ownedChildren(), $request->search(), ['first_name', 'middle_name', 'last_name'])
             ->with(['progressRecords' => fn ($query) => $query->where('teacher_id', $teacher->id)->with(['domains.checklistItem', 'teacher'])])
             ->orderBy('first_name')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         $children->getCollection()->transform(function ($child) {
             $child->latest_record = $child->progressRecords->first();

@@ -84,7 +84,7 @@
                         </div>
                     @endforeach
                     <div class="col-span-2 md:col-span-1 rounded-lg bg-white p-3 shadow-sm flex flex-col justify-center">
-                        <p id="preview-interpretation" class="text-sm font-bold text-[#001f5b]">—</p>
+                        <p id="preview-interpretation" class="text-sm font-bold text-[#001f5b] dark:text-blue-300">—</p>
                         <p class="text-[11px] font-semibold uppercase text-gray-500">Domain interpretation</p>
                     </div>
                 </div>
