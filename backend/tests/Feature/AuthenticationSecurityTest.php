@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Guardian;
 use App\Models\Child;
+use App\Models\Guardian;
 use App\Models\ProgressRecord;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class AuthenticationSecurityTest extends TestCase
@@ -30,7 +30,10 @@ class AuthenticationSecurityTest extends TestCase
             'last_name' => 'Teacher',
             'sex' => 'Female',
             'contact_number' => '09170000100',
-            'address' => 'Test address',
+            'barangay' => 'Balite',
+            'municipality' => 'Rodriguez',
+            'province' => 'Rizal',
+            'region' => 'CALABARZON',
             'email' => '  TEACHER@example.com ',
             'password' => 'a-secure-test-password',
             'password_confirmation' => 'a-secure-test-password',
@@ -44,6 +47,7 @@ class AuthenticationSecurityTest extends TestCase
         $this->assertDatabaseHas('teachers', [
             'user_id' => $user->id,
             'first_name' => 'Taylor',
+            'address' => 'Balite, Rodriguez, Rizal, CALABARZON',
         ]);
         Notification::assertSentTo($user, CustomVerifyEmail::class);
     }
@@ -58,7 +62,10 @@ class AuthenticationSecurityTest extends TestCase
                 'last_name' => 'Teacher',
                 'sex' => 'Female',
                 'contact_number' => '09170000100',
-                'address' => 'Test address',
+                'barangay' => 'Balite',
+                'municipality' => 'Rodriguez',
+                'province' => 'Rizal',
+                'region' => 'CALABARZON',
                 'email' => 'teacher@example.com',
                 'password' => $password,
                 'password_confirmation' => $password,

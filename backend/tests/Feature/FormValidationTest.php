@@ -332,12 +332,56 @@ class FormValidationTest extends TestCase
             'last_name' => 'Teacher',
             'sex' => 'Female',
             'contact_number' => '555-0100',
-            'address' => 'Test address',
+            'barangay' => 'Balite',
+            'municipality' => 'Rodriguez',
+            'province' => 'Rizal',
+            'region' => 'CALABARZON',
             'email' => 'teacher2@example.com',
             'password' => 'a-secure-test-password',
             'password_confirmation' => 'a-secure-test-password',
         ])->assertSessionHasErrors(['first_name', 'contact_number']);
 
         $this->assertDatabaseMissing('users', ['email' => 'teacher2@example.com']);
+    }
+
+    public function test_teacher_registration_requires_every_address_part(): void
+    {
+        $this->post(route('auth.register.submit'), [
+            'first_name' => 'Taylor',
+            'last_name' => 'Teacher',
+            'sex' => 'Female',
+            'contact_number' => '09170000100',
+            'address' => 'Old single address field',
+            'email' => 'teacher3@example.com',
+            'password' => 'a-secure-test-password',
+            'password_confirmation' => 'a-secure-test-password',
+        ])->assertSessionHasErrors(['barangay', 'municipality', 'province', 'region']);
+
+        $this->assertDatabaseMissing('users', ['email' => 'teacher3@example.com']);
+    }
+
+    public function test_registration_form_has_the_address_parts_and_a_digits_only_contact_number(): void
+    {
+        $html = $this->get(route('auth.register.form'))->assertOk()->getContent();
+
+        foreach (['barangay', 'municipality', 'province', 'region'] as $part) {
+            $this->assertMatchesRegularExpression('/<input type="text" id="'.$part.'" name="'.$part.'"[^>]*required/', $html);
+        }
+        $this->assertDoesNotMatchRegularExpression('/name="address"/', $html);
+        $this->assertMatchesRegularExpression('/name="contact_number"[^>]*maxlength="11"[^>]*pattern="09\[0-9\]\{9\}"[^>]*inputmode="numeric"[^>]*data-digits-only/', $html);
+    }
+
+    public function test_every_contact_number_field_accepts_digits_only(): void
+    {
+        $this->actingAs($this->teacherUser);
+        $pages = [
+            route('guardians.create'),
+            route('guardians.edit', $this->guardian->id),
+            route('settings.profile.edit'),
+        ];
+
+        foreach ($pages as $page) {
+            $this->assertMatchesRegularExpression('/name="contact_number"[^>]*data-digits-only/', $this->get($page)->assertOk()->getContent(), $page);
+        }
     }
 }

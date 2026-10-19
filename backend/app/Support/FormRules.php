@@ -52,7 +52,36 @@ final class FormRules
             'last_name' => self::name(),
             'sex' => ['required', Rule::in(self::SEXES)],
             'contact_number' => self::contactNumber(),
-            'address' => ['required', 'string', 'max:500'],
+            'barangay' => ['required', 'string', 'max:255'],
+            'municipality' => ['required', 'string', 'max:255'],
+            'province' => ['required', 'string', 'max:255'],
+            'region' => ['required', 'string', 'max:255'],
+        ];
+    }
+
+    /** Maps validated teacherProfile() input to `teachers` columns, joining the address parts like the other forms. */
+    public static function teacherAttributes(array $data): array
+    {
+        return [
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'] ?? null,
+            'last_name' => $data['last_name'],
+            'sex' => $data['sex'],
+            'contact_number' => $data['contact_number'],
+            'address' => self::joinAddress($data),
+        ];
+    }
+
+    /** Splits an address saved by joinAddress() back into its form fields. */
+    public static function splitAddress(?string $address): array
+    {
+        $parts = array_map('trim', explode(',', (string) $address));
+
+        return [
+            'barangay' => $parts[0] ?? '',
+            'municipality' => $parts[1] ?? '',
+            'province' => $parts[2] ?? '',
+            'region' => $parts[3] ?? '',
         ];
     }
 

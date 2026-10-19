@@ -27,7 +27,7 @@ class AuthController extends Controller
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
-        $request->validate([
+        $validated = $request->validate([
             ...FormRules::teacherProfile(),
             'email' => 'required|string|email|max:255|unique:users',
             'password' => FormRules::password(),
@@ -35,22 +35,14 @@ class AuthController extends Controller
 
         $cleanEmail = Str::lower(trim($request->email));
 
-        [$user, $teacher] = DB::transaction(function () use ($request, $cleanEmail) {
+        [$user, $teacher] = DB::transaction(function () use ($request, $validated, $cleanEmail) {
             $user = User::create([
                 'email' => $cleanEmail,
                 'password' => Hash::make($request->password),
                 'role' => 'teacher',
             ]);
 
-            $teacher = Teacher::create([
-                'user_id' => $user->id,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'sex' => $request->sex,
-                'contact_number' => $request->contact_number,
-                'address' => $request->address,
-            ]);
+            $teacher = Teacher::create(['user_id' => $user->id] + FormRules::teacherAttributes($validated));
 
             return [$user, $teacher];
         });

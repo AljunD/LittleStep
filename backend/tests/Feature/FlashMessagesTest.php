@@ -164,7 +164,10 @@ class FlashMessagesTest extends TestCase
                 'last_name' => 'Teacher',
                 'sex' => 'Female',
                 'contact_number' => '09170000000',
-                'address' => 'Teacher address',
+                'barangay' => 'Balite',
+                'municipality' => 'Rodriguez',
+                'province' => 'Rizal',
+                'region' => 'CALABARZON',
             ]);
 
         $this->assertFlashShownOnce($response, 'success', 'Your profile has been updated.');
@@ -178,7 +181,10 @@ class FlashMessagesTest extends TestCase
                 'last_name' => 'Teacher',
                 'sex' => 'Female',
                 'contact_number' => '09170000000',
-                'address' => 'Teacher address',
+                'barangay' => 'Balite',
+                'municipality' => 'Rodriguez',
+                'province' => 'Rizal',
+                'region' => 'CALABARZON',
             ])
             ->assertOk()
             ->assertSee('data-validation-errors', false)
