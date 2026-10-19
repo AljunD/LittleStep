@@ -39,10 +39,9 @@
                   transition-transform duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0">
 
       <a href="{{ route('dashboard') }}" class="block px-6 pb-5 pt-6">
-        {{-- The logo's navy wordmark needs a light badge on the dark theme. --}}
-        <span class="inline-block dark:rounded-2xl dark:bg-[#ffffff] dark:px-3 dark:py-2">
-          <img src="{{ asset('images/littlestep-logo.png') }}" alt="LittleStep" width="612" height="408" class="h-auto w-36">
-        </span>
+        {{-- The -dark variants recolor the navy wordmark so the logo sits directly on the dark theme. --}}
+        <img src="{{ asset('images/littlestep-logo.png') }}" alt="LittleStep" width="612" height="408" class="h-auto w-36 dark:hidden">
+        <img src="{{ asset('images/littlestep-logo-dark.png') }}" alt="LittleStep" width="612" height="408" class="hidden h-auto w-36 dark:block">
         <span class="mt-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Teacher Portal</span>
       </a>
 
@@ -106,7 +105,8 @@
           <i class="fas fa-bars text-xl" aria-hidden="true"></i>
         </button>
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-          <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-8 w-8 dark:rounded-lg dark:bg-[#ffffff]">
+          <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-8 w-8 dark:hidden">
+          <img src="{{ asset('images/littlestep-mark-dark.png') }}" alt="" width="256" height="256" class="hidden h-8 w-8 dark:block">
           <span class="text-base font-extrabold tracking-tight text-gray-900">LittleStep</span>
         </a>
         @auth

@@ -62,8 +62,9 @@
 <div class="space-y-6">
     <section class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white">
         <div class="flex items-center gap-4 border-b border-gray-100 p-6">
-            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-[#ffffff]">
-                <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-12 w-12">
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-gray-100">
+                <img src="{{ asset('images/littlestep-mark.png') }}" alt="" width="256" height="256" class="h-12 w-12 dark:hidden">
+                <img src="{{ asset('images/littlestep-mark-dark.png') }}" alt="" width="256" height="256" class="hidden h-12 w-12 dark:block">
             </span>
             <div>
                 <h2 class="text-base font-extrabold text-gray-900">About LittleStep</h2>
