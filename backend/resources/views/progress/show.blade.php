@@ -119,7 +119,7 @@
                         <tr class="h-32">
                             <td class="relative border-r-2 border-[#001f5b] p-0 overflow-hidden">
                                 <div class="absolute inset-0 flex">
-                                    <div class="w-16 flex flex-col items-center justify-center text-white font-black italic leading-none shrink-0" style="background-color: {{ $asmt['color'] }}; text-shadow: 0 0 2px rgba(0, 31, 91, .55), 0 1px 1px rgba(0, 31, 91, .45);">
+                                    <div class="w-16 flex flex-col items-center justify-center text-white font-black italic leading-none shrink-0" @style(['background-color: '.$asmt['color'], 'text-shadow: 0 0 2px rgba(0, 31, 91, .55), 0 1px 1px rgba(0, 31, 91, .45)'])>
                                         <span class="text-3xl">{{ $asmt['label'] }}</span>
                                         <span class="text-[8px] uppercase tracking-tighter mt-1">assessment</span>
                                     </div>
@@ -422,7 +422,10 @@
                                 </div>
                             </div>
 
-                            <div class="flex-1 grid grid-cols-7">
+                            <div class="relative flex-1 grid grid-cols-7">
+                                {{-- Covers the 19 score rows: from below the h-32 domain headers to the bottom of the grid. --}}
+                                <x-score-line class="inset-x-0 top-32 bottom-0"
+                                    :scores="collect(array_keys($domainDisplay))->map(fn ($key) => $computedByRound[$eval]['scaled_scores'][$key] ?? null)->all()" />
                                 @foreach($domainDisplay as $key => $domain)
                                 <div class="flex flex-col border-r border-gray-300 last:border-r-0">
                                     <div class="h-32 border-b border-[#001f5b] relative bg-white">
@@ -489,96 +492,51 @@
                                         };
                                     @endphp
                                     <div class="absolute inset-x-0 flex {{ $scoreLabelPosition }} items-center justify-end pr-3 text-sm font-black text-[#001f5b]"
-                                         style="top: {{ ((160 - $s) / 140) * 100 }}%">
+                                         @style(['top: '.((160 - $s) / 140) * 100 .'%'])>
                                         {{ $s }} <span class="ml-2 w-3 h-[2px] bg-[#001f5b]"></span>
                                     </div>
                                     @endfor
                                 </div>
                             </div>
 
-                            <div class="flex-1 grid grid-cols-3 h-[609px]">
-                                @php
-                                    $xTops = [];
-                                    foreach ([1, 2, 3] as $round) {
-                                        $stdScore = $computedByRound[$round]['standard_score'] ?? null;
-                                        $xTops[$round] = $stdScore !== null && $stdScore >= 20 && $stdScore <= 160
-                                            ? ((160 - $stdScore) / 140) * 609
-                                            : null;
-                                    }
-                                @endphp
-
-                                <div class="relative border-r border-[#001f5b]/30 overflow-hidden">
-                                    <div class="absolute top-0 w-full h-[174px] bg-[#fffd66]"></div>
-                                    <div class="absolute top-[174px] w-full h-[217.5px] bg-[#ffff99]"></div>
-                                    <div class="absolute top-[391.5px] w-full h-[217.5px] bg-[#ffffcc]"></div>
-                                    <div class="absolute inset-x-0 h-px bg-[#001f5b]/30" style="top: {{ ((160 - 100) / 140) * 100 }}%"></div>
-                                    <div class="absolute inset-0 flex justify-center pointer-events-none">
-                                        <div class="w-px bg-[#001f5b]/30 h-full relative">
-                                            @for ($val = 160; $val >= 20; $val--)
-                                                @php $distanceFromTop = ((160 - $val) / 140) * 609; @endphp
-                                                <div class="absolute h-px bg-[#001f5b]/30 -translate-y-1/2
-                                                    {{ $val % 10 == 0 ? 'w-6 -left-3' : 'w-3 -left-1.5' }}"
-                                                    style="top: {{ $distanceFromTop }}px">
-                                                </div>
-                                            @endfor
+                            @php
+                                // Standard score chart: 20 (bottom) to 160 (top) over 609px; one column per test administration.
+                                $standardScores = [];
+                                $xTops = [];
+                                foreach ([1, 2, 3] as $round) {
+                                    $stdScore = $computedByRound[$round]['standard_score'] ?? null;
+                                    $standardScores[$round] = $stdScore;
+                                    $xTops[$round] = $stdScore !== null && $stdScore >= 20 && $stdScore <= 160
+                                        ? ((160 - $stdScore) / 140) * 609
+                                        : null;
+                                }
+                            @endphp
+                            <div class="relative flex-1 grid grid-cols-3 h-[609px]">
+                                @foreach ($xTops as $round => $xTop)
+                                    <div @class(['relative overflow-hidden', 'border-r border-[#001f5b]/30' => ! $loop->last])>
+                                        <div class="absolute top-0 w-full h-[174px] bg-[#fffd66]"></div>
+                                        <div class="absolute top-[174px] w-full h-[217.5px] bg-[#ffff99]"></div>
+                                        <div class="absolute top-[391.5px] w-full h-[217.5px] bg-[#ffffcc]"></div>
+                                        <div class="absolute inset-x-0 h-px bg-[#001f5b]/30" @style(['top: '.((160 - 100) / 140) * 100 .'%'])></div>
+                                        <div class="absolute inset-0 flex justify-center pointer-events-none">
+                                            <div class="w-px bg-[#001f5b]/30 h-full relative">
+                                                @for ($val = 160; $val >= 20; $val--)
+                                                    <div @class(['absolute h-px bg-[#001f5b]/30 -translate-y-1/2', $val % 10 == 0 ? 'w-6 -left-3' : 'w-3 -left-1.5'])
+                                                         @style(['top: '.((160 - $val) / 140) * 609 .'px'])></div>
+                                                @endfor
+                                            </div>
                                         </div>
+
+                                        @if ($xTop !== null)
+                                            <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10" @style(['top: '.$xTop.'px'])>
+                                                <span class="font-black text-[#001f5b] text-xl leading-none">x</span>
+                                            </div>
+                                        @endif
                                     </div>
+                                @endforeach
 
-                                    @if($xTops[1] !== null)
-                                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-                                             style="top: {{ $xTops[1] }}px">
-                                            <span class="font-black text-[#001f5b] text-xl leading-none">x</span>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="relative border-r border-[#001f5b]/30 overflow-hidden">
-                                    <div class="absolute top-0 w-full h-[174px] bg-[#fffd66]"></div>
-                                    <div class="absolute top-[174px] w-full h-[217.5px] bg-[#ffff99]"></div>
-                                    <div class="absolute top-[391.5px] w-full h-[217.5px] bg-[#ffffcc]"></div>
-                                    <div class="absolute inset-x-0 h-px bg-[#001f5b]/30" style="top: {{ ((160 - 100) / 140) * 100 }}%"></div>
-                                    <div class="absolute inset-0 flex justify-center pointer-events-none">
-                                        <div class="w-px bg-[#001f5b]/30 h-full relative">
-                                            @for ($val = 160; $val >= 20; $val--)
-                                                @php $distanceFromTop = ((160 - $val) / 140) * 609; @endphp
-                                                <div class="absolute h-px bg-[#001f5b]/30 -translate-y-1/2
-                                                    {{ $val % 10 == 0 ? 'w-6 -left-3' : 'w-3 -left-1.5' }}"
-                                                    style="top: {{ $distanceFromTop }}px">
-                                                </div>
-                                            @endfor
-                                        </div>
-                                    </div>
-                                    @if($xTops[2] !== null)
-                                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-                                             style="top: {{ $xTops[2] }}px">
-                                            <span class="font-black text-[#001f5b] text-xl leading-none">x</span>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="relative overflow-hidden">
-                                    <div class="absolute top-0 w-full h-[174px] bg-[#fffd66]"></div>
-                                    <div class="absolute top-[174px] w-full h-[217.5px] bg-[#ffff99]"></div>
-                                    <div class="absolute top-[391.5px] w-full h-[217.5px] bg-[#ffffcc]"></div>
-                                    <div class="absolute inset-x-0 h-px bg-[#001f5b]/30" style="top: {{ ((160 - 100) / 140) * 100 }}%"></div>
-                                    <div class="absolute inset-0 flex justify-center pointer-events-none">
-                                        <div class="w-px bg-[#001f5b]/30 h-full relative">
-                                            @for ($val = 160; $val >= 20; $val--)
-                                                @php $distanceFromTop = ((160 - $val) / 140) * 609; @endphp
-                                                <div class="absolute h-px bg-[#001f5b]/30 -translate-y-1/2
-                                                    {{ $val % 10 == 0 ? 'w-6 -left-3' : 'w-3 -left-1.5' }}"
-                                                    style="top: {{ $distanceFromTop }}px">
-                                                </div>
-                                            @endfor
-                                        </div>
-                                    </div>
-                                    @if($xTops[3] !== null)
-                                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-                                             style="top: {{ $xTops[3] }}px">
-                                            <span class="font-black text-[#001f5b] text-xl leading-none">x</span>
-                                        </div>
-                                    @endif
-                                </div>
+                                {{-- After the columns so their tinted backgrounds don't cover it; z-20 keeps it above the x marks' layer. --}}
+                                <x-score-line class="inset-0 z-20" :scores="array_values($standardScores)" :min="20" :max="160" :rows="false" />
                             </div>
                         </div>
 
@@ -612,9 +570,6 @@
 </div>
 
 <style nonce="{{ request()->attributes->get('cspNonce') }}">
-    .border-navy-900 { border-color: #001f5b; }
-    .bg-navy-900 { background-color: #001f5b; }
-    
     @media print {
         @page { margin: 0; }
         body { padding: 2cm; }
