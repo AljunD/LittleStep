@@ -155,9 +155,13 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
         ->name('progress.preview');
 });
 
-Route::get('/logs', [LogsController::class, 'index'])
-    ->middleware(['auth', 'verified', 'teacher'])
-    ->name('logs.index');
+Route::prefix('logs')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::get('/', [LogsController::class, 'index'])->name('logs.index');
+    Route::get('/export', [LogsController::class, 'export'])
+        ->middleware('throttle:10,1')
+        ->name('logs.export');
+    Route::get('/{log}', [LogsController::class, 'show'])->whereNumber('log')->name('logs.show');
+});
 
 Route::prefix('settings')->middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::redirect('/', '/settings/profile')->name('settings.index');

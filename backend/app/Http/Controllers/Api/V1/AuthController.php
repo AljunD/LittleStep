@@ -22,10 +22,14 @@ class AuthController extends Controller
 
         $user = User::where('email', Str::lower(trim($credentials['email'])))->first();
         if (! $user || ! Hash::check($credentials['password'], $user->password) || $user->role !== 'guardian' || ! $user->guardian) {
+            recordLog('login_failed', 'User', $user?->id, 'Failed sign-in attempt in the mobile app.', $user?->id);
+
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
         if (! $user->hasVerifiedEmail()) {
+            recordLog('login_denied', 'User', $user->id, 'Unverified email attempted mobile app sign-in.', $user->id);
+
             return response()->json([
                 'error' => 'Email not verified. Please verify your email before logging in.',
             ], 403);
@@ -34,6 +38,7 @@ class AuthController extends Controller
         $expiresAt = now()->addHours(12);
         $token = $user->createToken('guardian-mobile', ['*'], $expiresAt)->plainTextToken;
         $guardian = $user->guardian;
+        recordLog('login', 'User', $user->id, 'Guardian signed in to the mobile app.', $user->id);
 
         return response()->json([
             'token' => $token,
@@ -88,6 +93,7 @@ class AuthController extends Controller
 
         if ($user && $user->currentAccessToken()) {
             $user->currentAccessToken()->delete();
+            recordLog('logout', 'User', $user->id, 'Guardian signed out of the mobile app.', $user->id);
 
             return response()->json(['message' => 'Logged out'], 200);
         }

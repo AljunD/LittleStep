@@ -303,9 +303,7 @@ class GuardianController extends Controller
         foreach ($ownedChildren as $child) {
             $child->delete();
 
-            if (function_exists('recordLog')) {
-                recordLog('deleted', 'Child', $child->id, 'Child archived with Guardian: '.$child->first_name.' '.$child->last_name);
-            }
+            recordLog('deleted', 'Child', $child->id, 'Child archived with Guardian: '.$child->first_name.' '.$child->last_name);
         }
 
         $guardianArchived = ! $guardian->children()->withTrashed()
@@ -316,7 +314,7 @@ class GuardianController extends Controller
             $guardian->user?->delete();
         }
 
-        if ($guardianArchived && function_exists('recordLog')) {
+        if ($guardianArchived) {
             recordLog('deleted', 'Guardian', $guardian->id, 'Guardian archived: '.$guardian->first_name.' '.$guardian->last_name);
         }
 
@@ -367,9 +365,7 @@ class GuardianController extends Controller
             return $child;
         });
 
-        if (function_exists('recordLog')) {
-            recordLog('created', 'Child', $child->id, 'Child created: '.$child->first_name.' '.$child->last_name);
-        }
+        recordLog('created', 'Child', $child->id, 'Child created: '.$child->first_name.' '.$child->last_name);
 
         return redirect()->route('guardians.index')
             ->with('success', 'Child profile created successfully.');
@@ -385,9 +381,7 @@ class GuardianController extends Controller
 
         $child->delete();
 
-        if (function_exists('recordLog')) {
-            recordLog('deleted', 'Child', $child->id, 'Child archived: '.$child->first_name.' '.$child->last_name);
-        }
+        recordLog('deleted', 'Child', $child->id, 'Child archived: '.$child->first_name.' '.$child->last_name);
 
         $hasActiveChildren = $teacher->ownedChildren()->where('guardian_id', $guardian->id)->exists();
         $redirect = $hasActiveChildren

@@ -263,7 +263,26 @@ Both pages get this from `ProgressController::currentRoundProgress()`, so they a
 - **File size:** a download is about 4 MB.
 - **Ownership:** only the record's teacher can download it.
 
-**Audit log.** Teacher actions call `recordLog($action, $entityType, $entityId, $details)`. Entries are listed at `/logs`.
+**Audit log and System Logs.** Actions are recorded with `recordLog($action, $entityType, $entityId = null, $details = null, $userId = null)`. It calls `App\Support\AuditLog::record()`, which also stores the request's IP address and browser/device (`ip_address`, `user_agent`, added by migration `2026_10_19_000000_add_request_context_to_logs_table`). Pass `null` as the entity id when there is no single record; don't use `0`.
+
+- **What's logged:**
+  - **Web sign-in:** successful, failed and blocked sign-ins, sign-outs and registration. Failed attempts are attributed to the targeted account so its owner sees them; attempts on unknown emails are stored without a user and without the typed email.
+  - **Guardian app:** sign-in, failed and blocked sign-in, and sign-out.
+  - **Account:** email verification, password change and reset.
+  - **Records:** create, update, archive and restore of guardians, children, progress records and checklist items.
+  - **Views and downloads:** viewing records and photos, PDF downloads, and log exports.
+  - **Not logged:** dashboard visits.
+- **Catalog:** `AuditLog::ACTIONS` gives each action its label (e.g. `deleted` shows as "Archived"), category (Sign-in & Security, Changes, Views & Downloads) and badge color, used by `<x-log-action>`. `AuditLog::ENTITY_LABELS` names the record types. Add new actions there.
+- **Append-only:** `App\Models\Log` throws if an entry is updated or deleted through Eloquent. The only removal is the optional retention prune.
+- **System Logs page** (`/logs`, `LogsController` + `App\Services\ActivityLogService`):
+  - **Your own entries only:** a teacher sees only entries where they are the user. Another user's entry id returns 404.
+  - **Summary:** 30-day counts (sign-ins, failed sign-ins, changes, views and downloads) and the previous sign-in with its device and IP.
+  - **Security alert:** a red banner links to Change Password when there were failed or blocked sign-ins in the last 7 days.
+  - **Filtering:** category tabs, search in details, filters for action, record type and date range, plus Today / 7 days / 30 days shortcuts. Validated by `LogIndexRequest`.
+  - **Table:** each row shows when, the action badge, the record, details and device/IP. The record links to its page only while you still own it and it isn't archived.
+- **Entry page** (`/logs/{id}`): the full details, IP address and raw browser string, plus a Change Password prompt on failed sign-ins.
+- **Export CSV** (`/logs/export`): the current filters as a UTF-8 CSV, throttled to 10 per minute and logged as `exported`. Cells starting with `= + - @` are prefixed with `'` so spreadsheet apps don't run them as formulas.
+- **Retention:** set `AUDIT_LOG_RETENTION_DAYS` to delete entries older than that many days. The scheduled daily `model:prune` does it, so `php artisan schedule:work` (or the system scheduler) must run. Empty, the default, keeps logs forever.
 
 **Security.**
 - `SecurityHeaders` adds a nonce-based Content-Security-Policy, so inline `<script>`/`<style>` tags need `nonce="{{ request()->attributes->get('cspNonce') }}"`. In production it also redirects to HTTPS and sends HSTS.

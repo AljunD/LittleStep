@@ -72,9 +72,7 @@ class ArchiveController extends Controller
         $guardian->restore();
         $guardian->user?->restore();
 
-        if (function_exists('recordLog')) {
-            recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: '.$guardian->first_name.' '.$guardian->last_name);
-        }
+        recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: '.$guardian->first_name.' '.$guardian->last_name);
 
         return redirect()->route('archives.index')
             ->with('success', 'Guardian and linked user restored successfully.');
@@ -91,9 +89,7 @@ class ArchiveController extends Controller
 
         $child->restore();
 
-        if (function_exists('recordLog')) {
-            recordLog('restored', 'Child', $child->id, 'Child restored: '.$child->first_name.' '.$child->last_name);
-        }
+        recordLog('restored', 'Child', $child->id, 'Child restored: '.$child->first_name.' '.$child->last_name);
 
         return redirect()->route('archives.index', ['tab' => 'children'])
             ->with('success', 'Child record restored successfully.');
