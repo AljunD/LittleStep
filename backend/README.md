@@ -13,7 +13,7 @@ Teachers register guardians and children, record ECCD checklist assessments over
 
 ## Requirements
 
-- PHP 8.3+ and Composer
+- PHP 8.4+ and Composer. The committed `composer.lock` pins Symfony 8.1 packages that need PHP 8.4.1 or newer. On PHP 8.3, `composer install` refuses to run, so the PDF report library (`barryvdh/laravel-dompdf`) is never installed and "Download PDF" fails with `Class "Barryvdh\DomPDF\Facade\Pdf" not found`. In Laragon, add PHP 8.4 under `bin/php`, select it in the tray menu (PHP → Version), and reopen the terminal before running `composer install`.
 - Node.js + npm (Vite / Tailwind CSS v4)
 - MySQL (Laragon) or SQLite
 
