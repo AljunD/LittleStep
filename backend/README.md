@@ -152,6 +152,15 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 
 Recent account activity is on the System Logs page (`/logs`), not the dashboard.
 
+**Child profile.** `children.show` (`ChildrenController::show` + `App\Services\ChildProfileSummary`) shows a child the teacher owns:
+
+- **Header:** full name, sex, latest overall result, birth date and the linked guardian. View Progress (or Start Evaluation) is a button; Edit, Evaluate, Add Observation and Archive are in the ⋮ menu.
+- **Quick facts:** age today in 30-day months with its ECCD age band, evaluations done (of 3), the latest standard score and the number of skills to practice (`skillsToPractice()`).
+- **ECCD Progress:** one tile per evaluation (date, age at test, standard score, domains scored, result), then the latest scored evaluation's scaled score and Table 6 wording per domain. Scores come from `EccdExpertSystem::compute()`, so they match the progress record page. Only the teacher's active record is used; an archived record shows "not evaluated yet".
+- **Details:** personal details, address, education, observation notes (`domain_observations`, escaped), guardian with email-verification status, father, mother and record dates.
+
+Viewing the page is logged as `viewed` on the `Child`.
+
 **Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. On large screens the right panel scrolls on its own, so long tabs such as Profile don't scroll the whole page. Phones keep the normal page scroll. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
 
 **Edit profile (Profile tab).** The Profile tab's Edit Profile button opens `settings.profile.edit`, which saves through `PUT /settings/profile` (`settings.profile.update`).

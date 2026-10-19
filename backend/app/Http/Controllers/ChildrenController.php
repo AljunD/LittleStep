@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ChildIndexRequest;
 use App\Models\Teacher;
+use App\Services\ChildProfileSummary;
 use App\Support\FormRules;
 use App\Support\Search;
 use Illuminate\Http\Request;
@@ -26,14 +27,17 @@ class ChildrenController extends Controller
         return view('children.index', compact('children'));
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $id, ChildProfileSummary $profileSummary)
     {
-        $child = $this->currentTeacher($request)->ownedChildren()
+        $teacher = $this->currentTeacher($request);
+        $child = $teacher->ownedChildren()
             ->with('guardian.user')
             ->findOrFail($id);
         recordLog('viewed', 'Child', $child->id, 'Child record viewed.');
 
-        return view('children.show', compact('child'));
+        $summary = $profileSummary->for($teacher, $child);
+
+        return view('children.show', compact('child', 'summary'));
     }
 
     public function edit(Request $request, $id)
