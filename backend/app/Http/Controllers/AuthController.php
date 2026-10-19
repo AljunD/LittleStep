@@ -101,7 +101,7 @@ class AuthController extends Controller
 
             recordLog('login', 'User', $user->id, 'Teacher logged in.', $user->id);
 
-            return redirect()->intended('/dashboard');
+            return redirect()->intended(route('dashboard'));
         }
 
         // Attribute the attempt to the targeted account (if any) so its owner sees it in System Logs.

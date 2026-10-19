@@ -70,6 +70,8 @@ class DashboardController extends Controller
         $urgentAlertRecord = null;
         if ($rawUrgentRecord) {
             $urgentAlertRecord = (object) [
+                'id' => $rawUrgentRecord->id,
+                'child_id' => $rawUrgentRecord->child_id,
                 'status' => $rawUrgentRecord->status,
                 'evaluation_number' => $rawUrgentRecord->evaluation_number,
                 'child' => (object) [
@@ -98,6 +100,7 @@ class DashboardController extends Controller
 
         $incompleteTasksQueue = $rawIncompleteTasks->map(function ($item) {
             return (object) [
+                'id' => $item->id,
                 'status' => $item->status,
                 'child' => (object) [
                     'first_name' => $item->child_first_name,
@@ -116,6 +119,7 @@ class DashboardController extends Controller
             ->whereNull('teachers.deleted_at')
             ->select(
                 'progress_records.id as record_id',
+                'progress_records.child_id',
                 DB::raw('COALESCE(progress_records.evaluation_date_round_3, progress_records.evaluation_date_round_2, progress_records.evaluation_date_round_1, progress_records.evaluation_date) as evaluation_date'),
                 'progress_records.evaluation_number',
                 'progress_records.status',
@@ -133,6 +137,7 @@ class DashboardController extends Controller
         $registryRecords = $rawRegistry->map(function ($row) {
             return (object) [
                 'id' => $row->record_id,
+                'child_id' => $row->child_id,
                 'evaluation_date' => $row->evaluation_date,
                 'evaluation_number' => $row->evaluation_number,
                 'status' => $row->status,

@@ -6,10 +6,13 @@
 <div class="space-y-6">
     <x-page-header title="Progress Records" description="Track each child's ECCD evaluations and observations." />
 
-    <x-search-bar placeholder="Search by child name" />
+    <x-search-bar placeholder="Search by child name">
+        <x-filter-field name="status" label="Record status" placeholder="All records"
+                        :options="\App\Http\Requests\ProgressIndexRequest::STATUS_LABELS" />
+    </x-search-bar>
 
     <x-table :columns="['Child', 'Evaluation', 'Evaluation Date', 'Status']" :paginator="$children"
-             :empty="request('search') ? 'No children match your search.' : 'No children to evaluate yet.'">
+             :empty="request('status') ? 'No children match your filters.' : (request('search') ? 'No children match your search.' : 'No children to evaluate yet.')">
         @foreach($children as $child)
             @php($latestRecord = $child->latest_record)
             <tr>

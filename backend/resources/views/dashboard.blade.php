@@ -9,10 +9,10 @@
     $teacherName = Auth::user()->teacher->first_name ?? '';
     $childName = fn ($child) => trim($child->first_name.' '.$child->middle_name.' '.$child->last_name);
     $stats = [
-        ['label' => 'Guardians', 'value' => $guardiansCount, 'hint' => 'Linked to your children', 'icon' => 'fa-people-roof', 'chip' => 'bg-violet-100 text-violet-600'],
-        ['label' => 'Children', 'value' => $childrenCount, 'hint' => 'Assigned to you', 'icon' => 'fa-child-reaching', 'chip' => 'bg-amber-100 text-amber-600'],
-        ['label' => 'Completed Records', 'value' => $completedRecordsCount, 'hint' => 'Finalized evaluations', 'icon' => 'fa-circle-check', 'chip' => 'bg-emerald-100 text-emerald-600'],
-        ['label' => 'Unfinished Records', 'value' => $unfinishedRecordsCount, 'hint' => 'Pending or in progress', 'icon' => 'fa-hourglass-half', 'chip' => 'bg-sky-100 text-sky-600'],
+        ['label' => 'Guardians', 'href' => route('guardians.index'), 'value' => $guardiansCount, 'hint' => 'Linked to your children', 'icon' => 'fa-people-roof', 'chip' => 'bg-violet-100 text-violet-600'],
+        ['label' => 'Children', 'href' => route('children.index'), 'value' => $childrenCount, 'hint' => 'Assigned to you', 'icon' => 'fa-child-reaching', 'chip' => 'bg-amber-100 text-amber-600'],
+        ['label' => 'Completed Records', 'href' => route('progress.index', ['status' => 'completed']), 'value' => $completedRecordsCount, 'hint' => 'Finalized evaluations', 'icon' => 'fa-circle-check', 'chip' => 'bg-emerald-100 text-emerald-600'],
+        ['label' => 'Unfinished Records', 'href' => route('progress.index', ['status' => 'unfinished']), 'value' => $unfinishedRecordsCount, 'hint' => 'Pending or in progress', 'icon' => 'fa-hourglass-half', 'chip' => 'bg-sky-100 text-sky-600'],
     ];
 @endphp
 <div class="space-y-6">
@@ -22,7 +22,8 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach($stats as $stat)
-            <div class="flex items-center gap-4 rounded-2xl border border-gray-200/70 bg-white p-5">
+            <a href="{{ $stat['href'] }}" data-dashboard-stat
+               class="group flex items-center gap-4 rounded-2xl border border-gray-200/70 bg-white p-5 transition hover:border-gray-300 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                 <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg {{ $stat['chip'] }}" aria-hidden="true">
                     <i class="fas {{ $stat['icon'] }}"></i>
                 </span>
@@ -31,7 +32,8 @@
                     <p class="text-2xl font-extrabold text-gray-900">{{ $stat['value'] }}</p>
                     <p class="text-xs text-gray-400">{{ $stat['hint'] }}</p>
                 </div>
-            </div>
+                <i class="fas fa-chevron-right ml-auto text-xs text-gray-300 transition group-hover:text-gray-500" aria-hidden="true"></i>
+            </a>
         @endforeach
     </div>
 
@@ -43,7 +45,7 @@
             </div>
 
             @if($urgentAlertRecord)
-                <div class="rounded-xl bg-rose-50 p-4">
+                <a href="{{ route('progress.select-domain', ['child_id' => $urgentAlertRecord->child_id]) }}" class="block rounded-xl bg-rose-50 p-4 transition hover:bg-rose-100">
                     <x-badge color="red">Action required</x-badge>
                     <p class="mt-2 font-bold text-gray-900">{{ $childName($urgentAlertRecord->child) }}</p>
                     <p class="text-sm text-gray-600">This record is pending your evaluation.</p>
@@ -51,18 +53,18 @@
                         <span>Evaluation no. {{ $urgentAlertRecord->evaluation_number }}</span>
                         <x-status-badge :status="$urgentAlertRecord->status" />
                     </div>
-                </div>
+                </a>
             @endif
 
             <div class="space-y-2">
                 @foreach($incompleteTasksQueue as $record)
-                    <div class="flex items-center justify-between gap-3 rounded-xl bg-amber-50/70 p-3">
+                    <a href="{{ route('progress.show', $record->id) }}" class="flex items-center justify-between gap-3 rounded-xl bg-amber-50/70 p-3 transition hover:bg-amber-100/70">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-gray-900">{{ $childName($record->child) }}</p>
                             <p class="text-xs text-gray-500">Some domains or notes are still missing.</p>
                         </div>
                         <x-status-badge :status="$record->status" />
-                    </div>
+                    </a>
                 @endforeach
             </div>
 
@@ -189,14 +191,23 @@
             <p class="text-sm text-gray-500">The latest progress records assigned to you.</p>
         </div>
 
-        <x-table :columns="['Child', 'Teacher', 'Evaluation Date', 'Evaluation No.', 'Status']" :actions="false" empty="No evaluations recorded yet.">
+        <x-table :columns="['Child', 'Teacher', 'Evaluation Date', 'Evaluation No.', 'Status']" empty="No evaluations recorded yet.">
             @foreach($registryRecords as $record)
                 <tr>
-                    <td class="whitespace-nowrap"><x-person :name="$childName($record->child)" /></td>
+                    <td class="whitespace-nowrap">
+                        <a href="{{ route('progress.show', $record->id) }}" class="hover:underline"><x-person :name="$childName($record->child)" /></a>
+                    </td>
                     <td class="whitespace-nowrap">{{ $record->teacher->first_name }} {{ $record->teacher->last_name }}</td>
                     <td class="whitespace-nowrap">{{ $record->evaluation_date ? \Carbon\Carbon::parse($record->evaluation_date)->format('M d, Y') : '—' }}</td>
                     <td class="whitespace-nowrap font-semibold text-gray-800">{{ $record->evaluation_number }}</td>
                     <td class="whitespace-nowrap"><x-status-badge :status="$record->status" /></td>
+                    <td class="whitespace-nowrap text-right">
+                        <x-action-menu label="Actions for {{ $childName($record->child) }}">
+                            <x-action-menu.item :href="route('progress.show', $record->id)" icon="view">View Record</x-action-menu.item>
+                            <x-action-menu.item :href="route('children.show', $record->child_id)" icon="view">Child Profile</x-action-menu.item>
+                            <x-action-menu.item :href="route('progress.select-domain', ['child_id' => $record->child_id])" icon="evaluate">Add Evaluation</x-action-menu.item>
+                        </x-action-menu>
+                    </td>
                 </tr>
             @endforeach
         </x-table>

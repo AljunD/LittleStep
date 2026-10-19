@@ -152,6 +152,14 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 
 Recent account activity is on the System Logs page (`/logs`), not the dashboard.
 
+**Dashboard links.** The stat cards open Guardians, Children, and Progress Records filtered to Completed or Unfinished records (`progress.index?status=completed|unfinished`, validated by `ProgressIndexRequest`; also selectable on the Progress Records page). Needs Attention items open the evaluation (pending) or the record (in progress), and each Recent Evaluations row has a ⋮ menu (View Record, Child Profile, Add Evaluation).
+
+**Routing rules.**
+
+- `/` (`home`) redirects to the dashboard when signed in, otherwise to the sign-in page.
+- The sign-in, registration, forgot-password and reset-password pages use the `guest` middleware, so a signed-in teacher is sent to the dashboard. Signing in redirects to the intended page or `dashboard`.
+- Progress pages opened without their id (`progress.show`, `progress.edit`, `progress.select-domain`, `progress.create`, `progress.add-observation`) redirect to Progress Records with an error message. `progress.show/{id}` takes a progress record id only (unknown ids are a 404). The PDF report is `progress.download-pdf`.
+
 **Child profile.** `children.show` (`ChildrenController::show` + `App\Services\ChildProfileSummary`) shows a child the teacher owns:
 
 - **Header:** full name, sex, latest overall result, birth date and the linked guardian. View Progress (or Start Evaluation) is a button; Edit, Evaluate, Add Observation and Archive are in the ⋮ menu.

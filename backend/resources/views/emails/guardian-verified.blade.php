@@ -73,9 +73,6 @@
 
                 <div class="mt-8 border-t border-slate-100 pt-6 text-center">
                     <p class="text-sm text-slate-500">Thank you for being part of your child’s learning journey.</p>
-                    <a href="{{ url('/') }}" class="mt-4 inline-flex font-semibold text-teal-700 underline decoration-teal-300 underline-offset-4 hover:text-teal-900">
-                        Visit LittleStep
-                    </a>
                 </div>
             </div>
         </section>
