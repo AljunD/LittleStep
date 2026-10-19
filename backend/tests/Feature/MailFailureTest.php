@@ -9,6 +9,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
@@ -205,5 +206,22 @@ class MailFailureTest extends TestCase
             ->post(route('auth.password.email'), ['email' => 'old@example.com'])
             ->assertOk()
             ->assertSee('If an account exists for that email, a password reset link will be sent.');
+    }
+
+    public function test_changing_the_teacher_password_while_mail_is_down_saves_and_warns(): void
+    {
+        $this->breakTheMailServer();
+
+        $this->actingAs($this->teacherUser)->followingRedirects()
+            ->put(route('settings.password.update'), [
+                'current_password' => 'Password123@',
+                'password' => 'NewSecurePass#2026',
+                'password_confirmation' => 'NewSecurePass#2026',
+            ])
+            ->assertOk()
+            ->assertSee('Your password has been changed.')
+            ->assertSee('The confirmation email could not be sent because the mail server could not be reached.');
+
+        $this->assertTrue(Hash::check('NewSecurePass#2026', $this->teacherUser->refresh()->password));
     }
 }

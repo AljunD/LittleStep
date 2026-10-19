@@ -156,6 +156,26 @@ class FlashMessagesTest extends TestCase
         $this->assertFlashShownOnce($response, 'success', 'Child record restored successfully.');
     }
 
+    public function test_password_change_success_is_shown_on_the_profile_tab(): void
+    {
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->put(route('settings.password.update'), [
+                'current_password' => 'Password123@',
+                'password' => 'NewSecurePass#2026',
+                'password_confirmation' => 'NewSecurePass#2026',
+            ]);
+
+        $this->assertFlashShownOnce($response, 'success', 'Your password has been changed. Other devices signed in to your account have been signed out.');
+    }
+
+    public function test_display_preference_success_is_shown_on_the_display_tab(): void
+    {
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->put(route('settings.display.update'), ['theme' => 'dark']);
+
+        $this->assertFlashShownOnce($response, 'success', 'Display preference saved.');
+    }
+
     public function test_progress_shortcuts_without_a_selection_explain_the_error(): void
     {
         $this->assertFlashShownOnce(

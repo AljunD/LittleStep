@@ -1,6 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+@php
+  $displayTheme = \App\Support\DisplayTheme::current();
+@endphp
+<html lang="en" data-theme="{{ $displayTheme }}" @class(['dark' => $displayTheme === 'dark'])>
 <head>
+  @if ($displayTheme === 'system')
+  <script nonce="{{ request()->attributes->get('cspNonce') }}">
+    (() => {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const applyTheme = () => document.documentElement.classList.toggle('dark', prefersDark.matches);
+      applyTheme();
+      prefersDark.addEventListener('change', applyTheme);
+    })();
+  </script>
+  @endif
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -44,6 +57,7 @@
             ['route' => 'progress.index',  'match' => 'progress.*',  'icon' => 'fa-seedling',       'chip' => 'bg-emerald-100 text-emerald-600', 'label' => 'Progress'],
             ['route' => 'archives.index',  'match' => 'archives.*',  'icon' => 'fa-box-archive',    'chip' => 'bg-rose-100 text-rose-600',       'label' => 'Archives'],
             ['route' => 'logs.index',      'match' => 'logs.*',      'icon' => 'fa-clock-rotate-left', 'chip' => 'bg-slate-100 text-slate-600',  'label' => 'System Logs'],
+            ['route' => 'settings.index',  'match' => 'settings.*',  'icon' => 'fa-gear',           'chip' => 'bg-gray-100 text-gray-600',       'label' => 'Settings'],
           ];
         @endphp
         <nav class="flex-1 space-y-1 overflow-y-auto px-4" aria-label="Main">
@@ -108,7 +122,7 @@
     </div>
   </div>
 
-  <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-gray-900/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden"></div>
+  <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden"></div>
 
   <script nonce="{{ request()->attributes->get('cspNonce') }}">
     function toggleSidebar() {

@@ -142,6 +142,25 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 - **Pagination:** `AppServiceProvider` sets `pagination.littlestep` as the default view, so every `$paginator->links()` renders the same "Showing 1–10 of 23" summary with numbered pages. Index paginators use `withQueryString()`, so search and filters survive page changes.
 - **`<x-person name subtitle>`**, **`<x-badge color>`**, **`<x-status-badge status>`** (Pending / In Progress / Completed), **`<x-log-action action>`:** the name cell with initials, and the shared colored badges.
 
+**Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
+
+**Change password (Profile tab).** The Change Password form sends `PUT /settings/password` (`settings.password.update`), throttled to 5 per minute like the auth forms.
+
+- **Validation:** `UpdatePasswordRequest` requires the correct current password (`current_password` rule). The new password follows `FormRules::password()` (12–72 characters, confirmed) and must differ from the current one.
+- **Password fields:** they are never refilled after an error, and Laravel does not flash password inputs.
+- **What happens on save:** `App\Services\TeacherPasswordService` saves the new hash and rotates the remember token, which voids "remember me" cookies. It revokes the account's API tokens and, with the database session driver (the Laragon default), deletes the account's other sessions. The current session gets a new ID and stays signed in.
+- **Afterwards:** the change is logged as `password_changed`, and the teacher sees a success message on the Profile tab.
+- **Confirmation email:** `PasswordChangedNotification` (view `emails/password-changed`) emails the teacher the time of the change and a "Reset Password" link to the forgot-password page. The link is built from `APP_URL`, and the email never contains the password. It is sent through `SafeMail::attempt()`, so if the mail server is unreachable, the new password stays saved and a red warning appears instead of a 500 error.
+
+To add a tab, add its route under the `settings` prefix (same `auth`, `verified`, `teacher` middleware), add it to `$settingsTabs` in the layout, and create a view that extends `settings.layout`.
+
+**Display (light / dark theme).** The Display tab (`settings.display`) lets the teacher choose Light (the default), Dark or System. Saving is a plain `PUT settings.display.update`, validated by `UpdateDisplayRequest`. It stores the choice in the encrypted `littlestep_theme` cookie for this browser, logs `updated`, and flashes "Display preference saved." `App\Support\DisplayTheme` holds the cookie name and options and reads the current value, falling back to Light for unknown values.
+
+- **How it applies:** `components/app.blade.php` renders `<html class="dark">` for Dark. For System, a small nonce'd head script toggles `.dark` from `prefers-color-scheme` and follows device changes. The sign-in pages always stay light.
+- **How the styles work:** `resources/css/theme-dark.css` redefines Tailwind's color variables under `.dark`. White becomes the card surface, the gray scale inverts, and light tints become translucent with lighter text, so every page switches without `dark:` classes. `dark:` utilities are also available for one-off fixes, and `.text-white` stays white on colored buttons.
+- **Keep the official form light:** add `keep-light` to content that must match the printed form. The progress record page (Child's Record 2) uses it, so it stays light in dark mode.
+- **Adding a color family:** the values in `theme-dark.css` were copied from `node_modules/tailwindcss/theme.css`. To use a new family, add its lines in both blocks with the same pattern. Under `.dark`, shades 50/100/200 become translucent mixes of its 500 shade and 700/800/900 take its 300/200/100 values. Under `.keep-light` they get their original values. Run `npm run build` afterwards.
+
 **Search and filters.** Searching runs on the server through `App\Support\Search::apply($query, $term, $columns)`. Every word of the term has to match one of the columns, so "casey guardian" finds Casey Guardian. `relation.column` searches a related model, and `%`/`_` are matched literally. Queries stay scoped through `Teacher::ownedChildren()` / `ownedGuardians()`. Input is validated by `App\Http\Requests\IndexSearchRequest` (`search`, max 100 characters), with `ChildIndexRequest` adding `sex` and `LogIndexRequest` adding the log filters.
 
 | Page | Searches | Filters |
