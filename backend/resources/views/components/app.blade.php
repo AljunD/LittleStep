@@ -4,76 +4,81 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>@yield('title', 'KidWatch')</title>
+  <title>@hasSection('title')@yield('title') · @endif LittleStep</title>
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 </head>
-<body class="bg-[#f4f7fe] font-[Inter] h-screen overflow-hidden">
+<body class="h-screen overflow-hidden bg-[#f8f7f4] font-[Nunito] text-gray-800 antialiased">
+  @php
+    $teacherProfile = Auth::user()?->teacher;
+    $displayName = trim(($teacherProfile->first_name ?? '').' '.($teacherProfile->last_name ?? '')) ?: (Auth::user()->email ?? '');
+    $userInitials = strtoupper(substr($teacherProfile->first_name ?? Auth::user()->email ?? '', 0, 1).substr($teacherProfile->last_name ?? '', 0, 1));
+  @endphp
 
   <div class="flex h-screen">
     <aside id="sidebar"
-           class="fixed inset-y-0 left-0 z-50 w-72 bg-[#081028] shadow-2xl flex flex-col
-                  -translate-x-full lg:translate-x-0 lg:static lg:w-64 lg:shadow-none
-                  transition-transform duration-300 ease-in-out border-r border-white/5">
+           class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-gray-200/70 bg-white
+                  transition-transform duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0">
 
-      <div class="px-8 py-10">
-        <h1 class="text-xl font-black tracking-widest text-white uppercase">LITTLESTEP</h1>
-      </div>
+      <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-6 py-7">
+        <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white" aria-hidden="true">
+          <i class="fas fa-shoe-prints -rotate-90"></i>
+        </span>
+        <span>
+          <span class="block text-lg font-extrabold leading-tight tracking-tight text-gray-900">LittleStep</span>
+          <span class="block text-xs font-semibold text-gray-400">Teacher Portal</span>
+        </span>
+      </a>
 
       @auth
         @if(Auth::user()->role === 'teacher')
-        <nav class="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
-          <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-tachometer-alt text-blue-500"></i>
-            <span>Dashboard</span>
-          </a>
-          <a href="{{ route('guardians.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-users text-blue-500"></i>
-            <span>Guardians</span>
-          </a>
-          <a href="{{ route('children.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-              <i class="fas fa-user-graduate text-blue-500"></i>
-              <span>Children</span>
-          </a>
-          <a href="{{ route('progress.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-chart-line text-blue-500"></i>
-            <span>Progress</span>
-          </a>
-          <a href="{{ route('archives.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-box-archive text-blue-500"></i>
-            <span>Archives</span>
-          </a>
-          <a href="{{ route('logs.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-            <i class="fas fa-clipboard-list text-blue-500"></i>
-            <span>System Logs</span>
-          </a>
+        @php
+          $navItems = [
+            ['route' => 'dashboard',       'match' => 'dashboard',   'icon' => 'fa-house',          'chip' => 'bg-sky-100 text-sky-600',         'label' => 'Dashboard'],
+            ['route' => 'guardians.index', 'match' => 'guardians.*', 'icon' => 'fa-people-roof',    'chip' => 'bg-violet-100 text-violet-600',   'label' => 'Guardians'],
+            ['route' => 'children.index',  'match' => 'children.*',  'icon' => 'fa-child-reaching', 'chip' => 'bg-amber-100 text-amber-600',     'label' => 'Children'],
+            ['route' => 'progress.index',  'match' => 'progress.*',  'icon' => 'fa-seedling',       'chip' => 'bg-emerald-100 text-emerald-600', 'label' => 'Progress'],
+            ['route' => 'archives.index',  'match' => 'archives.*',  'icon' => 'fa-box-archive',    'chip' => 'bg-rose-100 text-rose-600',       'label' => 'Archives'],
+            ['route' => 'logs.index',      'match' => 'logs.*',      'icon' => 'fa-clock-rotate-left', 'chip' => 'bg-slate-100 text-slate-600',  'label' => 'System Logs'],
+          ];
+        @endphp
+        <nav class="flex-1 space-y-1 overflow-y-auto px-4" aria-label="Main">
+          <p class="px-3 pb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">Menu</p>
+          @foreach($navItems as $item)
+            @php $active = request()->routeIs($item['match']); @endphp
+            <a href="{{ route($item['route']) }}"
+               @if($active) aria-current="page" @endif
+               class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition
+                      {{ $active ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-sm {{ $item['chip'] }}" aria-hidden="true">
+                <i class="fas {{ $item['icon'] }}"></i>
+              </span>
+              <span>{{ $item['label'] }}</span>
+            </a>
+          @endforeach
         </nav>
         @endif
       @endauth
 
-      <div class="p-6 border-t border-white/5 mt-auto">
+      <div class="mt-auto p-4">
         @auth
-        <div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-          <div class="w-9 h-9 bg-white text-[#081028] rounded-full flex items-center justify-center font-bold shadow-md text-xs">
-            {{ strtoupper(substr(Auth::user()->teacher->first_name ?? Auth::user()->email, 0, 2)) }}
+        <div class="flex items-center gap-3 rounded-2xl bg-gray-50 p-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700" aria-hidden="true">
+            {{ $userInitials }}
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-white text-sm truncate">
-              {{ Auth::user()->teacher->first_name ?? '' }} {{ Auth::user()->teacher->last_name ?? '' }}
-            </p>
-            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">
-              {{ ucfirst(Auth::user()->role) }}
-            </p>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-bold text-gray-900">{{ $displayName }}</p>
+            <p class="text-xs font-semibold text-gray-400">{{ ucfirst(Auth::user()->role) }}</p>
           </div>
           <form action="{{ route('auth.logout') }}" method="POST">
             @csrf
             <button type="submit" aria-label="Sign out" title="Sign out"
-                    class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors">
-              <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500">
+              <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
             </button>
           </form>
         </div>
@@ -81,27 +86,29 @@
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0 h-screen">
-      <div class="lg:hidden bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-        <button type="button" id="sidebar-toggle" aria-label="Open navigation menu" class="text-[#081028] p-2 -ml-2 rounded-xl hover:bg-slate-50">
-          <i class="fas fa-bars text-2xl" aria-hidden="true"></i>
+    <div class="flex h-screen min-w-0 flex-1 flex-col">
+      <div class="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200/70 bg-white px-4 py-3 lg:hidden">
+        <button type="button" id="sidebar-toggle" aria-label="Open navigation menu" class="-ml-1 rounded-xl p-2 text-gray-700 hover:bg-gray-100">
+          <i class="fas fa-bars text-xl" aria-hidden="true"></i>
         </button>
-        <h1 class="text-lg font-black text-[#081028] uppercase tracking-tighter">KidWatch</h1>
+        <span class="text-base font-extrabold tracking-tight text-gray-900">LittleStep</span>
         @auth
-        <div class="w-8 h-8 bg-[#081028] text-white rounded-full flex items-center justify-center font-bold text-[10px]">
-          {{ strtoupper(substr(Auth::user()->teacher->first_name ?? Auth::user()->email, 0, 2)) }}
+        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700" aria-hidden="true">
+          {{ $userInitials }}
         </div>
         @endauth
       </div>
 
-      <main class="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
-        <x-flash-messages />
-        @yield('content')
+      <main class="flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8 lg:px-10 lg:py-10">
+        <div class="mx-auto max-w-7xl">
+          <x-flash-messages />
+          @yield('content')
+        </div>
       </main>
     </div>
   </div>
 
-  <div id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity duration-300"></div>
+  <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-gray-900/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden"></div>
 
   <script nonce="{{ request()->attributes->get('cspNonce') }}">
     function toggleSidebar() {
@@ -136,6 +143,9 @@
     });
     document.addEventListener('click', event => {
       event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
+    });
+    document.addEventListener('change', event => {
+      if (event.target.matches('select[data-auto-submit]')) event.target.form?.requestSubmit();
     });
 
     const menuItems = panel => [...panel.querySelectorAll('[role="menuitem"]:not([disabled])')];

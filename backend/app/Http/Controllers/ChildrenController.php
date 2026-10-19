@@ -2,17 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChildIndexRequest;
 use App\Models\Teacher;
 use App\Support\FormRules;
+use App\Support\Search;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ChildrenController extends Controller
 {
-    public function index(Request $request)
+    public function index(ChildIndexRequest $request)
     {
         $teacher = $this->currentTeacher($request);
-        $children = $teacher->ownedChildren()->with('guardian')->paginate(10);
+        $children = Search::apply($teacher->ownedChildren(), $request->search(), [
+            'first_name', 'middle_name', 'last_name', 'guardian.first_name', 'guardian.last_name',
+        ])
+            ->when($request->validated('sex'), fn ($query, $sex) => $query->where('sex', $sex))
+            ->with('guardian')
+            ->orderBy('first_name')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('children.index', compact('children'));
     }

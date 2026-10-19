@@ -131,9 +131,26 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
 - **`<x-action-menu>`:** a ⋮ button that keeps a row's or record's actions out of sight until it is clicked. The menu holds `<x-action-menu.item>` links, or submit items placed inside their form (archive/restore forms keep `data-confirm`).
   - **Where it's used:** list rows on Guardians, Children, Progress Records and Archives, plus the Unlink Child page, and the record actions on the guardian profile, child profile and progress record pages.
   - **How it behaves:** the layout script opens one menu at a time next to its button, so tables that scroll sideways can't clip it. It follows the button when the page scrolls and closes on an outside click, Escape or Tab. Arrow keys move through the items.
-- **`<x-pagination-buttons :paginator>`:** the Previous/Next buttons.
+Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
 
-Form actions (Save/Cancel, wizard steps, Filter, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
+**Teacher portal design.** The portal uses a light, minimal look with the Nunito font, a white sidebar (pastel icon per section, active section highlighted) and white rounded cards on a warm off-white background. Index pages (Guardians, Children, Progress Records, Archives, System Logs) and the dashboard are built from the same components, so they look and behave the same:
+
+- **`<x-page-header title description>`:** page title and subtitle. Header actions (e.g. Add Guardian) go in the slot.
+- **`<x-search-bar placeholder :keep>`:** a GET search form with a Search button and a Clear link when filters are active. Filter controls go in its slot. `:keep` carries query values across searches (Archives keeps `tab`).
+- **`<x-filter-field name label>`:** a select when given `:options` (it submits on change), otherwise an input such as `type="date"`.
+- **`<x-table :columns :paginator empty>`:** the shared table card. Rows go in the slot, and a right-aligned actions column is added unless `:actions="false"`. It shows the `empty` message when there are no rows, and the pagination footer when a paginator is passed.
+- **Pagination:** `AppServiceProvider` sets `pagination.littlestep` as the default view, so every `$paginator->links()` renders the same "Showing 1–10 of 23" summary with numbered pages. Index paginators use `withQueryString()`, so search and filters survive page changes.
+- **`<x-person name subtitle>`**, **`<x-badge color>`**, **`<x-status-badge status>`** (Pending / In Progress / Completed), **`<x-log-action action>`:** the name cell with initials, and the shared colored badges.
+
+**Search and filters.** Searching runs on the server through `App\Support\Search::apply($query, $term, $columns)`. Every word of the term has to match one of the columns, so "casey guardian" finds Casey Guardian. `relation.column` searches a related model, and `%`/`_` are matched literally. Queries stay scoped through `Teacher::ownedChildren()` / `ownedGuardians()`. Input is validated by `App\Http\Requests\IndexSearchRequest` (`search`, max 100 characters), with `ChildIndexRequest` adding `sex` and `LogIndexRequest` adding the log filters.
+
+| Page | Searches | Filters |
+| --- | --- | --- |
+| Guardians | name, email, contact number, relationship | — |
+| Children | child name, guardian name | sex |
+| Progress Records | child name | — |
+| Archives | guardian and child names, guardian email | active tab is kept |
+| System Logs | details | action, entity, from/to date (actions and entities listed from your own logs) |
 
 **Forms and validation.** The teacher forms share their rules through `App\Support\FormRules`, so a field is accepted or rejected the same way everywhere:
 

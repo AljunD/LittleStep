@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexSearchRequest;
 use App\Models\Guardian;
 use App\Models\ProgressRecord;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Support\FormRules;
 use App\Support\SafeMail;
+use App\Support\Search;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,16 +59,19 @@ class GuardianController extends Controller
         ];
     }
 
-    public function index(Request $request)
+    public function index(IndexSearchRequest $request)
     {
-        $guardians = $this->currentTeacher($request)
-            ->ownedGuardians()
+        $guardians = Search::apply($this->currentTeacher($request)->ownedGuardians(), $request->search(), [
+            'first_name', 'middle_name', 'last_name', 'contact_number', 'relationship_to_child', 'user.email',
+        ])
             ->with(['user', 'children' => function ($query) use ($request) {
                 $query->whereHas('progressRecords', function ($progressQuery) use ($request) {
                     $progressQuery->withTrashed()->where('teacher_id', $request->user()->teacher->id);
                 });
             }])
-            ->paginate(10);
+            ->orderBy('first_name')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('guardians.index', compact('guardians'));
     }
