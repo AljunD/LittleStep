@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\ChildrenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
@@ -100,6 +101,12 @@ Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
 
     Route::resource('children', ChildrenController::class)->except(['create', 'store']);
     Route::get('/children/{id}/photo', [ChildrenController::class, 'photo'])->name('children.photo');
+});
+
+Route::prefix('checklist')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::get('/', [ChecklistController::class, 'index'])->name('checklist.index');
+    Route::get('/{checklistItem}/edit', [ChecklistController::class, 'edit'])->name('checklist.edit');
+    Route::put('/{checklistItem}', [ChecklistController::class, 'update'])->name('checklist.update');
 });
 
 Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(function () {

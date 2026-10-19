@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Child;
+use App\Models\EccdChecklistItem;
 use App\Models\Guardian;
 use App\Models\ProgressRecord;
 use App\Models\Teacher;
@@ -154,6 +155,20 @@ class FlashMessagesTest extends TestCase
             ->patch(route('children.restore', $this->child->id));
 
         $this->assertFlashShownOnce($response, 'success', 'Child record restored successfully.');
+    }
+
+    public function test_checklist_item_update_success_is_shown_on_the_checklist(): void
+    {
+        $item = EccdChecklistItem::create([
+            'domain' => 'gross_motor',
+            'activity' => 'Climbs on chair',
+            'item_number' => 1,
+        ]);
+
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->put(route('checklist.update', $item), ['activity' => 'Climbs on a chair']);
+
+        $this->assertFlashShownOnce($response, 'success', 'Checklist item updated.');
     }
 
     public function test_profile_update_success_is_shown_on_the_profile_tab(): void

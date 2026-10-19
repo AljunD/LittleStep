@@ -172,6 +172,13 @@ To add a tab, add its route under the `settings` prefix (same `auth`, `verified`
 - **Keep the official form light:** add `keep-light` to content that must match the printed form. The progress record page (Child's Record 2) uses it, so it stays light in dark mode.
 - **Adding a color family:** the values in `theme-dark.css` were copied from `node_modules/tailwindcss/theme.css`. To use a new family, add its lines in both blocks with the same pattern. Under `.dark`, shades 50/100/200 become translucent mixes of its 500 shade and 700/800/900 take its 300/200/100 values. Under `.keep-light` they get their original values. Run `npm run build` afterwards.
 
+**ECCD Checklist tab.** The sidebar's Checklist link (between Progress and Archives) opens `checklist.index` (`ChecklistController`). It lists the official `eccd_checklist_items` in Child's Record 2 order (`EccdChecklistItem::inOfficialOrder()`: domains as in `EccdExpertSystem::DOMAIN_LABELS`, then item number). You can search the activity and materials text and filter by domain (`ChecklistIndexRequest`).
+
+- **Editing wording only:** each row's ⋮ menu has **Edit Wording** (`checklist.edit` / `PUT checklist.update`). `UpdateChecklistItemRequest` accepts only `activity` (required, up to 255 characters) and `materials_and_procedure` (optional, up to 5000). Domain and item number are shown read-only and ignored if posted.
+- **Why there's no create or delete:** scoring counts every item per domain against the official tables, and the PDF places items by number, so adding or removing items would break scores and the report.
+- **Saving:** a real change is logged as `updated` on `ChecklistItem` with the domain, item number and changed fields. An unchanged form shows "No changes to save." Archived (soft-deleted) items return 404.
+- **Who sees edits:** the checklist is shared, so an edit applies to every teacher right away: evaluation forms, progress records, the expert-system explanation and the guardian app. The Child's Record 2 PDF keeps the official printed wording.
+
 **Search and filters.** Searching runs on the server through `App\Support\Search::apply($query, $term, $columns)`. Every word of the term has to match one of the columns, so "casey guardian" finds Casey Guardian. `relation.column` searches a related model, and `%`/`_` are matched literally. Queries stay scoped through `Teacher::ownedChildren()` / `ownedGuardians()`. Input is validated by `App\Http\Requests\IndexSearchRequest` (`search`, max 100 characters), with `ChildIndexRequest` adding `sex` and `LogIndexRequest` adding the log filters.
 
 | Page | Searches | Filters |
