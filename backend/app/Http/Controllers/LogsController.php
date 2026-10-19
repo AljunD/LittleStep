@@ -3,40 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LogIndexRequest;
-use App\Models\Log;
-use App\Support\Search;
+use App\Services\ActivityLogService;
+use App\Support\AuditLog;
+use Illuminate\Http\Request;
 
+/** System Logs: the signed-in teacher's own audit trail. */
 class LogsController extends Controller
 {
+    public function __construct(private readonly ActivityLogService $activityLogs) {}
+
     public function index(LogIndexRequest $request)
     {
-        $filters = $request->validated();
-        $ownLogs = fn () => Log::where('user_id', $request->user()->id);
+        $user = $request->user();
+        $logs = $this->activityLogs->filteredQuery($user, $request->validated())
+            ->paginate(ActivityLogService::PER_PAGE)
+            ->withQueryString();
 
-        $query = $ownLogs()->latest();
+        return view('logs.index', [
+            'logs' => $logs,
+            'recordLinks' => $this->activityLogs->recordLinks($user, $logs->getCollection()),
+            'summary' => $this->activityLogs->summary($user),
+            'actionOptions' => $this->activityLogs->ownDistinct($user, 'action')
+                ->mapWithKeys(fn (string $action) => [$action => AuditLog::actionLabel($action)]),
+            'entityOptions' => $this->activityLogs->ownDistinct($user, 'entity_type')
+                ->mapWithKeys(fn (string $type) => [$type => AuditLog::entityLabel($type)]),
+        ]);
+    }
 
-        if (! empty($filters['action'])) {
-            $query->where('action', $filters['action']);
-        }
+    public function show(Request $request, int $log)
+    {
+        $user = $request->user();
+        // Scoped to the user's own entries: anyone else's id is a 404, not a 403, so ids can't be probed.
+        $entry = $this->activityLogs->ownLogs($user)->findOrFail($log);
 
-        if (! empty($filters['entity_type'])) {
-            $query->where('entity_type', $filters['entity_type']);
-        }
+        return view('logs.show', [
+            'log' => $entry,
+            'recordUrl' => $this->activityLogs->recordLinks($user, [$entry])["{$entry->entity_type}:{$entry->entity_id}"] ?? null,
+        ]);
+    }
 
-        if (! empty($filters['from_date'])) {
-            $query->whereDate('created_at', '>=', $filters['from_date']);
-        }
-
-        if (! empty($filters['to_date'])) {
-            $query->whereDate('created_at', '<=', $filters['to_date']);
-        }
-
-        Search::apply($query, $request->search(), ['details']);
-
-        $logs = $query->paginate(15)->withQueryString();
-        $actions = $ownLogs()->distinct()->orderBy('action')->pluck('action');
-        $entityTypes = $ownLogs()->distinct()->orderBy('entity_type')->pluck('entity_type');
-
-        return view('logs.index', compact('logs', 'actions', 'entityTypes'));
+    public function export(LogIndexRequest $request)
+    {
+        return $this->activityLogs->exportCsv($request->user(), $request->validated());
     }
 }

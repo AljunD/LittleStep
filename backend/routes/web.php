@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\ChildrenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianController;
@@ -102,6 +103,12 @@ Route::middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::get('/children/{id}/photo', [ChildrenController::class, 'photo'])->name('children.photo');
 });
 
+Route::prefix('checklist')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::get('/', [ChecklistController::class, 'index'])->name('checklist.index');
+    Route::get('/{checklistItem}/edit', [ChecklistController::class, 'edit'])->name('checklist.edit');
+    Route::put('/{checklistItem}', [ChecklistController::class, 'update'])->name('checklist.update');
+});
+
 Route::prefix('archive')->middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::get('/', [ArchiveController::class, 'index'])->name('archives.index');
     Route::patch('/{id}/restore', [ArchiveController::class, 'restore'])->name('guardians.restore');
@@ -148,9 +155,13 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
         ->name('progress.preview');
 });
 
-Route::get('/logs', [LogsController::class, 'index'])
-    ->middleware(['auth', 'verified', 'teacher'])
-    ->name('logs.index');
+Route::prefix('logs')->middleware(['auth', 'verified', 'teacher'])->group(function () {
+    Route::get('/', [LogsController::class, 'index'])->name('logs.index');
+    Route::get('/export', [LogsController::class, 'export'])
+        ->middleware('throttle:10,1')
+        ->name('logs.export');
+    Route::get('/{log}', [LogsController::class, 'show'])->whereNumber('log')->name('logs.show');
+});
 
 Route::prefix('settings')->middleware(['auth', 'verified', 'teacher'])->group(function () {
     Route::redirect('/', '/settings/profile')->name('settings.index');

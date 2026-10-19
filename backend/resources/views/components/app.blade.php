@@ -54,6 +54,7 @@
             ['route' => 'guardians.index', 'match' => 'guardians.*', 'icon' => 'fa-people-roof',    'chip' => 'bg-violet-100 text-violet-600',   'label' => 'Guardians'],
             ['route' => 'children.index',  'match' => 'children.*',  'icon' => 'fa-child-reaching', 'chip' => 'bg-amber-100 text-amber-600',     'label' => 'Children'],
             ['route' => 'progress.index',  'match' => 'progress.*',  'icon' => 'fa-seedling',       'chip' => 'bg-emerald-100 text-emerald-600', 'label' => 'Progress'],
+            ['route' => 'checklist.index', 'match' => 'checklist.*', 'icon' => 'fa-list-check',     'chip' => 'bg-pink-100 text-pink-600',       'label' => 'Checklist'],
             ['route' => 'archives.index',  'match' => 'archives.*',  'icon' => 'fa-box-archive',    'chip' => 'bg-rose-100 text-rose-600',       'label' => 'Archives'],
             ['route' => 'logs.index',      'match' => 'logs.*',      'icon' => 'fa-clock-rotate-left', 'chip' => 'bg-slate-100 text-slate-600',  'label' => 'System Logs'],
             ['route' => 'settings.index',  'match' => 'settings.*',  'icon' => 'fa-gear',           'chip' => 'bg-gray-100 text-gray-600',       'label' => 'Settings'],

@@ -194,7 +194,7 @@ class DatabaseSeeder extends Seeder
         Log::create([
             'user_id' => $teacherUser->id,
             'action' => 'seeded_sample_evaluation',
-            'entity_type' => 'progress_record',
+            'entity_type' => 'ProgressRecord',
             'entity_id' => $progressRecord->id,
             'details' => 'Sample ECCD evaluation data seeded for child Juan Chowalter (Round 1 – all 7 domains).',
         ]);

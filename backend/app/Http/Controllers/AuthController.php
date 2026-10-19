@@ -104,7 +104,9 @@ class AuthController extends Controller
             return redirect()->intended('/dashboard');
         }
 
-        recordLog('login_failed', 'User', 0, 'Failed login attempt.');
+        // Attribute the attempt to the targeted account (if any) so its owner sees it in System Logs.
+        $targetedUserId = User::where('email', $credentials['email'])->value('id');
+        recordLog('login_failed', 'User', $targetedUserId, 'Failed sign-in attempt on the web portal.', $targetedUserId);
 
         return back()->withErrors([
             'email' => 'Invalid credentials provided.',

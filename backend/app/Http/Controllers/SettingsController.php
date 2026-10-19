@@ -42,9 +42,7 @@ class SettingsController extends Controller
             return redirect()->route('settings.profile')->with('status', 'No changes to save.');
         }
 
-        $changedFields = collect(array_keys($teacher->getDirty()))
-            ->map(fn ($field) => str_replace('_', ' ', $field))
-            ->implode(', ');
+        $changedFields = $this->changedFieldsList($teacher);
         $teacher->save();
 
         recordLog('updated', 'Teacher', $teacher->id, 'Teacher updated their profile: '.$changedFields.'.');

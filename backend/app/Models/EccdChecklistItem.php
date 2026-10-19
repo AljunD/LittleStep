@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EccdExpertSystem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -27,5 +28,17 @@ class EccdChecklistItem extends Model
     public function scopeOfType($query, string $domain)
     {
         return $query->where('domain', $domain);
+    }
+
+    /** Official items only, in Child's Record 2 order: domains as in EccdExpertSystem::DOMAIN_LABELS, then item number. */
+    public function scopeInOfficialOrder($query)
+    {
+        $domainKeys = array_keys(EccdExpertSystem::DOMAIN_LABELS);
+        $bindings = collect($domainKeys)->flatMap(fn (string $key, int $position) => [$key, $position])->all();
+
+        return $query->whereIn('domain', $domainKeys)
+            ->orderByRaw('CASE domain '.str_repeat('WHEN ? THEN ? ', count($domainKeys)).'END', $bindings)
+            ->orderBy('item_number')
+            ->orderBy('id');
     }
 }
