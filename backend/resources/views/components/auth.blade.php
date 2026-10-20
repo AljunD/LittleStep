@@ -45,6 +45,9 @@
                      class="mx-auto mb-6 h-auto w-40">
                 <x-flash-messages />
                 @yield('content')
+                <p class="mt-8 text-center text-xs text-gray-400">
+                    <a href="{{ route('privacy') }}" class="underline underline-offset-2 hover:text-gray-600">Privacy Policy</a>
+                </p>
             </div>
         </div>
 
