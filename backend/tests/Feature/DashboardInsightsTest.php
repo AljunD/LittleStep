@@ -60,11 +60,15 @@ class DashboardInsightsTest extends TestCase
 
         foreach ($rounds as $round => [$date, $code, $scaled]) {
             $record->update(["evaluation_date_round_{$round}" => $date]);
-            foreach ($this->items as $item) {
+            foreach ($this->items as $key => $item) {
+                $score = is_array($scaled) ? ($scaled[$key] ?? null) : $scaled;
+                if ($score === null) {
+                    continue;
+                }
                 $domain = Domain::create(['progress_record_id' => $record->id, 'checklist_item_id' => $item->id, 'evaluation_round' => $round]);
                 DomainScore::create([
                     'progress_record_id' => $record->id, 'domain_id' => $domain->id, 'raw_score' => 1,
-                    'scaled_score' => $scaled, 'standard_score' => 100, 'interpretation_code' => $code,
+                    'scaled_score' => $score, 'standard_score' => 100, 'interpretation_code' => $code,
                 ]);
             }
         }
@@ -81,6 +85,23 @@ class DashboardInsightsTest extends TestCase
             ->assertDontSee('Recent Activity')
             ->assertSee('Class Insights')
             ->assertSee('No scored evaluations yet.');
+    }
+
+    public function test_domains_are_ordered_by_need_then_lowest_average_with_unscored_domains_last(): void
+    {
+        [$user, $teacher] = $this->makeTeacher('Taylor');
+        $this->scoredChild($teacher, 'Ana', [1 => ['2026-09-01', 'average', ['gross_motor' => 3, 'fine_motor' => 12, 'self_help' => 9]]]);
+        $this->scoredChild($teacher, 'Ben', [1 => ['2026-09-02', 'average', ['gross_motor' => 4, 'fine_motor' => 13, 'self_help' => 8]]]);
+
+        $domains = app(DashboardInsightsService::class)->for($teacher)['domains'];
+
+        $this->assertSame(
+            ['gross_motor', 'self_help', 'fine_motor', 'receptive_language', 'expressive_language', 'cognitive', 'social_emotional'],
+            array_column($domains, 'key')
+        );
+        $this->assertSame([3.5, 8.5, 12.5, null], [$domains[0]['average'], $domains[1]['average'], $domains[2]['average'], $domains[3]['average']]);
+
+        $this->actingAs($user)->get(route('dashboard'))->assertOk();
     }
 
     public function test_insights_use_each_childs_latest_round_and_only_the_teachers_active_records(): void
