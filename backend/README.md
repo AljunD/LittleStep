@@ -9,7 +9,7 @@ It serves two audiences:
 | Teachers  | Server-rendered Blade web app      | Session + verified email     | `routes/web.php`  |
 | Guardians | JSON API used by the `mobile/` app | Sanctum bearer token (12 h)  | `routes/api.php` → `/api/v1/...` |
 
-Teachers register guardians and children, record ECCD checklist assessments over up to three evaluation rounds, write observation notes, and download PDF progress reports. Guardians have read-only access to their own children's profiles and progress.
+Teachers register guardians and children, record ECCD checklist assessments over up to three evaluations (1st, 2nd and 3rd), write observation notes, and download PDF progress reports. Guardians have read-only access to their own children's profiles and progress.
 
 ## Requirements
 
@@ -95,7 +95,7 @@ resources/pdf/childs-record-2/  Official Child's Record 2 pages used as the PDF 
   - **Teachers:** the progress record page has a **How Was This Computed?** section for every round with a date.
   - **Guardians:** `GET /guardian/children/{id}/insights`, shown on the mobile **Why This Result?** screen.
 - **Skills to practise:** `skillsToPractice()` lists the official checklist items marked — in the latest round of each domain.
-  - **Teachers:** shown as **Focus Items for the Next Round**.
+  - **Teachers:** shown as **Focus Items for the Next Evaluation**.
   - **Guardians:** shown as "Things to try at home".
 - **Live preview:** while a teacher marks ✓/— on the evaluation form, `POST /progress/preview` re-scores the page without saving anything.
   - The page shows the domain's answered items, raw score, scaled score and interpretation, the standard score once all 7 domains are scored, and the warnings.
@@ -133,7 +133,7 @@ Domain interpretations follow the Technical Manual's Table 6 wording, e.g. "Sugg
   - **How it behaves:** the layout script opens one menu at a time next to its button, so tables that scroll sideways can't clip it. It follows the button when the page scrolls and closes on an outside click, Escape or Tab. Arrow keys move through the items.
 Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run `npm run build` after adding new button classes.
 
-**Logo.** `public/images/littlestep-logo.png` is the mobile app's `assets/images/logo.png` (full logo with the wordmark), shown at the top of the sidebar and above the form on the sign-in, registration and password pages (`components/auth.blade.php`). `public/images/littlestep-mark.png` is a 256×256 crop of just the footprint-and-clipboard mark, used as the browser-tab icon, in the mobile top bar and on Help & About. In dark mode the logos sit on a white badge so the navy parts stay visible. If the app logo changes, replace both files. `public/images/logo.png` is the Barangay Balite seal on the sign-in page, not the LittleStep logo.
+**Logo.** `public/images/littlestep-logo.png` is the mobile app's `assets/images/logo.png` (full logo with the wordmark), shown at the top of the sidebar and above the form on the sign-in, registration and password pages (`components/auth.blade.php`). `public/images/littlestep-mark.png` is a 256×256 crop of just the footprint-and-clipboard mark, used as the browser-tab icon, in the mobile top bar and on Help & About. In dark mode the views swap in `littlestep-logo-dark.png` / `littlestep-mark-dark.png`, copies with the navy wordmark and arrow recolored to a light tone, so the transparent logo sits directly on the dark background. If the app logo changes, replace all four files (regenerate the `-dark` copies by recoloring the navy pixels and keeping the alpha). `public/images/logo.png` is the Barangay Balite seal on the sign-in page, not the LittleStep logo.
 
 **Teacher portal design.** The portal uses a light, minimal look with the Nunito font, a white sidebar (pastel icon per section, active section highlighted) and white rounded cards on a warm off-white background. Index pages (Guardians, Children, Progress Records, Archives, System Logs) and the dashboard are built from the same components, so they look and behave the same:
 
@@ -143,6 +143,31 @@ Form actions (Save/Cancel, wizard steps, Search, Add Guardian) stay visible. Run
 - **`<x-table :columns :paginator empty>`:** the shared table card. Rows go in the slot, and a right-aligned actions column is added unless `:actions="false"`. It shows the `empty` message when there are no rows, and the pagination footer when a paginator is passed.
 - **Pagination:** `AppServiceProvider` sets `pagination.littlestep` as the default view, so every `$paginator->links()` renders the same "Showing 1–10 of 23" summary with numbered pages. Index paginators use `withQueryString()`, so search and filters survive page changes.
 - **`<x-person name subtitle>`**, **`<x-badge color>`**, **`<x-status-badge status>`** (Pending / In Progress / Completed), **`<x-log-action action>`:** the name cell with initials, and the shared colored badges.
+
+**Dashboard insights.** Next to Needs Attention, the dashboard's Class Insights card (built by `App\Services\DashboardInsightsService`) summarizes the saved `domain_scores` of each child's **latest scored round**. Only the teacher's own records are included, and archived records and children are left out.
+
+- **Overall Development:** how many children fall in each interpretation code (`monitor_3m` … `highly_advanced`), shown as a stacked bar with counts.
+- **Domains to Focus On:** for each of the 7 domains, the average scaled score and how many children score in the delay range (`EccdExpertSystem::scaledScoreSuggestsDelay()`, scaled ≤ 6, as in Table 6). The domains with the most children needing support are listed first.
+- **Monitoring Schedule:** children whose latest result is `monitor_3m` or `monitor_6m`, with the re-check date (3 or 6 months after that round's evaluation date). Overdue checks are flagged and listed first. Each row links to the progress record. The 5 most urgent are shown.
+
+Recent account activity is on the System Logs page (`/logs`), not the dashboard.
+
+**Dashboard links.** The stat cards open Guardians, Children, and Progress Records filtered to Completed or Unfinished records (`progress.index?status=completed|unfinished`, validated by `ProgressIndexRequest`; also selectable on the Progress Records page). Needs Attention items open the evaluation (pending) or the record (in progress), and each Recent Evaluations row has a ⋮ menu (View Record, Child Profile, Add Evaluation).
+
+**Routing rules.**
+
+- `/` (`home`) redirects to the dashboard when signed in, otherwise to the sign-in page.
+- The sign-in, registration, forgot-password and reset-password pages use the `guest` middleware, so a signed-in teacher is sent to the dashboard. Signing in redirects to the intended page or `dashboard`.
+- Progress pages opened without their id (`progress.show`, `progress.edit`, `progress.select-domain`, `progress.create`, `progress.add-observation`) redirect to Progress Records with an error message. `progress.show/{id}` takes a progress record id only (unknown ids are a 404). The PDF report is `progress.download-pdf`.
+
+**Child profile.** `children.show` (`ChildrenController::show` + `App\Services\ChildProfileSummary`) shows a child the teacher owns:
+
+- **Header:** full name, sex, latest overall result, birth date and the linked guardian. View Progress (or Start Evaluation) is a button; Edit, Evaluate, Add Observation and Archive are in the ⋮ menu.
+- **Quick facts:** age today in 30-day months with its ECCD age band, evaluations done (of 3), the latest standard score and the number of skills to practice (`skillsToPractice()`).
+- **ECCD Progress:** one tile per evaluation (date, age at test, standard score, domains scored, result), then the latest scored evaluation's scaled score and Table 6 wording per domain. Scores come from `EccdExpertSystem::compute()`, so they match the progress record page. Only the teacher's active record is used; an archived record shows "not evaluated yet".
+- **Details:** personal details, address, education, observation notes (`domain_observations`, escaped), guardian with email-verification status, father, mother and record dates.
+
+Viewing the page is logged as `viewed` on the `Child`.
 
 **Settings.** The sidebar's Settings link opens `/settings`, which redirects to the Profile tab (`settings.profile`, `SettingsController`). Views live in `resources/views/settings/`. `settings/layout.blade.php` is the two-column shell: the tab list on the left and the selected tab's `@section('settings')` on the right. On large screens the right panel scrolls on its own, so long tabs such as Profile don't scroll the whole page. Phones keep the normal page scroll. The Profile tab shows the signed-in teacher's personal details, contact details and account info (role, email status, member since). Passwords and tokens are never shown.
 
@@ -169,6 +194,7 @@ To add a tab, add its route under the `settings` prefix (same `auth`, `verified`
 
 - **How it applies:** `components/app.blade.php` renders `<html class="dark">` for Dark. For System, a small nonce'd head script toggles `.dark` from `prefers-color-scheme` and follows device changes. The sign-in pages always stay light.
 - **How the styles work:** `resources/css/theme-dark.css` redefines Tailwind's color variables under `.dark`. White becomes the card surface, the gray scale inverts, and light tints become translucent with lighter text, so every page switches without `dark:` classes. `dark:` utilities are also available for one-off fixes, and `.text-white` stays white on colored buttons.
+- **Text, hovers and focus rings:** mid-tone text (`text-blue-600`, `text-red-600`, `text-green-600`, etc.) switches to the 400 shade so links stay readable on dark cards. Because shade 700 becomes a light tint, solid buttons that darken on hover also need a `dark:hover:` shade (see `<x-button>`: `dark:hover:bg-blue-500`). Focus rings use the card color for their offset instead of a white halo. Avoid hard-coded hex colors (`bg-[#…]`) outside `keep-light` content; they don't switch.
 - **Keep the official form light:** add `keep-light` to content that must match the printed form. The progress record page (Child's Record 2) uses it, so it stays light in dark mode.
 - **Adding a color family:** the values in `theme-dark.css` were copied from `node_modules/tailwindcss/theme.css`. To use a new family, add its lines in both blocks with the same pattern. Under `.dark`, shades 50/100/200 become translucent mixes of its 500 shade and 700/800/900 take its 300/200/100 values. Under `.keep-light` they get their original values. Run `npm run build` afterwards.
 

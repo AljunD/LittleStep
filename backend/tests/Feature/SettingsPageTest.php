@@ -219,7 +219,13 @@ class SettingsPageTest extends TestCase
 
         $this->withCookie(DisplayTheme::COOKIE, 'dark')->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('<html lang="en" data-theme="dark" class="dark">', false);
+            ->assertSee('<html lang="en" data-theme="dark" class="dark">', false)
+            // Primary buttons hover to a darker blue on the dark theme, where blue-700 is remapped to a light tint.
+            ->assertSee('dark:hover:bg-blue-500', false);
+
+        $css = file_get_contents(resource_path('css/theme-dark.css'));
+        $this->assertStringContainsString('.dark :is(.text-blue-500, .text-blue-600, .hover\:text-blue-600:hover):not(.keep-light *)', $css);
+        $this->assertStringContainsString('--tw-ring-offset-color: var(--color-white);', $css);
     }
 
     public function test_system_theme_follows_the_device_with_a_nonced_script(): void

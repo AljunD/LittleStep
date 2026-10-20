@@ -14,35 +14,39 @@ use App\Support\SafeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+// The site root opens the teacher portal: the dashboard when signed in, otherwise the sign-in page.
+Route::get('/', function (Request $request) {
+    return redirect()->route($request->user() ? 'dashboard' : 'login');
+})->name('home');
 
 Route::prefix('auth')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('auth.register.form');
-    Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:5,1')
-        ->name('auth.register.submit');
+    // Signed-in users are sent to the dashboard instead of seeing the sign-in, registration and password pages again.
+    Route::middleware('guest')->group(function () {
+        Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('auth.register.form');
+        Route::post('/register', [AuthController::class, 'register'])
+            ->middleware('throttle:5,1')
+            ->name('auth.register.submit');
 
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1')
-        ->name('auth.login.submit');
+        Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AuthController::class, 'login'])
+            ->middleware('throttle:5,1')
+            ->name('auth.login.submit');
+
+        Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('auth.password.request');
+        Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+            ->middleware('throttle:5,1')
+            ->name('auth.password.email');
+
+        Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+
+        Route::post('/reset-password', [AuthController::class, 'reset'])
+            ->middleware('throttle:5,1')
+            ->name('auth.password.update');
+    });
 
     Route::post('/logout', [AuthController::class, 'logout'])
         ->middleware('auth')
         ->name('auth.logout');
-
-    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('auth.password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
-        ->middleware('throttle:5,1')
-        ->name('auth.password.email');
-
-    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
-
-    Route::post('/reset-password', [AuthController::class, 'reset'])
-        ->middleware('throttle:5,1')
-        ->name('auth.password.update');
 });
 
 Route::get('/email/verify', function () {
@@ -137,9 +141,6 @@ Route::prefix('progress')->middleware(['auth', 'verified', 'teacher'])->group(fu
 
     Route::get('/{progressRecord}/download-pdf', [ProgressController::class, 'downloadPdf'])
         ->name('progress.download-pdf');
-
-    Route::get('/{progressRecord}/pdf', [ProgressController::class, 'downloadPdf'])
-        ->name('progress.pdf');
 
     Route::get('/edit/{id?}', [ProgressController::class, 'edit'])
         ->name('progress.edit');

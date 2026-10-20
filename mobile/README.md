@@ -72,16 +72,16 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   - On screens wider than the portrait background artwork (desktop web, landscape tablets), Welcome shows the whole illustration in a centered frame over a blurred copy, instead of zooming in and cropping it.
   - Sizes come from `useWindowDimensions()`, not a one-time `Dimensions.get()`, so they follow window resizes.
 - **Development areas (Domain screen):** tapping a Recent Activity card on the Dashboard, or any of the 7 development areas on the ECCD Checklist screen, opens `screens/DomainScreen.tsx`. It shows:
-  - a round selector (1st/2nd/3rd evaluation, with dates)
+  - an evaluation selector (1st/2nd/3rd Eval, with dates)
   - the raw score, scaled score, and how many skills were assessed
   - the interpretation of the scaled score (e.g. "Average development"), with a "Why this result?" link
   - every checklist item with ✓ (present), — (not present), or a clock icon (not yet assessed), plus the teacher's comment
   - **Things to try at home:** the items marked — in the latest evaluation of this area
-  - a "No results yet" panel when the teacher hasn't recorded that round
+  - a "No results yet" panel when the teacher hasn't recorded that evaluation
   - loading and error-with-retry states, and pull-to-refresh
 
   Data comes from `getGuardianChildDomain()` (`GET /guardian/children/{id}/domains/{domain}`). Domain names, icons and colors live in `constants/eccd-domains.ts` (official Child's Record 2 order).
-- **Why this result? (Insights screen):** the Dashboard's **Latest result** card and the Domain screen's "Why this result?" link open `screens/InsightsScreen.tsx`. For each evaluation round with a date, it shows:
+- **Why this result? (Insights screen):** the Dashboard's **Latest result** card and the Domain screen's "Why this result?" link open `screens/InsightsScreen.tsx`. For each evaluation with a date, it shows:
   - the standard score and overall interpretation, or how many of the 7 areas are scored so far
   - notes, e.g. items not answered yet, or an age outside the 3y1m–5y11m range
   - the numbered scoring steps: age in 30-day months, age band, raw score, scaled score, sum, standard score

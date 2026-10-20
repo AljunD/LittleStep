@@ -119,40 +119,34 @@
         </div>
 
         <div class="space-y-6">
-            <div class="bg-gray-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 -mr-16 -mt-16 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
-                
+            <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-6">Account Status</h2>
-                
-                <div class="space-y-6 relative z-10">
+
+                <div class="space-y-6">
                     <div>
-                        <p class="text-xs text-gray-400 mb-1">Email Address</p>
+                        <p class="text-xs text-gray-500 mb-1">Email Address</p>
                         @if($guardian->user)
-                            <p class="font-medium break-all">{{ $guardian->user->email }}</p>
+                            <p class="font-medium text-gray-900 break-all">{{ $guardian->user->email }}</p>
                             @if($guardian->user->email_verified_at)
-                                <span class="mt-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-green-500/20 text-green-400 border border-green-500/30 uppercase tracking-tighter">
-                                    Verified Account
-                                </span>
+                                <x-badge color="green" dot class="mt-2">Verified Account</x-badge>
                             @else
-                                <span class="mt-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 uppercase tracking-tighter">
-                                    Unverified Account
-                                </span>
+                                <x-badge color="amber" dot class="mt-2">Unverified Account</x-badge>
                             @endif
                         @else
                             <p class="font-medium text-gray-500 italic">No linked user account</p>
                         @endif
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                         <div>
-                            <p class="text-xs text-gray-400 mb-1">System Role</p>
-                            <p class="text-sm font-semibold text-blue-400">
+                            <p class="text-xs text-gray-500 mb-1">System Role</p>
+                            <p class="text-sm font-semibold text-gray-900">
                                 {{ $guardian->user ? ucfirst($guardian->user->role) : 'N/A' }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-400 mb-1">Guardian ID</p>
-                            <p class="text-sm font-semibold">#GRD-{{ str_pad($guardian->id, 5, '0', STR_PAD_LEFT) }}</p>
+                            <p class="text-xs text-gray-500 mb-1">Guardian ID</p>
+                            <p class="text-sm font-semibold text-gray-900">#GRD-{{ str_pad($guardian->id, 5, '0', STR_PAD_LEFT) }}</p>
                         </div>
                     </div>
                 </div>

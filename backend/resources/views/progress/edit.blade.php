@@ -24,7 +24,7 @@
         <section id="assessment-dates" class="scroll-mt-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 bg-gray-50 px-5 py-4">
                 <h2 class="font-bold text-gray-900">Assessment dates</h2>
-                <p class="mt-1 text-xs text-gray-600">Saved dates are shown below. Leave a date blank if that round has not been administered.</p>
+                <p class="mt-1 text-xs text-gray-600">Saved dates are shown below. Leave a date blank if that evaluation has not been administered.</p>
             </div>
             <div class="grid gap-4 p-5 sm:grid-cols-3">
                 @foreach ([1 => '1st', 2 => '2nd', 3 => '3rd'] as $round => $label)
@@ -52,7 +52,7 @@
         <section class="space-y-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-900">Checklist evaluations</h2>
-                <p class="mt-1 text-sm text-gray-600">Current saved marks and comments are prefilled for every assessment round.</p>
+                <p class="mt-1 text-sm text-gray-600">Current saved marks and comments are prefilled for every evaluation.</p>
             </div>
 
             @foreach ($domainLabels as $domainKey => $domainLabel)

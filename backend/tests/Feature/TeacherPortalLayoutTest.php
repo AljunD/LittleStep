@@ -80,6 +80,9 @@ class TeacherPortalLayoutTest extends TestCase
             ->assertSee('Action required')
             ->assertDontSee('KidWatch')
             ->assertSee('<img src="'.asset('images/littlestep-logo.png').'" alt="LittleStep"', false)
+            // The dark theme swaps in a recolored logo instead of a white badge behind it.
+            ->assertSee('<img src="'.asset('images/littlestep-logo-dark.png').'" alt="LittleStep"', false)
+            ->assertDontSee('dark:bg-[#ffffff]', false)
             ->assertSee('<link rel="icon" type="image/png" href="'.asset('images/littlestep-mark.png').'">', false)
             ->getContent();
 

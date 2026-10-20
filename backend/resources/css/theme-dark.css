@@ -191,3 +191,21 @@
     --color-slate-800: oklch(27.9% 0.041 260.031);
     --color-slate-900: oklch(20.8% 0.042 265.755);
 }
+
+/*
+ * Mid-tone colored text (links, status words, icons) is too dim on dark cards: use the 400 shade instead.
+ * Only the text color changes; bg-*-600 buttons keep their white text. The Child's Record 2 replica keeps its colors.
+ */
+.dark :is(.text-blue-500, .text-blue-600, .hover\:text-blue-600:hover):not(.keep-light *) { color: var(--color-blue-400); }
+.dark :is(.text-sky-600):not(.keep-light *) { color: var(--color-sky-400); }
+.dark :is(.text-red-600):not(.keep-light *) { color: var(--color-red-400); }
+.dark :is(.text-rose-600):not(.keep-light *) { color: var(--color-rose-400); }
+.dark :is(.text-green-600):not(.keep-light *) { color: var(--color-green-400); }
+.dark :is(.text-emerald-600):not(.keep-light *) { color: var(--color-emerald-400); }
+.dark :is(.text-violet-600):not(.keep-light *) { color: var(--color-violet-400); }
+.dark :is(.text-pink-600):not(.keep-light *) { color: var(--color-pink-400); }
+
+/* Focus rings keep a card-colored gap instead of a white halo. */
+.dark :not(.keep-light, .keep-light *) {
+    --tw-ring-offset-color: var(--color-white);
+}

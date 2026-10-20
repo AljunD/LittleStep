@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
+use App\Services\DashboardInsightsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, DashboardInsightsService $insightsService)
     {
         $teacher = $request->user()?->teacher;
         if (! $teacher) {
@@ -70,6 +70,8 @@ class DashboardController extends Controller
         $urgentAlertRecord = null;
         if ($rawUrgentRecord) {
             $urgentAlertRecord = (object) [
+                'id' => $rawUrgentRecord->id,
+                'child_id' => $rawUrgentRecord->child_id,
                 'status' => $rawUrgentRecord->status,
                 'evaluation_number' => $rawUrgentRecord->evaluation_number,
                 'child' => (object) [
@@ -98,29 +100,13 @@ class DashboardController extends Controller
 
         $incompleteTasksQueue = $rawIncompleteTasks->map(function ($item) {
             return (object) [
+                'id' => $item->id,
                 'status' => $item->status,
                 'child' => (object) [
                     'first_name' => $item->child_first_name,
                     'middle_name' => $item->child_middle_name,
                     'last_name' => $item->child_last_name,
                 ],
-            ];
-        });
-
-        $rawLogs = DB::table('logs')
-            ->where('user_id', $request->user()->id)
-            ->whereNull('deleted_at')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        $recentLogs = $rawLogs->map(function ($log) {
-            return (object) [
-                'action' => $log->action,
-                'entity_type' => $log->entity_type,
-                'entity_id' => $log->entity_id,
-                'details' => $log->details,
-                'created_at' => Carbon::parse($log->created_at),
             ];
         });
 
@@ -133,6 +119,7 @@ class DashboardController extends Controller
             ->whereNull('teachers.deleted_at')
             ->select(
                 'progress_records.id as record_id',
+                'progress_records.child_id',
                 DB::raw('COALESCE(progress_records.evaluation_date_round_3, progress_records.evaluation_date_round_2, progress_records.evaluation_date_round_1, progress_records.evaluation_date) as evaluation_date'),
                 'progress_records.evaluation_number',
                 'progress_records.status',
@@ -150,6 +137,7 @@ class DashboardController extends Controller
         $registryRecords = $rawRegistry->map(function ($row) {
             return (object) [
                 'id' => $row->record_id,
+                'child_id' => $row->child_id,
                 'evaluation_date' => $row->evaluation_date,
                 'evaluation_number' => $row->evaluation_number,
                 'status' => $row->status,
@@ -165,6 +153,8 @@ class DashboardController extends Controller
             ];
         });
 
+        $insights = $insightsService->for($teacher);
+
         return view('dashboard', compact(
             'guardiansCount',
             'childrenCount',
@@ -172,8 +162,8 @@ class DashboardController extends Controller
             'unfinishedRecordsCount',
             'urgentAlertRecord',
             'incompleteTasksQueue',
-            'recentLogs',
-            'registryRecords'
+            'registryRecords',
+            'insights'
         ));
     }
 }

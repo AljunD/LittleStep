@@ -171,7 +171,7 @@ class ProgressObservationTest extends TestCase
 
     public function test_security_headers_are_added_to_web_responses(): void
     {
-        $this->get(route('welcome'))
+        $this->get(route('login'))
             ->assertOk()
             ->assertHeader('X-Frame-Options', 'DENY')
             ->assertHeader('X-Content-Type-Options', 'nosniff')

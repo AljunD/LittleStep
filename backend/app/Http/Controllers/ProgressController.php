@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\IndexSearchRequest;
+use App\Http\Requests\ProgressIndexRequest;
 use App\Models\Domain;
 use App\Models\DomainResult;
 use App\Models\EccdChecklistItem;
@@ -130,11 +130,15 @@ class ProgressController extends Controller
         );
     }
 
-    public function index(IndexSearchRequest $request)
+    public function index(ProgressIndexRequest $request)
     {
         $teacher = $request->user()?->teacher;
         abort_unless($teacher, 403, 'A teacher profile is required.');
         $children = Search::apply($teacher->ownedChildren(), $request->search(), ['first_name', 'middle_name', 'last_name'])
+            ->when($request->recordStatuses(), fn ($query, array $statuses) => $query->whereHas(
+                'progressRecords',
+                fn ($records) => $records->where('teacher_id', $teacher->id)->whereIn('status', $statuses)
+            ))
             ->with(['progressRecords' => fn ($query) => $query->where('teacher_id', $teacher->id)->with(['domains.checklistItem', 'teacher'])])
             ->orderBy('first_name')
             ->paginate(10)
@@ -194,12 +198,22 @@ class ProgressController extends Controller
         ];
     }
 
+    /** Where a progress link without its child or record id lands: the Progress Records list, with a hint. */
+    private function redirectToProgressIndex(string $message)
+    {
+        return redirect()->route('progress.index')->with('error', $message);
+    }
+
     public function selectDomain(Request $request, $child_id = null)
     {
         $childId = $child_id ?? request('child_id');
+        if (! $childId) {
+            return $this->redirectToProgressIndex('Select a child to evaluate.');
+        }
+
         $teacher = $request->user()?->teacher;
         abort_unless($teacher, 403, 'A teacher profile is required.');
-        $child = $childId ? $teacher->ownedChildren()->findOrFail($childId) : null;
+        $child = $teacher->ownedChildren()->findOrFail($childId);
 
         $definedDomains = [
             'gross_motor' => 'Gross Motor',
@@ -233,9 +247,13 @@ class ProgressController extends Controller
 
     public function create(Request $request, $child_id = null)
     {
+        if (! $child_id) {
+            return $this->redirectToProgressIndex('Select a child to evaluate.');
+        }
+
         $teacher = $request->user()?->teacher;
         abort_unless($teacher, 403, 'A teacher profile is required.');
-        $child = $child_id ? $teacher->ownedChildren()->findOrFail($child_id) : null;
+        $child = $teacher->ownedChildren()->findOrFail($child_id);
         $domainKey = $request->query('domain');
 
         $allowed = [
@@ -361,7 +379,7 @@ class ProgressController extends Controller
 
         $maxAllowedRound = $this->getMaxAllowedRound($childId);
         if ($currentRound > $maxAllowedRound) {
-            return back()->with('error', 'You cannot start this evaluation round yet. Finish the previous round for all 7 domains first.');
+            return back()->with('error', 'You cannot start this evaluation yet. Finish the previous evaluation for all 7 domains first.');
         }
 
         $responseErrors = [];
@@ -472,14 +490,14 @@ class ProgressController extends Controller
                 'saved',
                 'ProgressRecord',
                 $progressRecord->id,
-                "Assessment results saved for domain {$domainKey}, round {$currentRound}."
+                "Assessment results saved for domain {$domainKey}, evaluation {$currentRound}."
             );
 
             DB::commit();
 
             $message = $filledCount === $totalItems
-                ? "Evaluation (Round {$currentRound}) completed and saved successfully!"
-                : "Evaluation (Round {$currentRound}) saved successfully! ({$filledCount}/{$totalItems} items filled)";
+                ? "Evaluation {$currentRound} completed and saved successfully!"
+                : "Evaluation {$currentRound} saved successfully! ({$filledCount}/{$totalItems} items filled)";
 
             return redirect()
                 ->route('progress.select-domain', ['child_id' => $childId])
@@ -545,9 +563,7 @@ class ProgressController extends Controller
     {
         $childId = $child_id ?? request('child_id');
         if (! $childId) {
-            return redirect()
-                ->route('progress.index')
-                ->with('error', 'Select a child before adding observation notes.');
+            return $this->redirectToProgressIndex('Select a child before adding observation notes.');
         }
 
         $teacher = $request->user()?->teacher;
@@ -563,9 +579,7 @@ class ProgressController extends Controller
     public function edit(Request $request, ?int $id = null)
     {
         if ($id === null) {
-            return redirect()
-                ->route('progress.index')
-                ->with('error', 'Select a progress record to edit.');
+            return $this->redirectToProgressIndex('Select a progress record to edit.');
         }
 
         $teacher = $request->user()?->teacher;
@@ -809,9 +823,13 @@ class ProgressController extends Controller
 
     public function show(Request $request, $id = null)
     {
-        abort_unless($id !== null, 404);
+        if ($id === null) {
+            return $this->redirectToProgressIndex('Select a progress record to view.');
+        }
+
         $teacher = $request->user()?->teacher;
         abort_unless($teacher, 403, 'A teacher profile is required.');
+        // The id is always a progress record id; links never pass a child id here.
         $progressRecord = $teacher->progressRecords()->with([
             'child',
             'teacher',
@@ -819,22 +837,7 @@ class ProgressController extends Controller
             'domains.results',
             'domainScores',
             'domainObservation',
-        ])->find($id);
-
-        if (! $progressRecord) {
-            $progressRecord = $teacher->progressRecords()->with([
-                'child',
-                'teacher',
-                'domains.checklistItem',
-                'domains.results',
-                'domainScores',
-                'domainObservation',
-            ])
-                ->where('child_id', $id)
-                ->first();
-        }
-
-        abort_unless($progressRecord, 404);
+        ])->findOrFail($id);
         $child = $progressRecord->child;
         recordLog('viewed', 'ProgressRecord', $progressRecord->id, 'Progress record viewed.');
 
