@@ -116,7 +116,7 @@ class DashboardInsightsService
                     'needs_support' => $scores->filter(fn (int $score) => $this->expertSystem->scaledScoreSuggestsDelay($score))->count(),
                 ];
             })
-            ->sortBy([['needs_support', 'desc'], [fn ($domain) => $domain['average'] ?? INF, 'asc']])
+            ->sort(fn (array $a, array $b) => [$b['needs_support'], $a['average'] ?? INF] <=> [$a['needs_support'], $b['average'] ?? INF])
             ->values()
             ->all();
     }
