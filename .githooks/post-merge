@@ -1,0 +1,3 @@
+#!/bin/sh
+# git pull / VS Code Sync (merge or fast-forward)
+exec sh "$(git rev-parse --show-toplevel)/.githooks/littlestep-sync.sh" ORIG_HEAD HEAD
