@@ -1,0 +1,43 @@
+kind: wasmer.io/App.v0
+owner: aljund
+name: littlestep
+package: .
+
+# Non-secret settings. Secrets (APP_KEY, MAIL_PASSWORD, ...) are added with `wasmer app secrets create`.
+env:
+  APP_NAME: LittleStep
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_URL: https://littlestep.wasmer.app
+  LOG_CHANNEL: stderr
+  LOG_LEVEL: warning
+  DB_CONNECTION: mysql
+  SESSION_DRIVER: database
+  SESSION_SECURE_COOKIE: "true"
+  CACHE_STORE: database
+  QUEUE_CONNECTION: sync
+  FILESYSTEM_DISK: local
+  # The app files are read-only; Laravel's storage/ (photos, compiled views, PDF fonts) lives on the volume.
+  LARAVEL_STORAGE_PATH: /data/storage
+  GUARDIAN_APP_LOGIN_URL: littlestep://login
+  PRIVACY_CONTROLLER_NAME: Barangay Balite Day Care Center
+  MAIL_MAILER: smtp
+  MAIL_HOST: smtp.gmail.com
+  MAIL_PORT: "587"
+  MAIL_ENCRYPTION: tls
+  MAIL_FROM_NAME: LittleStep
+
+volumes:
+  - name: storage
+    mount: /data
+
+capabilities:
+  database:
+    engine: mysql
+  ssh:
+    enabled: true
+
+# No `jobs:` here on purpose: Wasmer jobs ran against a separate, temporary database and filesystem (not the
+# app's), so migrations never reached the live site. build.sh runs migrate/seed/view:cache over `wasmer ssh`
+# after each deploy instead, which works on the live app (that is why SSH stays enabled; only the account
+# owner can open it).

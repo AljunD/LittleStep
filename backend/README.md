@@ -86,6 +86,20 @@ sudo DOMAIN=littlestep.example.com EMAIL=you@example.com bash setup-server.sh
 
 After setup, set `MAIL_*`, `GUARDIAN_DEFAULT_PASSWORD` and the `PRIVACY_*` values in `/var/www/littlestep/backend/.env`, then run `sudo -u www-data php artisan optimize`. Artisan commands on the server run as `www-data`, which owns the writable `storage/` and `bootstrap/cache/`. Open ports 80 and 443 in the provider's own firewall too (Oracle: the VCN Security List).
 
+### Wasmer Edge (free hosting, current live site)
+
+The live teacher portal runs at **https://littlestep.wasmer.app** on Wasmer Edge's free plan. The config is in `deploy/wasmer/`:
+- **`wasmer.toml`:** PHP 8.3 and its built-in web server on port 8080.
+- **`app.yaml`:** a MySQL database, a `/data` volume holding Laravel's `storage/` (`LARAVEL_STORAGE_PATH`), and SSH.
+- **`php-config/php.ini`:** PHP settings.
+
+Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `GUARDIAN_DEFAULT_PASSWORD`) are set with `wasmer app secrets create --app aljund/littlestep NAME VALUE`, never in files.
+
+- **Automatic deploys:** `.github/workflows/deploy.yml` runs the tests on PHP 8.3 for every pull request and push. After a push or merge to `main`, it deploys only if the tests pass. It needs the repository secret `WASMER_TOKEN` (from wasmer.io → Settings → Access tokens). You can also start it by hand under Actions → Test and deploy → Run workflow.
+- **Manual deploys:** run `bash deploy/wasmer/build.sh --deploy`, which needs `wasmer login`.
+- **What a deploy does:** it packages only committed files, so `.env` never leaves your computer. Then it runs `migrate --force`, `db:seed --force` and `view:cache` on the live app over `wasmer ssh`. Wasmer's own post-deployment jobs aren't used, because they ran against a separate, temporary database.
+- **Data:** only code is deployed. The live database and photos are separate from any local Laragon data.
+
 ## Testing and formatting
 
 ```bash
