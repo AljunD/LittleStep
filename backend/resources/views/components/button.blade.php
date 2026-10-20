@@ -1,9 +1,9 @@
 @props(['variant' => 'primary', 'href' => null, 'icon' => null, 'type' => 'button'])
 @php
     $variants = [
-        'primary' => 'border-transparent bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus-visible:ring-blue-500',
+        'primary' => 'border-transparent bg-blue-600 text-white shadow-sm hover:bg-blue-700 dark:hover:bg-blue-500 focus-visible:ring-blue-500',
         'secondary' => 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-blue-500',
-        'danger' => 'border-transparent bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500',
+        'danger' => 'border-transparent bg-red-600 text-white shadow-sm hover:bg-red-700 dark:hover:bg-red-500 focus-visible:ring-red-500',
     ];
     $classes = 'inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-4 text-sm font-semibold transition '
         .'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[.98] '

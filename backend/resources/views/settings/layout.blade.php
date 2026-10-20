@@ -27,7 +27,7 @@
                     </span>
                     <span class="min-w-0">
                         <span class="block text-sm font-bold">{{ $tab['label'] }}</span>
-                        <span class="block truncate text-xs {{ $active ? 'text-blue-600/70' : 'text-gray-400' }}">{{ $tab['description'] }}</span>
+                        <span class="block truncate text-xs {{ $active ? 'text-blue-600/70 dark:text-blue-300/80' : 'text-gray-400' }}">{{ $tab['description'] }}</span>
                     </span>
                 </a>
             @endforeach
