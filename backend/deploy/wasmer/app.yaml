@@ -1,7 +1,7 @@
 kind: wasmer.io/App.v0
 owner: aljund
 name: littlestep
-package: aljund/littlestep
+package: .
 
 # Non-secret settings. Secrets (APP_KEY, MAIL_PASSWORD, ...) are added with `wasmer app secrets create`.
 env:
@@ -34,31 +34,10 @@ volumes:
 capabilities:
   database:
     engine: mysql
+  ssh:
+    enabled: true
 
-jobs:
-  - name: prepare-storage
-    trigger: post-deployment
-    action:
-      execute:
-        command: php
-        cli_args:
-          - "-r"
-          - "foreach (['app/private', 'framework/cache/data', 'framework/sessions', 'framework/views', 'logs', 'fonts'] as $dir) { @mkdir('/data/storage/' . $dir, 0775, true); }"
-  - name: migrate
-    trigger: post-deployment
-    action:
-      execute:
-        command: artisan
-        cli_args: ["migrate", "--force"]
-  - name: seed-checklist
-    trigger: post-deployment
-    action:
-      execute:
-        command: artisan
-        cli_args: ["db:seed", "--force"]
-  - name: prune-audit-logs
-    trigger: "0 3 * * *"
-    action:
-      execute:
-        command: artisan
-        cli_args: ["model:prune", "--model=App\\Models\\Log"]
+# No `jobs:` here on purpose: Wasmer jobs ran against a separate, temporary database and filesystem (not the
+# app's), so migrations never reached the live site. build.sh runs migrate/seed/view:cache over `wasmer ssh`
+# after each deploy instead, which works on the live app (that is why SSH stays enabled; only the account
+# owner can open it).

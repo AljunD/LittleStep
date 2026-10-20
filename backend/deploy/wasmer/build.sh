@@ -31,5 +31,13 @@ cp -r "$BACKEND/deploy/wasmer/php-config" .
 echo "Package ready in $OUT ($(du -sh . | cut -f1))."
 
 if [ "${1:-}" = "--deploy" ]; then
-    "$WASMER" deploy
+    "$WASMER" deploy --non-interactive --publish-package --bump
+
+    # Post-deploy steps on the live app (Wasmer jobs don't see the app's database, see app.yaml).
+    remote() { MSYS_NO_PATHCONV=1 "$WASMER" ssh -a aljund/littlestep -- "$1" < /dev/null; }
+    remote "mkdir -p /data/storage/app/private /data/storage/framework/cache/data /data/storage/framework/sessions /data/storage/framework/views /data/storage/logs /data/storage/fonts"
+    remote "php /app/artisan migrate --force"
+    remote "php /app/artisan db:seed --force"
+    remote "php /app/artisan view:cache"
+    echo "Deployed: https://littlestep.wasmer.app"
 fi
