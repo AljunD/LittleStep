@@ -1,0 +1,4 @@
+#!/bin/sh
+# git pull --rebase
+[ "$1" = "rebase" ] || exit 0
+exec sh "$(git rev-parse --show-toplevel)/.githooks/littlestep-sync.sh" ORIG_HEAD HEAD

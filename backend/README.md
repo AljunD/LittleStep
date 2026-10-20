@@ -50,6 +50,25 @@ Without Laragon:
 composer dev   # artisan serve + queue worker + log tail (pail) + Vite, together
 ```
 
+## Staying up to date after `git pull`
+
+The repo ships git hooks in `.githooks/`. They run after `git pull` (including VS Code Sync and GitHub Desktop), `git pull --rebase`, and switching branches, so a fresh pull never leaves the app broken or unstyled. Only the steps the new commits need run:
+
+| When the pull changes… | The hook runs |
+|---|---|
+| `backend/.env.example` gains settings | adds the missing ones to `.env` with their example values (existing values are kept) |
+| `composer.json` / `composer.lock` | `composer install` |
+| backend `package.json` / lock | `npm install` |
+| `resources/`, Vite or Tailwind setup | `npm run build` |
+| `database/migrations/` | `php artisan migrate` |
+| `config/`, `.env*`, `routes/` | `config:clear` / `route:clear` |
+| `mobile/package.json` / lock | `npm install` in `mobile/` |
+
+- **Turning it on:** `composer install`, `npm install` in `backend/`, or `npm install` in `mobile/` runs `git config core.hooksPath .githooks`, so every clone turns it on during setup. To turn it on by hand, run that command from the repo root.
+- **Failures:** a step that fails, e.g. `migrate` while MySQL is stopped, prints the command to run and never blocks the pull.
+- **Line endings:** `.gitattributes` keeps the hook files on Unix line endings so they run on Windows too.
+- **To turn it off on one computer:** `git config --unset core.hooksPath`.
+
 ## Testing and formatting
 
 ```bash
