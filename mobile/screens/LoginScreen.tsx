@@ -22,6 +22,7 @@ import {
   isRememberMeSupported,
   loginGuardian,
 } from "../services/guardianApi";
+import { openPrivacyPolicy } from "../services/privacy-policy";
 
 export default function LoginScreen({ navigation, route }: any) {
   const { isDark } = useAppTheme();
@@ -285,6 +286,14 @@ export default function LoginScreen({ navigation, route }: any) {
                 )}
               </TouchableOpacity>
 
+              <TouchableOpacity
+                style={styles.privacyLink}
+                accessibilityRole="link"
+                onPress={() => void openPrivacyPolicy()}
+              >
+                <Text style={[styles.privacyText, isDark && darkStyles.mutedText]}>Privacy Policy</Text>
+              </TouchableOpacity>
+
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -452,6 +461,18 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 15,
     fontWeight: "800",
+  },
+
+  privacyLink: {
+    alignSelf: "center",
+    marginTop: 16,
+    padding: 6,
+  },
+
+  privacyText: {
+    fontSize: 11,
+    color: "#777",
+    textDecorationLine: "underline",
   },
 });
 

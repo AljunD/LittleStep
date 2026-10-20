@@ -19,6 +19,9 @@ Route::get('/', function (Request $request) {
     return redirect()->route($request->user() ? 'dashboard' : 'login');
 })->name('home');
 
+// Public privacy policy: linked from the sign-in pages, the guardian app and the Google Play listing.
+Route::view('/privacy', 'privacy')->name('privacy');
+
 Route::prefix('auth')->group(function () {
     // Signed-in users are sent to the dashboard instead of seeing the sign-in, registration and password pages again.
     Route::middleware('guest')->group(function () {

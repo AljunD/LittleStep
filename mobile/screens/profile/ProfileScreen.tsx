@@ -16,6 +16,7 @@ import { useAppTheme } from "../../hooks/use-app-theme";
 import { useApiResource } from "../../hooks/use-api-resource";
 import { getGuardianAccount, isUsingDefaultPassword } from "../../services/guardianApi";
 import { fullName } from "../../services/format";
+import { openPrivacyPolicy } from "../../services/privacy-policy";
 
 const COLORS = {
   background: "#FFFFFF",
@@ -84,6 +85,11 @@ export default function ProfileScreen({
       subtitle: "Get help and support",
       icon: "call-outline",
     },
+    {
+      title: "Privacy Policy",
+      subtitle: "How your child's information is protected",
+      icon: "shield-checkmark-outline",
+    },
   ];
 
   const openScreen = (screen: string) => {
@@ -106,6 +112,8 @@ export default function ProfileScreen({
       openScreen("ContactUs");
     } else if (title === "Notification") {
       openScreen("Notifications");
+    } else if (title === "Privacy Policy") {
+      void openPrivacyPolicy();
     }
   };
 

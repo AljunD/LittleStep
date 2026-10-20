@@ -69,6 +69,23 @@ The repo ships git hooks in `.githooks/`. They run after `git pull` (including V
 - **Line endings:** `.gitattributes` keeps the hook files on Unix line endings so they run on Windows too.
 - **To turn it off on one computer:** `git config --unset core.hooksPath`.
 
+## Deployment (production server)
+
+`deploy/` holds scripts for a fresh **Ubuntu 24.04** server (Oracle Cloud, RackNerd, a Hostinger VPS, ...). Point a domain at the server first.
+
+| Script | What it does |
+|---|---|
+| `deploy/setup-server.sh` | One-time setup: Nginx, PHP 8.3, MySQL, Node 22, the code, a production `.env` (random DB password and app key, debug off, secure cookies), migrations, the ECCD checklist seed, free HTTPS (Let's Encrypt), the scheduler cron and nightly backups. Adds a swap file on servers under 2 GB of memory. Safe to run again. |
+| `deploy/deploy.sh` | Updates to the latest `main`: maintenance page, `git pull`, dependencies, `npm run build`, migrations, `artisan optimize`. The site comes back up even if a step fails. |
+| `deploy/backup.sh` | Nightly at 02:30 (from `/etc/cron.d/littlestep`): the database and the private child photos to `/var/backups/littlestep`, kept 14 days. Copy them off the server regularly. |
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AljunD/LittleStep/main/backend/deploy/setup-server.sh -o setup-server.sh
+sudo DOMAIN=littlestep.example.com EMAIL=you@example.com bash setup-server.sh
+```
+
+After setup, set `MAIL_*`, `GUARDIAN_DEFAULT_PASSWORD` and the `PRIVACY_*` values in `/var/www/littlestep/backend/.env`, then run `sudo -u www-data php artisan optimize`. Artisan commands on the server run as `www-data`, which owns the writable `storage/` and `bootstrap/cache/`. Open ports 80 and 443 in the provider's own firewall too (Oracle: the VCN Security List).
+
 ## Testing and formatting
 
 ```bash
@@ -333,6 +350,11 @@ Both pages get this from `ProgressController::currentRoundProgress()`, so they a
 - `SecurityHeaders` adds a nonce-based Content-Security-Policy, so inline `<script>`/`<style>` tags need `nonce="{{ request()->attributes->get('cspNonce') }}"`. In production it also redirects to HTTPS and sends HSTS.
 - Login, registration, and password-reset POSTs are throttled to 5 per minute.
 - Child photos are stored on the private `local` disk and served only through authenticated, ownership-checked routes.
+
+**Privacy policy.** `/privacy` (`privacy.blade.php`, route `privacy`) is public. It explains what LittleStep stores, why, who can see it, how it is protected and kept, and parents' rights under the Data Privacy Act of 2012, with a short child-friendly summary (NPC Advisory 2024-03).
+- **Where it's linked:** under every sign-in page (`components/auth.blade.php`), from the mobile app's Login and Profile screens, and from the Google Play listing.
+- **Settings:** the organization name and contact details come from `PRIVACY_CONTROLLER_NAME`, `PRIVACY_CONTACT_EMAIL` and `PRIVACY_CONTACT_PHONE` (`config/littlestep.php`). Empty contact values are hidden.
+- **Keeping it accurate:** when the app starts storing or sharing new data, update the page and `PRIVACY_POLICY_UPDATED`.
 
 ## Guardian API (v1)
 

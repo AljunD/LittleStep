@@ -392,6 +392,10 @@ async function setMustChangePassword(value: boolean, persist: boolean): Promise<
   }
 }
 
+export function getPrivacyPolicyUrl(): string {
+  return new URL("privacy", getApiBaseUrl()).toString();
+}
+
 export function hasGuardianSession(): boolean {
   return sessionToken !== null;
 }

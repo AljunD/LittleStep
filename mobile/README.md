@@ -44,6 +44,16 @@ To sign in you need a guardian account created by a teacher in the web app, with
 | `npm run lint`    | Run ESLint (`expo lint`)       |
 | `npx tsc --noEmit`| Type-check                     |
 
+## Release builds and Google Play
+
+- **App identity:** set in `app.json`. The name is **LittleStep**, and the Android package and iOS bundle ID are **`ph.littlestep.guardian`** (permanent once uploaded to Google Play). The deep-link scheme is `littlestep`.
+- **Icons:** in `assets/images/` (app icon, Android adaptive and monochrome layers, splash, web favicon). They're made from the LittleStep mark; replace them with a higher-resolution logo when one is available.
+- **Builds:** EAS Build profiles are in `eas.json`. `preview` makes an installable **APK** for testers; `production` makes the **AAB** for Google Play and raises the version code automatically.
+  - Both read `EXPO_PUBLIC_API_URL` from EAS environment variables (`eas env:create`), not from `.env`, so a build always points at the live **https** server.
+  - A build without it shows "not connected to the server" instead of reaching a wrong address.
+- **Privacy policy:** shown in the browser from the Login screen and Profile → Privacy Policy (`services/privacy-policy.ts`, which opens `<server>/privacy`).
+- **Publishing:** see [`PLAY_STORE.md`](PLAY_STORE.md) for the full checklist: one-time setup commands, closed testing (12 testers for 14 days on new personal accounts), the demo account for reviewers, draft Data safety answers and the store listing text. Store graphics are in `store/`.
+
 ## Project structure
 
 ```
