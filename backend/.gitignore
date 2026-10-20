@@ -25,3 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Wasmer Edge package built by deploy/wasmer/build.sh
+/deploy/wasmer/build

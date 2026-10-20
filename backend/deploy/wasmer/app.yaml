@@ -1,0 +1,64 @@
+kind: wasmer.io/App.v0
+owner: aljund
+name: littlestep
+package: aljund/littlestep
+
+# Non-secret settings. Secrets (APP_KEY, MAIL_PASSWORD, ...) are added with `wasmer app secrets create`.
+env:
+  APP_NAME: LittleStep
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_URL: https://littlestep.wasmer.app
+  LOG_CHANNEL: stderr
+  LOG_LEVEL: warning
+  DB_CONNECTION: mysql
+  SESSION_DRIVER: database
+  SESSION_SECURE_COOKIE: "true"
+  CACHE_STORE: database
+  QUEUE_CONNECTION: sync
+  FILESYSTEM_DISK: local
+  # The app files are read-only; Laravel's storage/ (photos, compiled views, PDF fonts) lives on the volume.
+  LARAVEL_STORAGE_PATH: /data/storage
+  GUARDIAN_APP_LOGIN_URL: littlestep://login
+  PRIVACY_CONTROLLER_NAME: Barangay Balite Day Care Center
+  MAIL_MAILER: smtp
+  MAIL_HOST: smtp.gmail.com
+  MAIL_PORT: "587"
+  MAIL_ENCRYPTION: tls
+  MAIL_FROM_NAME: LittleStep
+
+volumes:
+  - name: storage
+    mount: /data
+
+capabilities:
+  database:
+    engine: mysql
+
+jobs:
+  - name: prepare-storage
+    trigger: post-deployment
+    action:
+      execute:
+        command: php
+        cli_args:
+          - "-r"
+          - "foreach (['app/private', 'framework/cache/data', 'framework/sessions', 'framework/views', 'logs', 'fonts'] as $dir) { @mkdir('/data/storage/' . $dir, 0775, true); }"
+  - name: migrate
+    trigger: post-deployment
+    action:
+      execute:
+        command: artisan
+        cli_args: ["migrate", "--force"]
+  - name: seed-checklist
+    trigger: post-deployment
+    action:
+      execute:
+        command: artisan
+        cli_args: ["db:seed", "--force"]
+  - name: prune-audit-logs
+    trigger: "0 3 * * *"
+    action:
+      execute:
+        command: artisan
+        cli_args: ["model:prune", "--model=App\\Models\\Log"]
