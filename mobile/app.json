@@ -43,6 +43,15 @@
       "expo-status-bar",
       "expo-web-browser",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "884e23d7-8d63-4244-b6bd-bad9a48ae5fd"
+      }
+    },
+    "owner": "peinzein",
+    "experiments": {
+      "baseUrl": "/app"
+    }
   }
 }
