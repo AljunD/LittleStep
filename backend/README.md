@@ -97,7 +97,7 @@ Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `GUAR
 
 - **Automatic deploys:** `.github/workflows/deploy.yml` runs the tests on PHP 8.3 for every pull request and push. After a push or merge to `main`, it deploys only if the tests pass. It needs the repository secret `WASMER_TOKEN` (from wasmer.io → Settings → Access tokens). You can also start it by hand under Actions → Test and deploy → Run workflow.
 - **Manual deploys:** run `bash deploy/wasmer/build.sh --deploy`, which needs `wasmer login`.
-- **What a deploy does:** it packages only committed files, so `.env` never leaves your computer. Then it runs `migrate --force`, `db:seed --force` and `view:cache` on the live app over `wasmer ssh`. Wasmer's own post-deployment jobs aren't used, because they ran against a separate, temporary database.
+- **What a deploy does:** it packages only committed files, so `.env` never leaves your computer. It also builds the guardian **web app** from `mobile/` (`expo export --platform web`, API URL = `APP_URL` from `app.yaml`) into `public/app`, so iPhone users can open **https://littlestep.wasmer.app/app** in Safari and add it to their home screen. PHP serves those files directly, on the same origin as the API. Then it runs `migrate --force`, `db:seed --force` and `view:cache` on the live app over `wasmer ssh`. Wasmer's own post-deployment jobs aren't used, because they ran against a separate, temporary database.
 - **Data:** only code is deployed. The live database and photos are separate from any local Laragon data.
 
 ## Testing and formatting

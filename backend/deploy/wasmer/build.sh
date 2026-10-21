@@ -23,6 +23,14 @@ cd "$OUT"
 composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 npm ci --no-audit --no-fund
 npm run build
+
+# Guardian web app (for iPhone users: Safari → Add to Home Screen), served at <APP_URL>/app.
+APP_URL="$(sed -n 's/^ *APP_URL: *//p' "$BACKEND/deploy/wasmer/app.yaml")"
+WEB="$(mktemp -d)"
+trap 'rm -rf "$WEB"' EXIT
+git -C "$REPO" archive --format=tar HEAD:mobile | tar -x -C "$WEB"
+(cd "$WEB" && npm ci --no-audit --no-fund && EXPO_PUBLIC_API_URL="$APP_URL" npx expo export --platform web --output-dir "$OUT/public/app")
+
 rm -rf node_modules tests deploy
 
 cp "$BACKEND/deploy/wasmer/wasmer.toml" "$BACKEND/deploy/wasmer/app.yaml" .
@@ -34,7 +42,15 @@ if [ "${1:-}" = "--deploy" ]; then
     "$WASMER" deploy --non-interactive --publish-package --bump
 
     # Post-deploy steps on the live app (Wasmer jobs don't see the app's database, see app.yaml).
-    remote() { MSYS_NO_PATHCONV=1 "$WASMER" ssh -a aljund/littlestep -- "$1" < /dev/null; }
+    # Each step is safe to repeat; retried because `wasmer ssh` sometimes drops the connection (exit 255).
+    remote() {
+        for attempt in 1 2 3; do
+            MSYS_NO_PATHCONV=1 "$WASMER" ssh -a aljund/littlestep -- "$1" < /dev/null && return 0
+            echo "Retrying ($attempt/3): $1"
+            sleep 10
+        done
+        return 1
+    }
     remote "mkdir -p /data/storage/app/private /data/storage/framework/cache/data /data/storage/framework/sessions /data/storage/framework/views /data/storage/logs /data/storage/fonts"
     remote "php /app/artisan migrate --force"
     remote "php /app/artisan db:seed --force"

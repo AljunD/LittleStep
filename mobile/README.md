@@ -51,6 +51,11 @@ To sign in you need a guardian account created by a teacher in the web app, with
 - **Builds:** EAS Build profiles are in `eas.json`. `preview` makes an installable **APK** for testers; `production` makes the **AAB** for Google Play and raises the version code automatically.
   - Both read `EXPO_PUBLIC_API_URL` from EAS environment variables (`eas env:create`), not from `.env`, so a build always points at the live **https** server.
   - A build without it shows "not connected to the server" instead of reaching a wrong address.
+  - The project is linked to the Expo account **peinzein** (`owner` and `extra.eas.projectId` in `app.json`; builds at https://expo.dev/accounts/peinzein/projects/littlestep). `EXPO_PUBLIC_API_URL` is set to `https://littlestep.wasmer.app` for both profiles, and the Android signing keystore is stored by Expo.
+  - Build a tester APK: `eas login`, then `eas build -p android --profile preview`. When it finishes, the build page has the APK download link and a QR code to install it.
+- **iPhone (web app):** iOS can't install the APK, and the App Store needs a paid Apple Developer account. Instead, iPhone users open **https://littlestep.wasmer.app/app** in Safari and tap **Share → Add to Home Screen**. It opens full screen with the LittleStep icon. Like any web session, guardians sign in each time (no Remember me).
+  - Every Wasmer deploy builds it (`backend/deploy/wasmer/build.sh` runs `expo export --platform web`). `experiments.baseUrl` in `app.json` (`/app`) sets the path, so `npm run web` also opens at `/app` locally.
+  - `public/` holds the web page template (`index.html`: home-screen tags and a Content-Security-Policy that only allows the app's own origin), `manifest.json` and the home-screen icons made from `assets/images/icon.png`.
 - **Privacy policy:** shown in the browser from the Login screen and Profile → Privacy Policy (`services/privacy-policy.ts`, which opens `<server>/privacy`).
 - **Publishing:** see [`PLAY_STORE.md`](PLAY_STORE.md) for the full checklist: one-time setup commands, closed testing (12 testers for 14 days on new personal accounts), the demo account for reviewers, draft Data safety answers and the store listing text. Store graphics are in `store/`.
 
