@@ -25,6 +25,8 @@ Expo / React Native app (TypeScript) that guardians use to view their children's
 
    In development, if this variable is unset, the app falls back to the Expo dev-server host plus `/LittleStep/backend/public`. Outside development, the URL must use HTTPS. Restart Expo after changing `.env`.
 
+   On the web in development, the app calls its own origin instead, and the dev server forwards `/api` and `/privacy` to this URL (`metro.config.js`), because the page's Content-Security-Policy only allows its own origin.
+
 4. Start the app:
 
    ```bash

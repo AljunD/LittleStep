@@ -257,13 +257,12 @@ function isGuardianChild(value: unknown): value is GuardianChild {
 function getApiBaseUrl(): URL {
   let configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 
-  if (!configuredUrl && __DEV__) {
+  if (Platform.OS === "web" && __DEV__) {
+    // The dev server proxies the API (metro.config.js) because the page's CSP only allows its own origin.
+    configuredUrl = window.location.origin;
+  } else if (!configuredUrl && __DEV__) {
     const expoHost = Constants.expoConfig?.hostUri;
-    const host = Platform.OS === "web"
-      ? "localhost"
-      : expoHost
-        ? new URL(`http://${expoHost}`).hostname
-        : null;
+    const host = expoHost ? new URL(`http://${expoHost}`).hostname : null;
 
     if (host) {
       configuredUrl = `http://${host}/LittleStep/backend/public`;
