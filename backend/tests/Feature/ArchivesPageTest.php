@@ -131,6 +131,31 @@ class ArchivesPageTest extends TestCase
         $this->assertMatchesRegularExpression('/href="[^"]*tab=children[^"]*children_page=2/', html_entity_decode($html));
     }
 
+    public function test_an_active_guardian_stays_listed_after_their_only_child_is_archived(): void
+    {
+        $this->archivedChild('Robin');
+
+        $this->actingAs($this->teacherUser)->get(route('guardians.index'))
+            ->assertOk()
+            ->assertSee('Casey')
+            ->assertSee('No linked children')
+            ->assertDontSee('Robin');
+        $this->get(route('guardians.show', $this->guardian->id))->assertOk();
+        $this->get(route('dashboard'))->assertViewHas('guardiansCount', 1);
+
+        $otherTeacherUser = User::factory()->create(['role' => 'teacher']);
+        Teacher::create([
+            'user_id' => $otherTeacherUser->id,
+            'first_name' => 'Other',
+            'middle_name' => null,
+            'last_name' => 'Teacher',
+            'sex' => 'Male',
+            'contact_number' => '09170000009',
+            'address' => 'Other address',
+        ]);
+        $this->actingAs($otherTeacherUser)->get(route('guardians.index'))->assertDontSee('Casey');
+    }
+
     public function test_an_archived_guardian_can_be_viewed_read_only_with_their_archived_children(): void
     {
         $this->archivedChild('Jordan');
