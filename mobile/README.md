@@ -109,7 +109,7 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   Data comes from `getGuardianChildInsights()` (`GET /guardian/children/{id}/insights`). The text is produced by the backend expert system, so it always matches what the teacher sees. The screen is read-only.
 - **Recent Activities:** the Dashboard shows the 3 domains the teacher updated most recently, newest first, using `recent_activity` from the dashboard API. Until the teacher records anything, it shows the first three official domains. The Dashboard reloads whenever it comes back into view and supports pull-to-refresh, so a new teacher entry moves that domain to the front.
 - **Profile screens** (`screens/profile/`):
-  - **Profile:** shows the signed-in guardian's name, email and relationship.
+  - **Profile:** shows the signed-in guardian's name, email and relationship. Its **Session** card has **Switch Student** (back to Select Student) and **Log Out** (revokes the token and returns to Welcome), the same actions as the Dashboard quick actions.
   - **Guardian Details** and **Child Details:** show every stored field (contact number, address; birthday, school, both parents, siblings, birth order).
   - **Contact Us:** lists the teacher handling each child, with Call / Text buttons.
   - **Notifications:** a feed of teacher updates across all children, newest first. It's built from each child's dashboard `recent_activity`, since there are no push notifications. Tapping an update opens that domain.
