@@ -65,7 +65,7 @@ const GuardianDetailsScreen = ({ navigation }: any) => {
           <ErrorState message={account.error ?? "Guardian details could not be loaded."} onRetry={account.retry} />
         ) : (
           <>
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Guardian Information</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>GUARDIAN INFORMATION</Text>
 
             <ReadOnlyField label="Full Name" value={fullName(guardian)} />
             <ReadOnlyField label="Email Address" value={guardian.email} />
