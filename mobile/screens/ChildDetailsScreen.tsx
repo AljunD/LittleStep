@@ -37,7 +37,6 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
       <View style={[styles.header, isDark && darkStyles.header, { paddingTop: insets.top + 10 }]}>

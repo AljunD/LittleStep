@@ -2,7 +2,7 @@
 
 Expo / React Native app (TypeScript) that guardians use to view their children's ECCD progress. It is a client of the LittleStep Laravel backend's guardian API (`/api/v1/guardian/*`). See [`../backend/README.md`](../backend/README.md).
 
-**Stack:** Expo SDK 57, React Native 0.86, React 19, React Navigation (stack), `expo-secure-store`.
+**Stack:** Expo SDK 58, React Native 0.88, React 19, React Navigation (stack), `expo-secure-store`.
 
 ## Setup
 
@@ -143,4 +143,4 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 
 ## Expo documentation
 
-This project targets Expo SDK 57. Use the versioned docs at https://docs.expo.dev/versions/v57.0.0/, because APIs differ between SDK versions.
+This project targets Expo SDK 58. Use the versioned docs at https://docs.expo.dev/versions/v58.0.0/, because APIs differ between SDK versions.

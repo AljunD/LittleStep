@@ -214,7 +214,6 @@ export default function DashboardScreen({
     <View style={[styles.screen, isDark && darkStyles.screen]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
       <View

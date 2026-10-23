@@ -311,7 +311,6 @@ export default function DomainScreen({ navigation, route }: any) {
   return (
     <View style={[styles.screen, isDark && darkStyles.container]}>
       <StatusBar
-        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 
