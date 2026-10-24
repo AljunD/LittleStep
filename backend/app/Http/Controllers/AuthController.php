@@ -85,7 +85,7 @@ class AuthController extends Controller
 
                 return back()->withErrors([
                     'email' => 'Only teachers are allowed to access the web portal.',
-                ])->onlyInput('email');
+                ])->with('login_alert', 'not_teacher')->onlyInput('email');
             }
 
             if (! $user->hasVerifiedEmail()) {
@@ -96,7 +96,7 @@ class AuthController extends Controller
 
                 return back()->withErrors([
                     'email' => 'You must verify your email before logging in. Check your inbox for the verification link.',
-                ])->onlyInput('email');
+                ])->with('login_alert', 'unverified')->onlyInput('email');
             }
 
             recordLog('login', 'User', $user->id, 'Teacher logged in.', $user->id);
@@ -110,7 +110,7 @@ class AuthController extends Controller
 
         return back()->withErrors([
             'email' => 'Invalid credentials provided.',
-        ])->onlyInput('email');
+        ])->with('login_alert', 'credentials')->onlyInput('email');
     }
 
     public function logout(Request $request)
