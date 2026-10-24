@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { Platform } from "react-native";
 import {
   DarkTheme,
   DefaultTheme,
@@ -11,6 +11,7 @@ import {
 } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import * as Linking from "expo-linking";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { DarkColors } from "./constants/theme";
 import { AppThemeProvider, useAppTheme } from "./hooks/use-app-theme";
@@ -20,6 +21,7 @@ import {
   hasGuardianSession,
   restoreGuardianSession,
 } from "./services/guardianApi";
+import SplashScreen from "./screens/SplashScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SelectStudentScreen from "./screens/SelectStudentScreen";
@@ -38,6 +40,9 @@ import NotificationScreen from "./screens/profile/NotificationScreen";
 import ChangePasswordScreen from "./screens/profile/ChangePasswordScreen";
 
 const Stack = createStackNavigator();
+
+// Keep the branded splash up long enough to read, even when the session restores instantly.
+const MIN_SPLASH_MS = 1600;
 
 const navigationDarkTheme = {
   ...DarkTheme,
@@ -76,16 +81,18 @@ const linking: LinkingOptions<ParamListBase> = {
 
 export default function App() {
   return (
-    <AppThemeProvider>
-      <AppNavigator />
-    </AppThemeProvider>
+    <SafeAreaProvider>
+      <AppThemeProvider>
+        <AppNavigator />
+      </AppThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
 function AppNavigator() {
   const { isDark } = useAppTheme();
   const [isRestoringSession, setIsRestoringSession] = useState(true);
-  const [initialRoute, setInitialRoute] = useState("Welcome");
+  const [initialRoute, setInitialRoute] = useState("Start");
   const [guardian, setGuardian] = useState<GuardianProfile | null>(null);
   const [initialError, setInitialError] = useState<string | null>(null);
 
@@ -93,6 +100,8 @@ function AppNavigator() {
     let isMounted = true;
 
     const restoreSession = async () => {
+      const splashShown = new Promise((resolve) => setTimeout(resolve, MIN_SPLASH_MS));
+
       try {
         const restoredGuardian = await restoreGuardianSession();
         if (isMounted && restoredGuardian) {
@@ -105,6 +114,7 @@ function AppNavigator() {
           setInitialError(getGuardianApiErrorMessage(error));
         }
       } finally {
+        await splashShown;
         if (isMounted) {
           setIsRestoringSession(false);
         }
@@ -119,11 +129,7 @@ function AppNavigator() {
   }, []);
 
   if (isRestoringSession) {
-    return (
-      <View style={[styles.loadingScreen, isDark && styles.loadingScreenDark]}>
-        <ActivityIndicator color="#0BA8BD" size="large" />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   return (
@@ -135,6 +141,12 @@ function AppNavigator() {
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
       >
+        <Stack.Screen
+          name="Start"
+          component={SplashScreen}
+          options={{ animation: "fade" }}
+        />
+
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
@@ -219,16 +231,3 @@ function AppNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingScreen: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-  },
-
-  loadingScreenDark: {
-    backgroundColor: DarkColors.background,
-  },
-});

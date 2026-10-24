@@ -135,7 +135,7 @@ export default function ProfileScreen({
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{ name: "Welcome" }],
+        routes: [{ name: "Start" }],
       });
     }
   };

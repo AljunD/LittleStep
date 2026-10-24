@@ -153,7 +153,7 @@ export default function LoginScreen({ navigation, route }: any) {
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      navigation.replace("Welcome");
+      navigation.replace("Start");
     }
   };
 
