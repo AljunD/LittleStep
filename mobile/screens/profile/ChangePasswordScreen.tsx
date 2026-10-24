@@ -110,7 +110,6 @@ export default function ChangePasswordScreen({ navigation }: any) {
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
       <View style={[styles.header, isDark && darkStyles.container, { paddingTop: insets.top + 10 }]}>

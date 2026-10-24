@@ -66,6 +66,25 @@
     <script nonce="{{ request()->attributes->get('cspNonce') }}">
         document.addEventListener('click', (event) => {
             event.target.closest('[data-dismiss-alert]')?.closest('[data-flash]')?.remove();
+
+            const toggle = event.target.closest('[data-password-toggle]');
+            const input = toggle && document.getElementById(toggle.dataset.passwordToggle);
+            if (!input) return;
+
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            toggle.setAttribute('aria-pressed', String(reveal));
+            toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+            toggle.querySelector('[data-password-icon="show"]').classList.toggle('hidden', reveal);
+            toggle.querySelector('[data-password-icon="hide"]').classList.toggle('hidden', !reveal);
+        });
+
+        // Never submit (or let the browser remember) a password while it is shown as plain text.
+        document.addEventListener('submit', (event) => {
+            event.target.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+                const input = document.getElementById(toggle.dataset.passwordToggle);
+                if (input?.type === 'text') toggle.click();
+            });
         });
 
         (() => {

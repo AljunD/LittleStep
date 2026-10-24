@@ -2,7 +2,7 @@
 
 Expo / React Native app (TypeScript) that guardians use to view their children's ECCD progress. It is a client of the LittleStep Laravel backend's guardian API (`/api/v1/guardian/*`). See [`../backend/README.md`](../backend/README.md).
 
-**Stack:** Expo SDK 57, React Native 0.86, React 19, React Navigation (stack), `expo-secure-store`.
+**Stack:** Expo SDK 58, React Native 0.88, React 19, React Navigation (stack), `expo-secure-store`.
 
 ## Setup
 
@@ -24,6 +24,8 @@ Expo / React Native app (TypeScript) that guardians use to view their children's
    ```
 
    In development, if this variable is unset, the app falls back to the Expo dev-server host plus `/LittleStep/backend/public`. Outside development, the URL must use HTTPS. Restart Expo after changing `.env`.
+
+   On the web in development, the app calls its own origin instead, and the dev server forwards `/api` and `/privacy` to this URL (`metro.config.js`), because the page's Content-Security-Policy only allows its own origin.
 
 4. Start the app:
 
@@ -75,7 +77,9 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 
 ## How it works
 
-- **Startup:** `restoreGuardianSession()` checks for a stored token and validates it against `/guardian/profile`. A valid token opens **SelectStudent**. Otherwise the app shows **Welcome**, or **Login** if there was an error.
+- **Startup:** while `restoreGuardianSession()` checks for a stored token and validates it against `/guardian/profile`, `App.tsx` shows the branded **Splash** (`screens/SplashScreen.tsx`). The splash has a teal background, the logo card and the tagline, and stays up for at least 1.6 s. A valid token then opens **SelectStudent**. Otherwise the app opens **Start** (the same splash as a route, so the logo stays put while a **Let's Get Started** button fades in), or **Login** if there was an error. Logging out also returns to Start. The whole app is wrapped in `SafeAreaProvider`, because the splash reads safe-area insets before the navigator mounts.
+- **Welcome (onboarding):** reached from Start's **Let's Get Started**. It has three swipeable pages: Welcome to LittleStep, See every milestone, and Support learning at home. Each has an illustration ringed by ECCD domain badges, page dots, **Skip**, and **Next**. **Get Started** on the last page opens Login. The Login screen itself is unchanged.
+- **Login errors:** a failed sign-in shows an alert card above the fields with a title and next step. The cases are: wrong email or password (fields outlined in red), email not verified, too many attempts, server unreachable, and session ended. The form shakes and the phone gives an error haptic. The shake is skipped when Reduce Motion is on. Editing a field clears its red outline.
 - **API layer:** every request goes through `requestJson()` in `services/guardianApi.ts`. It applies a 15-second timeout, attaches the bearer token, and checks the response shape with runtime type guards. Failures are converted into a `GuardianApiError` with a user-facing message. Add new endpoints there rather than calling `fetch` from screens.
 - **Tokens:** these are Sanctum tokens that expire after 12 hours. The password is never stored. With **Remember me**, the token is saved in the device's secure storage (iOS Keychain, readable only while the device is unlocked and never synced to other devices; Android Keystore). Otherwise it is kept in memory only. The checkbox appears only where secure storage is available, so it is hidden on web. If a stale or corrupted stored entry (e.g. after a reinstall) blocks saving or reading, it is deleted and the save is retried once. If the token still can't be saved, it is revoked on the server and the reason is shown. Any 401/403 response clears the stored token.
 - **Child photos:** these are protected by the same auth as the API. `getGuardianChildPhotoSource()` checks that the photo URL points to the configured backend, fetches the image with the bearer token, accepts only JPEG/PNG/GIF up to 5 MB, and returns a `data:` URI. The token never reaches `<Image>` or its cache, and this works on web, where images can't send auth headers. The Dashboard and student list show a spinner while a photo loads and the person placeholder if there's no photo or it fails to load. A failed photo doesn't block the rest of the screen.
@@ -84,7 +88,6 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   - `compactHeight` / `smallWidth` switch on tighter spacing for short or narrow phones.
   - Every screen's main content scrolls when it doesn't fit (short phones, large system font sizes).
   - Login stays above the keyboard.
-  - On screens wider than the portrait background artwork (desktop web, landscape tablets), Welcome shows the whole illustration in a centered frame over a blurred copy, instead of zooming in and cropping it.
   - Sizes come from `useWindowDimensions()`, not a one-time `Dimensions.get()`, so they follow window resizes.
 - **Development areas (Domain screen):** tapping a Recent Activity card on the Dashboard, or any of the 7 development areas on the ECCD Checklist screen, opens `screens/DomainScreen.tsx`. It shows:
   - an evaluation selector (1st/2nd/3rd Eval, with dates)
@@ -107,7 +110,7 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   Data comes from `getGuardianChildInsights()` (`GET /guardian/children/{id}/insights`). The text is produced by the backend expert system, so it always matches what the teacher sees. The screen is read-only.
 - **Recent Activities:** the Dashboard shows the 3 domains the teacher updated most recently, newest first, using `recent_activity` from the dashboard API. Until the teacher records anything, it shows the first three official domains. The Dashboard reloads whenever it comes back into view and supports pull-to-refresh, so a new teacher entry moves that domain to the front.
 - **Profile screens** (`screens/profile/`):
-  - **Profile:** shows the signed-in guardian's name, email and relationship.
+  - **Profile:** shows the signed-in guardian's name, email and relationship. Its **Session** card has **Switch Student** (back to Select Student) and **Log Out** (revokes the token and returns to Welcome), the same actions as the Dashboard quick actions.
   - **Guardian Details** and **Child Details:** show every stored field (contact number, address; birthday, school, both parents, siblings, birth order).
   - **Contact Us:** lists the teacher handling each child, with Call / Text buttons.
   - **Notifications:** a feed of teacher updates across all children, newest first. It's built from each child's dashboard `recent_activity`, since there are no push notifications. Tapping an update opens that domain.
@@ -141,4 +144,4 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
 
 ## Expo documentation
 
-This project targets Expo SDK 57. Use the versioned docs at https://docs.expo.dev/versions/v57.0.0/, because APIs differ between SDK versions.
+This project targets Expo SDK 58. Use the versioned docs at https://docs.expo.dev/versions/v58.0.0/, because APIs differ between SDK versions.

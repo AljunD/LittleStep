@@ -104,6 +104,61 @@ class FlashMessagesTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_wrong_password_shows_the_login_alert_and_highlights_the_fields(): void
+    {
+        $response = $this->from(route('login'))->followingRedirects()->post(route('auth.login.submit'), [
+            'email' => $this->teacherUser->email,
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertOk()
+            ->assertSee('data-flash="login"', false)
+            ->assertSee('Incorrect email or password')
+            ->assertSee('Passwords are case-sensitive.')
+            ->assertSee('aria-invalid="true"', false)
+            ->assertDontSee('Invalid credentials provided.');
+        $this->assertGuest();
+    }
+
+    public function test_guardian_account_is_told_the_web_portal_is_for_teachers(): void
+    {
+        $this->guardian->user->forceFill([
+            'password' => Hash::make('Password123@'),
+            'email_verified_at' => now(),
+        ])->save();
+
+        $this->from(route('login'))->followingRedirects()->post(route('auth.login.submit'), [
+            'email' => $this->guardian->user->email,
+            'password' => 'Password123@',
+        ])->assertOk()
+            ->assertSee('Teacher accounts only')
+            ->assertSee('Guardians sign in with the LittleStep mobile app.')
+            ->assertDontSee('aria-invalid="true"', false);
+        $this->assertGuest();
+    }
+
+    public function test_too_many_login_attempts_return_to_the_login_page_with_a_warning(): void
+    {
+        foreach (range(1, 5) as $attempt) {
+            $this->from(route('login'))->post(route('auth.login.submit'), [
+                'email' => 'nobody@example.com',
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $response = $this->from(route('login'))->post(route('auth.login.submit'), [
+            'email' => 'nobody@example.com',
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('Too many attempts')
+            ->assertSee('Too many sign-in attempts. Please try again in')
+            ->assertSee('value="nobody@example.com"', false);
+    }
+
     public function test_child_update_success_is_shown_on_the_profile_page(): void
     {
         $response = $this->actingAs($this->teacherUser)->followingRedirects()

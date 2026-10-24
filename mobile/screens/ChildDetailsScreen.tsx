@@ -37,7 +37,6 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.surface : "#FFFFFF"}
       />
 
       <View style={[styles.header, isDark && darkStyles.header, { paddingTop: insets.top + 10 }]}>
@@ -77,7 +76,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
           />
         ) : (
           <>
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Student Information</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>STUDENT INFORMATION</Text>
 
             <ReadOnlyField label="Full Name" value={fullName(child)} />
 
@@ -93,12 +92,12 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
             <ReadOnlyField label="Birthday" value={formatDate(child.date_of_birth) ?? child.date_of_birth} />
             <ReadOnlyField label="Address" value={child.address} />
 
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>School Information</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>SCHOOL INFORMATION</Text>
 
             <ReadOnlyField label="Currently Studying" value={child.is_studying ? "Yes" : "No"} />
             <ReadOnlyField label="School Name" value={child.school_name} />
 
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Father</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>FATHER INFORMATION</Text>
 
             <ReadOnlyField label="Name" value={child.fathers_name} />
             <View style={styles.row}>
@@ -111,7 +110,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
             </View>
             <ReadOnlyField label="Educational Attainment" value={child.fathers_education} />
 
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Mother</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>MOTHER INFORMATION</Text>
 
             <ReadOnlyField label="Name" value={child.mothers_name} />
             <View style={styles.row}>
@@ -124,7 +123,7 @@ const ChildDetailsScreen = ({ navigation, route }: any) => {
             </View>
             <ReadOnlyField label="Educational Attainment" value={child.mothers_education} />
 
-            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>Siblings</Text>
+            <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>SIBLINGS</Text>
 
             <View style={styles.row}>
               <View style={styles.halfField}>
