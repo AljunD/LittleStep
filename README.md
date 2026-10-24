@@ -39,7 +39,7 @@ mobile/    Expo / React Native (TypeScript) — guardian app for Android, iOS an
 |---|---|
 | Teacher portal | Laravel Blade, Tailwind CSS, DomPDF |
 | API | Laravel REST API (`/api/v1`) with Sanctum bearer tokens |
-| Mobile | Expo SDK 57, React Native, React Navigation |
+| Mobile | Expo SDK 58, React Native, React Navigation |
 | Database | MySQL (SQLite for local development and tests) |
 
 ## Getting started

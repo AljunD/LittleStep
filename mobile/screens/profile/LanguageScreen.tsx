@@ -72,7 +72,6 @@ export default function LanguageScreen({
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.background : COLORS.background}
       />
 
       <View

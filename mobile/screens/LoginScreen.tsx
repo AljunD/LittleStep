@@ -98,8 +98,6 @@ export default function LoginScreen({ navigation, route }: any) {
       resizeMode="cover"
     >
       <StatusBar
-        translucent
-        backgroundColor="transparent"
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 

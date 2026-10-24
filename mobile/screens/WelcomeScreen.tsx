@@ -46,8 +46,6 @@ export default function WelcomeScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
-        translucent
-        backgroundColor="transparent"
         barStyle={isDark ? "light-content" : "dark-content"}
       />
 
