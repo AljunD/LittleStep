@@ -102,6 +102,16 @@ class AuthenticationSecurityTest extends TestCase
             ->assertSee('data-submitting-text="Registering..."', false);
     }
 
+    public function test_sign_in_form_has_a_show_password_toggle(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('type="password" id="password"', false)
+            ->assertSee('data-password-toggle="password"', false)
+            ->assertSee('aria-label="Show password"', false)
+            ->assertSee('data-password-icon="hide"', false);
+    }
+
     public function test_guardian_mobile_login_requires_email_verification(): void
     {
         $user = User::factory()->create([
