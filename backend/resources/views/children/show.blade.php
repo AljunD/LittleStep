@@ -20,6 +20,7 @@
         default => 'gray',
     };
     $valueOrNa = fn ($value) => filled($value) ? $value : 'N/A';
+    $archived = $child->trashed();
     $personal = [
         'Full name' => $fullName,
         'Sex' => ucfirst($child->sex),
@@ -42,7 +43,11 @@
 @endphp
 <div class="mx-auto max-w-6xl space-y-6">
     <div>
-        <x-button variant="secondary" icon="back" :href="route('children.index')">Back to Children</x-button>
+        @if($archived)
+            <x-button variant="secondary" icon="back" :href="route('archives.index', ['tab' => 'children'])">Back to Archives</x-button>
+        @else
+            <x-button variant="secondary" icon="back" :href="route('children.index')">Back to Children</x-button>
+        @endif
     </div>
 
     {{-- Header --}}
@@ -59,6 +64,9 @@
                 <div class="flex flex-col items-center gap-2 md:flex-row md:flex-wrap">
                     <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">{{ $fullName }}</h1>
                     <x-badge>{{ ucfirst($child->sex) }}</x-badge>
+                    @if($archived)
+                        <x-badge color="red" dot>Archived {{ $child->deleted_at->format('M d, Y') }}</x-badge>
+                    @endif
                     @if($latest && $latest['interpretation_code'])
                         <x-badge :color="$overallBands[$latest['interpretation_code']]['color']" dot>{{ $overallBands[$latest['interpretation_code']]['label'] }}</x-badge>
                     @endif
@@ -80,6 +88,7 @@
                 @endif
             </div>
 
+            @unless($archived)
             <div class="flex shrink-0 items-center gap-2">
                 @if($record)
                     <x-button :href="route('progress.show', $record->id)" icon="view">View Progress</x-button>
@@ -97,6 +106,7 @@
                     </form>
                 </x-action-menu>
             </div>
+            @endunless
         </div>
     </section>
 
@@ -154,7 +164,9 @@
                     <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-gray-200 py-10 text-center">
                         <i class="fas fa-clipboard-list text-2xl text-gray-300" aria-hidden="true"></i>
                         <p class="text-sm text-gray-500">This child has not been evaluated yet.</p>
-                        <x-button :href="route('progress.select-domain', ['child_id' => $child->id])" icon="evaluate">Start Evaluation</x-button>
+                        @unless($archived)
+                            <x-button :href="route('progress.select-domain', ['child_id' => $child->id])" icon="evaluate">Start Evaluation</x-button>
+                        @endunless
                     </div>
                 @else
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -244,9 +256,11 @@
                         <h2 class="text-base font-extrabold text-gray-900">Observation Notes</h2>
                         <p class="text-sm text-gray-500">Notes about the child and their home environment.</p>
                     </div>
-                    <x-button variant="secondary" :href="route('progress.add-observation', ['child_id' => $child->id])" icon="observation">
-                        {{ $summary['observations'] ? 'Edit Notes' : 'Add Notes' }}
-                    </x-button>
+                    @unless($archived)
+                        <x-button variant="secondary" :href="route('progress.add-observation', ['child_id' => $child->id])" icon="observation">
+                            {{ $summary['observations'] ? 'Edit Notes' : 'Add Notes' }}
+                        </x-button>
+                    @endunless
                 </div>
                 @forelse($summary['observations'] as $note)
                     <div class="border-t border-gray-100 py-3 first:border-t-0 first:pt-0">

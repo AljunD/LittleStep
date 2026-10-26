@@ -43,7 +43,9 @@ class Teacher extends Model
     public function ownedGuardians(): Builder
     {
         return Guardian::query()->whereHas('children', function (Builder $query) {
-            $query->whereHas('progressRecords', function (Builder $progressQuery) {
+            // Archived children still tie their guardian to the teacher, so unlinking a guardian's
+            // last child does not hide that (still active) guardian from the Guardians page.
+            $query->withTrashed()->whereHas('progressRecords', function (Builder $progressQuery) {
                 $progressQuery->withTrashed()->where('teacher_id', $this->id);
             });
         });

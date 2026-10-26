@@ -7,6 +7,7 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +15,11 @@ import { useFocusEffect } from "@react-navigation/native";
 import { DarkColors, Layout } from "../../constants/theme";
 import { useAppTheme } from "../../hooks/use-app-theme";
 import { useApiResource } from "../../hooks/use-api-resource";
-import { getGuardianAccount, isUsingDefaultPassword } from "../../services/guardianApi";
+import {
+  getGuardianAccount,
+  isUsingDefaultPassword,
+  logoutGuardian,
+} from "../../services/guardianApi";
 import { fullName } from "../../services/format";
 import { openPrivacyPolicy } from "../../services/privacy-policy";
 
@@ -28,6 +33,8 @@ const COLORS = {
   infoBackground: "#F4F8F6",
   teal: "#00A9C7",
   inactive: "#C5CBCD",
+  danger: "#B42318",
+  dangerBackground: "#FEF3F2",
 };
 
 export default function ProfileScreen({
@@ -116,6 +123,39 @@ export default function ProfileScreen({
       void openPrivacyPolicy();
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await logoutGuardian();
+    } catch {
+      Alert.alert(
+        "Signed out on this device",
+        "The app cleared its saved sign-in, but could not confirm that the server revoked the token. It will expire automatically.",
+      );
+    } finally {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Start" }],
+      });
+    }
+  };
+
+  const sessionItems = [
+    {
+      title: "Switch Student",
+      subtitle: "View another child's progress",
+      icon: "people-outline",
+      danger: false,
+      onPress: () => navigation.navigate("SelectStudent"),
+    },
+    {
+      title: "Log Out",
+      subtitle: "Sign out of LittleStep on this device",
+      icon: "log-out-outline",
+      danger: true,
+      onPress: () => void handleLogout(),
+    },
+  ];
 
   return (
     <View style={[styles.container, isDark && darkStyles.container]}>
@@ -244,6 +284,72 @@ export default function ProfileScreen({
               </TouchableOpacity>
 
               {index < profileItems.length - 1 && (
+                <View style={[styles.divider, isDark && darkStyles.divider]} />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+
+        <View style={[styles.sectionHeader, styles.sessionSectionHeader]}>
+          <Text style={[styles.sectionTitle, isDark && darkStyles.text]}>
+            Session
+          </Text>
+        </View>
+
+        <View style={[styles.menuCard, isDark && darkStyles.card]}>
+          {sessionItems.map((item, index) => (
+            <React.Fragment key={item.title}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                onPress={item.onPress}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View
+                    style={[
+                      styles.menuIconContainer,
+                      isDark && darkStyles.surfaceMuted,
+                      item.danger && styles.dangerIconContainer,
+                      item.danger && isDark && darkStyles.dangerIconContainer,
+                    ]}
+                  >
+                    <Ionicons
+                      name={item.icon as any}
+                      size={21}
+                      color={
+                        item.danger
+                          ? isDark ? DarkColors.danger : COLORS.danger
+                          : isDark ? DarkColors.icon : COLORS.green
+                      }
+                    />
+                  </View>
+
+                  <View style={styles.menuTextContainer}>
+                    <Text
+                      style={[
+                        styles.menuTitle,
+                        isDark && darkStyles.text,
+                        item.danger && styles.dangerText,
+                        item.danger && isDark && darkStyles.danger,
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.menuSubtitle, isDark && darkStyles.mutedText]}>
+                      {item.subtitle}
+                    </Text>
+                  </View>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={19}
+                  color={isDark ? DarkColors.textMuted : COLORS.gray}
+                />
+              </TouchableOpacity>
+
+              {index < sessionItems.length - 1 && (
                 <View style={[styles.divider, isDark && darkStyles.divider]} />
               )}
             </React.Fragment>
@@ -465,6 +571,18 @@ const styles = StyleSheet.create({
     color: "#B54708",
     fontWeight: "600",
   },
+
+  sessionSectionHeader: {
+    marginTop: 26,
+  },
+
+  dangerIconContainer: {
+    backgroundColor: COLORS.dangerBackground,
+  },
+
+  dangerText: {
+    color: COLORS.danger,
+  },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
@@ -553,6 +671,10 @@ const darkStyles = StyleSheet.create({
 
   danger: {
     color: DarkColors.danger,
+  },
+
+  dangerIconContainer: {
+    backgroundColor: "rgba(240, 68, 56, 0.16)",
   },
 
   warning: {

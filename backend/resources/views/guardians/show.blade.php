@@ -5,12 +5,12 @@
 @section('content')
 <div class="max-w-6xl mx-auto my-10 px-4">
     <div class="mb-6">
-        <a href="{{ route('guardians.index') }}" 
+        <a href="{{ $guardian->trashed() ? route('archives.index') : route('guardians.index') }}"
            class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
-            Back to Guardians
+            {{ $guardian->trashed() ? 'Back to Archives' : 'Back to Guardians' }}
         </a>
     </div>
 
@@ -18,7 +18,11 @@
         <div>
             <nav class="flex mb-2" aria-label="Breadcrumb">
                 <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                    <li><a href="{{ route('guardians.index') }}" class="hover:text-blue-600 transition">Guardians</a></li>
+                    @if($guardian->trashed())
+                        <li><a href="{{ route('archives.index') }}" class="hover:text-blue-600 transition">Archives</a></li>
+                    @else
+                        <li><a href="{{ route('guardians.index') }}" class="hover:text-blue-600 transition">Guardians</a></li>
+                    @endif
                     <li>
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"></path>
@@ -29,11 +33,15 @@
             </nav>
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Guardian Profile</h1>
         </div>
-        
-        <x-action-menu label="Guardian actions">
-            <x-action-menu.item :href="route('guardians.edit', $guardian->id)" icon="edit">Edit Details</x-action-menu.item>
-            <x-action-menu.item :href="route('guardians.create-child', $guardian->id)" icon="link">Link Child</x-action-menu.item>
-        </x-action-menu>
+
+        @if($guardian->trashed())
+            <x-badge color="red" dot>Archived {{ $guardian->deleted_at->format('M d, Y') }}</x-badge>
+        @else
+            <x-action-menu label="Guardian actions">
+                <x-action-menu.item :href="route('guardians.edit', $guardian->id)" icon="edit">Edit Details</x-action-menu.item>
+                <x-action-menu.item :href="route('guardians.create-child', $guardian->id)" icon="link">Link Child</x-action-menu.item>
+            </x-action-menu>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -94,6 +102,9 @@
                                 <div>
                                     <h4 class="font-bold text-gray-900">
                                         {{ trim("{$child->first_name} {$child->middle_name} {$child->last_name}") }}
+                                        @if($child->trashed())
+                                            <x-badge color="red" class="ml-1 align-middle">Archived</x-badge>
+                                        @endif
                                     </h4>
                                     <p class="text-xs text-gray-500 font-medium mt-0.5">
                                         {{ \Carbon\Carbon::parse($child->date_of_birth)->age }} yrs old • {{ $child->sex }}

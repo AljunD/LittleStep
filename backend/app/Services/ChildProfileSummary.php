@@ -31,6 +31,8 @@ class ChildProfileSummary
     {
         // Only this teacher's active record: an archived record is not shown as current progress.
         $record = $teacher->progressRecords()->where('child_id', $child->id)->with('domainObservation')->first();
+        // Reuse the loaded child: the relation alone would not find an archived child when computing scores.
+        $record?->setRelation('child', $child);
         $evaluations = $record ? $this->evaluations($record) : [];
         $latest = collect($evaluations)->filter(fn (array $evaluation) => $evaluation['scored_domains'] > 0)->last();
 

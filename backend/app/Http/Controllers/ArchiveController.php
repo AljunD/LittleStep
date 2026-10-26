@@ -69,13 +69,29 @@ class ArchiveController extends Controller
             }])
             ->findOrFail($id);
 
+        // Bring back the children archived together with the guardian (GuardianController::destroy archives them
+        // just before the guardian); children archived on their own earlier stay archived.
+        $children = Child::onlyTrashed()
+            ->where('guardian_id', $guardian->id)
+            ->whereHas('progressRecords', function ($query) use ($teacher) {
+                $query->withTrashed()->where('teacher_id', $teacher->id);
+            })
+            ->whereBetween('deleted_at', [$guardian->deleted_at->copy()->subMinute(), $guardian->deleted_at])
+            ->get();
+
         $guardian->restore();
         $guardian->user?->restore();
 
         recordLog('restored', 'Guardian', $guardian->id, 'Guardian and linked user restored: '.$guardian->first_name.' '.$guardian->last_name);
 
+        foreach ($children as $child) {
+            $child->restore();
+
+            recordLog('restored', 'Child', $child->id, 'Child restored with Guardian: '.$child->first_name.' '.$child->last_name);
+        }
+
         return redirect()->route('archives.index')
-            ->with('success', 'Guardian and linked user restored successfully.');
+            ->with('success', 'Guardian, linked user and archived children restored successfully.');
     }
 
     public function restoreChild(Request $request, int $id)

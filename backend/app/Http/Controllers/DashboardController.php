@@ -18,15 +18,8 @@ class DashboardController extends Controller
 
         $teacherId = $teacher->id;
 
-        $guardiansCount = DB::table('guardians')
-            ->join('children', 'guardians.id', '=', 'children.guardian_id')
-            ->join('progress_records', 'children.id', '=', 'progress_records.child_id')
-            ->where('progress_records.teacher_id', $teacherId)
-            ->whereNull('guardians.deleted_at')
-            ->whereNull('children.deleted_at')
-            ->whereNull('progress_records.deleted_at')
-            ->distinct()
-            ->count('guardians.id');
+        // Same scope as the Guardians page, so the count matches the list.
+        $guardiansCount = $teacher->ownedGuardians()->count();
 
         $childrenCount = DB::table('children')
             ->join('progress_records', 'children.id', '=', 'progress_records.child_id')
