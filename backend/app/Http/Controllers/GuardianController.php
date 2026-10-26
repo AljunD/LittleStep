@@ -176,14 +176,20 @@ class GuardianController extends Controller
 
     public function show(Request $request, $id)
     {
-        $guardian = $this->currentTeacher($request)->ownedGuardians()->with([
-            'user' => fn ($query) => $query->withTrashed(),
-            'children' => function ($query) use ($request) {
-                $query->whereHas('progressRecords', function ($progressQuery) use ($request) {
-                    $progressQuery->withTrashed()->where('teacher_id', $request->user()->teacher->id);
-                });
-            },
-        ])->findOrFail($id);
+        $teacher = $this->currentTeacher($request);
+        $ownedByTeacher = function ($progressQuery) use ($teacher) {
+            $progressQuery->withTrashed()->where('teacher_id', $teacher->id);
+        };
+
+        // Archived guardians stay viewable from the Archives page, along with their archived children.
+        $guardian = Guardian::withTrashed()
+            ->whereHas('children', fn ($query) => $query->withTrashed()->whereHas('progressRecords', $ownedByTeacher))
+            ->with(['user' => fn ($query) => $query->withTrashed()])
+            ->findOrFail($id);
+        $guardian->load(['children' => function ($query) use ($guardian, $ownedByTeacher) {
+            $query->when($guardian->trashed(), fn ($query) => $query->withTrashed())
+                ->whereHas('progressRecords', $ownedByTeacher);
+        }]);
 
         recordLog('viewed', 'Guardian', $guardian->id, 'Guardian record viewed.');
 

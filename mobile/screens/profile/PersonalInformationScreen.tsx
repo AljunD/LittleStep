@@ -35,7 +35,6 @@ export default function PersonalInformationScreen({
     <View style={[styles.container, isDark && darkStyles.container]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? DarkColors.background : "#FFFFFF"}
       />
 
       <View

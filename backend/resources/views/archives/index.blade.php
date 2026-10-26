@@ -63,6 +63,7 @@
                     <td class="whitespace-nowrap">{{ $child->deleted_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
                     <td class="whitespace-nowrap text-right">
                         <x-action-menu label="Actions for {{ $child->first_name }} {{ $child->last_name }}">
+                            <x-action-menu.item :href="route('children.show', $child->id)" icon="view">View</x-action-menu.item>
                             <form action="{{ route('children.restore', $child->id) }}" method="POST" data-confirm="Are you sure you want to restore this child record?">
                                 @csrf
                                 @method('PATCH')

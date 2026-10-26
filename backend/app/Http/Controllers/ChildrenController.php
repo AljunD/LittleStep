@@ -30,8 +30,10 @@ class ChildrenController extends Controller
     public function show(Request $request, $id, ChildProfileSummary $profileSummary)
     {
         $teacher = $this->currentTeacher($request);
+        // Archived children stay viewable from the Archives page.
         $child = $teacher->ownedChildren()
-            ->with('guardian.user')
+            ->withTrashed()
+            ->with(['guardian' => fn ($query) => $query->withTrashed()->with(['user' => fn ($query) => $query->withTrashed()])])
             ->findOrFail($id);
         recordLog('viewed', 'Child', $child->id, 'Child record viewed.');
 
@@ -96,7 +98,7 @@ class ChildrenController extends Controller
 
     public function photo(Request $request, int $id)
     {
-        $child = $this->currentTeacher($request)->ownedChildren()->findOrFail($id);
+        $child = $this->currentTeacher($request)->ownedChildren()->withTrashed()->findOrFail($id);
         abort_unless($child->photo_path, 404);
 
         $disk = Storage::disk('local');
