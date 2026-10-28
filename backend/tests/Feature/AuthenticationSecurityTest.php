@@ -77,6 +77,91 @@ class AuthenticationSecurityTest extends TestCase
         $this->assertSame(0, Teacher::count());
     }
 
+    private function teacherRegistration(array $overrides = []): array
+    {
+        return array_merge([
+            'first_name' => 'Taylor',
+            'last_name' => 'Teacher',
+            'sex' => 'Female',
+            'contact_number' => '09170000100',
+            'barangay' => 'Balite',
+            'municipality' => 'Rodriguez',
+            'province' => 'Rizal',
+            'region' => 'CALABARZON',
+            'email' => 'teacher@example.com',
+            'password' => 'a-secure-test-password',
+            'password_confirmation' => 'a-secure-test-password',
+        ], $overrides);
+    }
+
+    public function test_registration_requires_the_code_from_the_day_care_center(): void
+    {
+        Notification::fake();
+        config(['littlestep.teacher_registration_code' => 'balite-k7mq-p2rw']);
+
+        $this->get(route('auth.register.form'))
+            ->assertOk()
+            ->assertSee('name="registration_code"', false);
+
+        $this->from(route('auth.register.form'))
+            ->post(route('auth.register.submit'), $this->teacherRegistration())
+            ->assertRedirect(route('auth.register.form'))
+            ->assertSessionHasErrors(['registration_code' => 'Enter the registration code from the day care center.']);
+        $this->post(route('auth.register.submit'), $this->teacherRegistration(['registration_code' => 'balite-guess']))
+            ->assertSessionHasErrors(['registration_code' => 'The registration code is incorrect. Ask the day care center for the current code.']);
+        $this->assertSame(0, User::count());
+
+        $this->post(route('auth.register.submit'), $this->teacherRegistration(['registration_code' => '  BALITE-K7MQ-P2RW ']))
+            ->assertRedirect(route('verification.notice'));
+        $this->assertSame('teacher', User::where('email', 'teacher@example.com')->value('role'));
+    }
+
+    public function test_registration_needs_no_code_on_a_local_install(): void
+    {
+        config(['littlestep.teacher_registration_code' => null]);
+
+        $this->get(route('auth.register.form'))
+            ->assertOk()
+            ->assertSee('name="email"', false)
+            ->assertDontSee('name="registration_code"', false);
+    }
+
+    public function test_registration_is_closed_in_production_without_a_code(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+        config(['littlestep.teacher_registration_code' => null]);
+
+        $this->get('https://localhost/auth/register')
+            ->assertOk()
+            ->assertSee('Teacher registration is closed.')
+            ->assertDontSee('name="email"', false);
+
+        // Production checks CSRF tokens even in tests, so the post carries one.
+        $this->withSession(['_token' => 'test-csrf-token'])
+            ->post('https://localhost/auth/register', $this->teacherRegistration(['_token' => 'test-csrf-token']))
+            ->assertForbidden();
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_the_visitor_ip_comes_from_the_proxy_but_a_forwarded_host_is_ignored(): void
+    {
+        $failedLogin = ['email' => 'nobody@example.com', 'password' => 'not-the-password'];
+
+        // Through Wasmer's proxy: the visitor's IP is used, but X-Forwarded-Host can't change generated links.
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.100'])
+            ->withHeaders(['X-Forwarded-For' => '203.0.113.7', 'X-Forwarded-Host' => 'evil.example'])
+            ->post(route('auth.login.submit'), $failedLogin)
+            ->assertRedirect('http://localhost');
+        $this->assertDatabaseHas('logs', ['action' => 'login_failed', 'ip_address' => '203.0.113.7']);
+
+        // Straight from the internet: a made-up X-Forwarded-For is ignored.
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.20'])
+            ->withHeaders(['X-Forwarded-For' => '203.0.113.99'])
+            ->post(route('auth.login.submit'), $failedLogin);
+        $this->assertDatabaseHas('logs', ['action' => 'login_failed', 'ip_address' => '198.51.100.20']);
+        $this->assertDatabaseMissing('logs', ['ip_address' => '203.0.113.99']);
+    }
+
     public function test_account_confirmation_email_contains_no_personal_profile_data_or_external_assets(): void
     {
         $html = view('emails.account-details')->render();

@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\TeacherPasswordService;
 use App\Support\FormRules;
 use App\Support\SafeMail;
+use App\Support\TeacherRegistration;
+use Closure;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,19 +22,36 @@ class AuthController extends Controller
 {
     public function showRegisterForm()
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'registrationOpen' => TeacherRegistration::isOpen(),
+            'codeRequired' => TeacherRegistration::code() !== null,
+        ]);
     }
 
     public function register(Request $request)
     {
+        abort_unless(TeacherRegistration::isOpen(), 403, 'Teacher registration is closed.');
+
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
         $validated = $request->validate([
+            'registration_code' => [
+                TeacherRegistration::code() !== null ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                static function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! TeacherRegistration::accepts($value)) {
+                        $fail('The registration code is incorrect. Ask the day care center for the current code.');
+                    }
+                },
+            ],
             ...FormRules::teacherProfile(),
             'email' => 'required|string|email|max:255|unique:users',
             'password' => FormRules::password(),
-        ], FormRules::messages());
+        ], [
+            'registration_code.required' => 'Enter the registration code from the day care center.',
+        ] + FormRules::messages());
 
         $cleanEmail = Str::lower(trim($request->email));
 
@@ -150,7 +170,7 @@ class AuthController extends Controller
         return view('auth.reset-password', ['token' => $token]);
     }
 
-    public function reset(Request $request)
+    public function reset(Request $request, TeacherPasswordService $passwords)
     {
         $request->validate([
             'token' => 'required|string|max:255',
@@ -165,11 +185,9 @@ class AuthController extends Controller
                 'password' => $request->password,
                 'password_confirmation' => $request->password_confirmation,
             ],
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                ])->save();
-                $user->tokens()->delete();
+            function ($user, $password) use ($passwords) {
+                // A reset is how a locked-out or compromised account is recovered, so no existing session is kept.
+                $passwords->change($user, $password);
 
                 recordLog('password_reset', 'User', $user->id, 'Password reset.', $user->id);
             }

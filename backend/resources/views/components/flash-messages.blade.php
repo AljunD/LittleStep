@@ -4,6 +4,9 @@
         'error' => session('error'),
     ], fn ($message) => is_string($message) && $message !== '');
 
+    // A new guardian's temporary password, shown with the success message on the one page after it was created.
+    $temporaryPassword = session('temporary_password');
+
     $flashStyles = [
         'success' => [
             'title' => 'Success',
@@ -40,6 +43,11 @@
                     <div>
                         <p class="font-semibold text-sm">{{ $style['title'] }}</p>
                         <p class="text-sm {{ $style['text'] }}">{{ $message }}</p>
+                        @if ($type === 'success' && is_string($temporaryPassword) && $temporaryPassword !== '')
+                            <p class="mt-2 text-xs font-semibold uppercase tracking-wide {{ $style['text'] }}">Temporary password</p>
+                            <p data-temporary-password
+                               class="mt-1 inline-block select-all rounded-lg border border-green-200 bg-white px-3 py-1.5 font-mono text-lg font-bold tracking-wider text-gray-900">{{ $temporaryPassword }}</p>
+                        @endif
                     </div>
                 </div>
                 <button type="button" data-dismiss-alert aria-label="Dismiss message"

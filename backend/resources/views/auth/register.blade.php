@@ -20,8 +20,25 @@
     <p class="text-gray-400 text-lg font-light">Fill in your details to create an account</p>
 </div>
 
+@if (! $registrationOpen)
+<div role="status" class="p-4 border rounded-xl bg-gray-50 border-gray-200 text-sm text-gray-600">
+    Teacher registration is closed. Ask the day care center for a registration code.
+</div>
+@else
 <form method="POST" action="{{ route('auth.register.submit') }}" class="space-y-8" data-lock-submit>
     @csrf
+
+    @if ($codeRequired)
+        <section class="space-y-4">
+            <h2 class="{{ $sectionClass }}">Registration Code</h2>
+            <div>
+                <label for="registration_code" class="{{ $labelClass }}">Code from the day care center</label>
+                <input type="text" id="registration_code" name="registration_code" value="{{ old('registration_code') }}"
+                       maxlength="255" autocomplete="off" autocapitalize="none" spellcheck="false" required class="{{ $fieldClass }}">
+                @error('registration_code') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
+        </section>
+    @endif
 
     <section class="space-y-4">
         <h2 class="{{ $sectionClass }}">Personal Information</h2>
@@ -103,6 +120,7 @@
 
     <x-button type="submit" class="w-full" data-submitting-text="Registering...">Register</x-button>
 </form>
+@endif
 
 <div class="text-center mt-6">
     <p class="text-sm text-gray-500">

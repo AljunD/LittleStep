@@ -172,7 +172,7 @@ LittleStep is running at https://$DOMAIN
 
 Before real use, edit $ENV_FILE (sudo nano $ENV_FILE) and set:
   MAIL_*                      the email account that sends verification links
-  GUARDIAN_DEFAULT_PASSWORD   your own default password for new guardian accounts
+  TEACHER_REGISTRATION_CODE   the code teachers enter to register (registration is closed without one)
   PRIVACY_CONTROLLER_NAME, PRIVACY_CONTACT_EMAIL, PRIVACY_CONTACT_PHONE   shown on /privacy
 then apply the changes with:  sudo -u www-data php $BACKEND/artisan optimize
 

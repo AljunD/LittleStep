@@ -129,9 +129,8 @@
                             <input type="password" id="guardianConfirmPassword" name="password_confirmation" minlength="12" maxlength="72" autocomplete="new-password" class="w-full border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none border text-sm">
                         </div>
                         <p id="guardianPasswordHint" class="md:col-span-2 text-xs text-gray-500 -mt-3">
-                            Leave both password fields empty to use the default password
-                            <span class="font-mono font-semibold text-gray-700">{{ $defaultPassword }}</span>.
-                            Ask the guardian to change it after signing in.
+                            Leave both password fields empty to create a random temporary password. It is shown once after you save,
+                            so give it to the guardian then. The guardian is asked to change the password after signing in.
                         </p>
                     </div>
 
@@ -599,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reviewPassword) {
             reviewPassword.textContent = document.getElementById('guardianPassword')?.value
                 ? 'Custom password'
-                : 'Default password';
+                : 'Temporary password (shown after saving)';
         }
 
         const handedness = document.getElementById('childHandedness');

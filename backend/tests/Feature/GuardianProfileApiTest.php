@@ -128,4 +128,30 @@ class GuardianProfileApiTest extends TestCase
             ->assertJsonPath('1.child.first_name', 'Bea')
             ->assertJsonPath('1.teacher', null);
     }
+
+    public function test_there_is_no_endpoint_that_dumps_raw_records(): void
+    {
+        $guardian = $this->createGuardian('maria@example.com');
+        $teacher = Teacher::create([
+            'user_id' => User::factory()->create(['role' => 'teacher'])->id,
+            'first_name' => 'Taylor',
+            'middle_name' => null,
+            'last_name' => 'Teacher',
+            'sex' => 'Female',
+            'contact_number' => '09998887777',
+            'address' => 'Teacher home address',
+        ]);
+        ProgressRecord::create([
+            'child_id' => $this->createChild($guardian, 'Ana')->id,
+            'teacher_id' => $teacher->id,
+            'evaluation_date' => '2026-10-01',
+            'evaluation_number' => 1,
+            'status' => 'pending',
+        ]);
+        Sanctum::actingAs($guardian->user, ['*']);
+
+        $this->getJson('/api/v1/guardian/views')
+            ->assertNotFound()
+            ->assertDontSee('Teacher home address');
+    }
 }

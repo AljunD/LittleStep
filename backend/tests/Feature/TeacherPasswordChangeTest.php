@@ -10,6 +10,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class TeacherPasswordChangeTest extends TestCase
@@ -180,6 +181,36 @@ class TeacherPasswordChangeTest extends TestCase
         $this->assertDatabaseMissing('sessions', ['id' => 'teacher-laptop-session']);
         $this->assertDatabaseHas('sessions', ['id' => 'someone-elses-session']);
         $this->assertSame(0, $this->user->tokens()->count());
+    }
+
+    public function test_a_password_reset_signs_the_account_out_everywhere(): void
+    {
+        config(['session.driver' => 'database']);
+        $otherUser = User::factory()->create(['role' => 'teacher']);
+        $storedSession = fn (string $id, int $userId) => [
+            'id' => $id, 'user_id' => $userId, 'ip_address' => '127.0.0.1', 'user_agent' => 'Test',
+            'payload' => base64_encode(serialize([])), 'last_activity' => now()->timestamp,
+        ];
+        DB::table('sessions')->insert([
+            $storedSession('possibly-stolen-session', $this->user->id),
+            $storedSession('someone-elses-session', $otherUser->id),
+        ]);
+        $this->user->createToken('old-device');
+
+        $this->post(route('auth.password.update'), [
+            'token' => Password::createToken($this->user),
+            'email' => $this->user->email,
+            'password' => self::NEW_PASSWORD,
+            'password_confirmation' => self::NEW_PASSWORD,
+        ])->assertRedirect(route('login'))->assertSessionHasNoErrors();
+
+        $this->user->refresh();
+        $this->assertTrue(Hash::check(self::NEW_PASSWORD, $this->user->password));
+        $this->assertNotSame('old-remember-token', $this->user->remember_token);
+        $this->assertDatabaseMissing('sessions', ['id' => 'possibly-stolen-session']);
+        $this->assertDatabaseHas('sessions', ['id' => 'someone-elses-session']);
+        $this->assertSame(0, $this->user->tokens()->count());
+        $this->assertDatabaseHas('logs', ['user_id' => $this->user->id, 'action' => 'password_reset']);
     }
 
     public function test_password_changes_are_rate_limited(): void

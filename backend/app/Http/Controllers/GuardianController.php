@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\FormRules;
 use App\Support\SafeMail;
 use App\Support\Search;
+use App\Support\TemporaryPassword;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ use Illuminate\Validation\Rule;
 
 class GuardianController extends Controller
 {
+    private const TEMPORARY_PASSWORD_MESSAGE = 'Give the guardian the temporary password below now. It will not be shown again, and they will be asked to change it after signing in.';
+
     protected function validationMessages()
     {
         return array_merge([
@@ -78,9 +81,7 @@ class GuardianController extends Controller
 
     public function create()
     {
-        return view('guardians.create', [
-            'defaultPassword' => config('littlestep.guardian_default_password'),
-        ]);
+        return view('guardians.create');
     }
 
     public function store(Request $request)
@@ -98,8 +99,8 @@ class GuardianController extends Controller
         ), $this->validationMessages());
 
         $teacher = $this->currentTeacher($request);
-        $usesDefaultPassword = empty($validated['password']);
-        $password = $usesDefaultPassword ? (string) config('littlestep.guardian_default_password') : $validated['password'];
+        $temporaryPassword = empty($validated['password']) ? TemporaryPassword::generate() : null;
+        $password = $temporaryPassword ?? $validated['password'];
         $isStudying = (bool) ($validated['is_studying'] ?? false);
 
         $photoPath = $request->hasFile('photo')
@@ -107,10 +108,12 @@ class GuardianController extends Controller
             : null;
 
         $user = DB::transaction(function () use ($validated, $teacher, $password, $isStudying, $photoPath) {
-            $user = User::create([
+            // The teacher knows this password, so the app asks the guardian to change it.
+            $user = User::forceCreate([
                 'email' => $validated['email'],
                 'password' => Hash::make($password),
                 'role' => 'guardian',
+                'must_change_password' => true,
             ]);
 
             $guardian = Guardian::create([
@@ -165,12 +168,13 @@ class GuardianController extends Controller
         $verificationSent = SafeMail::attempt(fn () => event(new Registered($user)));
 
         $message = 'Guardian and child registered successfully.';
-        if ($usesDefaultPassword) {
-            $message .= ' No password was entered, so the account uses the default password. Ask the guardian to change it after signing in.';
+        if ($temporaryPassword !== null) {
+            $message .= ' '.self::TEMPORARY_PASSWORD_MESSAGE;
         }
 
         return redirect()->route('guardians.index')
             ->with('success', $message)
+            ->with('temporary_password', $temporaryPassword)
             ->with('error', $verificationSent ? null : SafeMail::VERIFICATION_FAILED);
     }
 
@@ -213,11 +217,7 @@ class GuardianController extends Controller
     {
         $teacher = $this->currentTeacher($request);
         $guardian = $teacher->ownedGuardians()->with('user')->findOrFail($id);
-        abort_if($guardian->children()->withTrashed()
-            ->whereDoesntHave('progressRecords', function ($query) use ($teacher) {
-                $query->withTrashed()->where('teacher_id', $teacher->id);
-            })
-            ->exists(), 403, 'This guardian is linked to children assigned to another teacher.');
+        $this->abortIfSharedWithAnotherTeacher($teacher, $guardian);
         if ($request->filled('email')) {
             $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
         }
@@ -248,7 +248,7 @@ class GuardianController extends Controller
             }
 
             if (! empty($data['password'])) {
-                $user->forceFill(['password' => Hash::make($data['password'])])->save();
+                $user->forceFill(['password' => Hash::make($data['password']), 'must_change_password' => true])->save();
             }
 
             if ($emailChanged || ! empty($data['password'])) {
@@ -292,6 +292,28 @@ class GuardianController extends Controller
 
         return redirect()->route('guardians.index')
             ->with('success', 'A new verification link was sent to '.$user->email.'.');
+    }
+
+    /** For a guardian who lost their temporary password or forgot their own: the old one stops working everywhere. */
+    public function resetPassword(Request $request, $id)
+    {
+        $teacher = $this->currentTeacher($request);
+        $guardian = $teacher->ownedGuardians()->with('user')->findOrFail($id);
+        $this->abortIfSharedWithAnotherTeacher($teacher, $guardian);
+        abort_unless($guardian->user, 404);
+
+        $temporaryPassword = TemporaryPassword::generate();
+        $guardian->user->forceFill([
+            'password' => Hash::make($temporaryPassword),
+            'must_change_password' => true,
+        ])->save();
+        $guardian->user->tokens()->delete();
+
+        recordLog('password_reset', 'Guardian', $guardian->id, 'Temporary password created; the guardian was signed out of the app.');
+
+        return redirect()->route('guardians.index')
+            ->with('success', 'A new password was created for '.$guardian->first_name.' '.$guardian->last_name.', who was signed out of the app. '.self::TEMPORARY_PASSWORD_MESSAGE)
+            ->with('temporary_password', $temporaryPassword);
     }
 
     public function destroy(Request $request, $id)
@@ -406,6 +428,16 @@ class GuardianController extends Controller
             ->get());
 
         return view('guardians.archive-child', compact('guardian'));
+    }
+
+    /** Editing or resetting a guardian whose children another teacher also has would change that teacher's records too. */
+    private function abortIfSharedWithAnotherTeacher(Teacher $teacher, Guardian $guardian): void
+    {
+        abort_if($guardian->children()->withTrashed()
+            ->whereDoesntHave('progressRecords', function ($query) use ($teacher) {
+                $query->withTrashed()->where('teacher_id', $teacher->id);
+            })
+            ->exists(), 403, 'This guardian is linked to children assigned to another teacher.');
     }
 
     private function currentTeacher(Request $request): Teacher
