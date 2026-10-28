@@ -67,7 +67,7 @@ export default function ProfileScreen({
     {
       title: "Change Password",
       subtitle: usingDefaultPassword
-        ? "Recommended: you are using the default password"
+        ? "Recommended: you are using a temporary password"
         : "Update your account password",
       icon: "key-outline",
       warning: usingDefaultPassword,

@@ -87,7 +87,10 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
 
     Route::get('/', [GuardianController::class, 'index'])->name('guardians.index');
     Route::get('/create', [GuardianController::class, 'create'])->name('guardians.create');
-    Route::post('/', [GuardianController::class, 'store'])->name('guardians.store');
+    // Adding a guardian or changing their email sends mail from the center's account, so both are rate limited.
+    Route::post('/', [GuardianController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('guardians.store');
 
     Route::get('/{id}/create-child', [GuardianController::class, 'createChild'])->name('guardians.create-child');
     Route::post('/{id}/store-child', [GuardianController::class, 'storeChild'])->name('guardians.store-child');
@@ -97,11 +100,16 @@ Route::prefix('guardians')->middleware(['auth', 'verified', 'teacher'])->group(f
 
     Route::get('/{id}', [GuardianController::class, 'show'])->name('guardians.show');
     Route::get('/{id}/edit', [GuardianController::class, 'edit'])->name('guardians.edit');
-    Route::put('/{id}', [GuardianController::class, 'update'])->name('guardians.update');
+    Route::put('/{id}', [GuardianController::class, 'update'])
+        ->middleware('throttle:10,1')
+        ->name('guardians.update');
     Route::delete('/{id}', [GuardianController::class, 'destroy'])->name('guardians.destroy');
     Route::post('/{id}/resend-verification', [GuardianController::class, 'resendVerification'])
         ->middleware('throttle:6,1')
         ->name('guardians.resend-verification');
+    Route::post('/{id}/reset-password', [GuardianController::class, 'resetPassword'])
+        ->middleware('throttle:6,1')
+        ->name('guardians.reset-password');
 });
 
 Route::middleware(['auth', 'verified', 'teacher'])->group(function () {

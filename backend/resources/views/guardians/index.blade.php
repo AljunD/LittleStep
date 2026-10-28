@@ -44,6 +44,13 @@
                                 <x-action-menu.item icon="mail">Resend Verification Email</x-action-menu.item>
                             </form>
                         @endif
+                        @if($guardian->user)
+                            <form action="{{ route('guardians.reset-password', $guardian->id) }}" method="POST"
+                                  data-confirm="Create a new temporary password for {{ $guardian->first_name }} {{ $guardian->last_name }}? Their current password will stop working and they will be signed out of the app.">
+                                @csrf
+                                <x-action-menu.item icon="key">Reset Password</x-action-menu.item>
+                            </form>
+                        @endif
                         <form action="{{ route('guardians.destroy', $guardian->id) }}" method="POST"
                               data-confirm="Are you sure you want to archive {{ $guardian->first_name }} {{ $guardian->last_name }} and all linked children records?">
                             @csrf

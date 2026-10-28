@@ -356,24 +356,4 @@ class GuardianController extends Controller
             'Cache-Control' => 'private, no-store',
         ], 'inline');
     }
-
-    public function views(Request $request)
-    {
-        $guardian = $request->user()->guardian;
-
-        if (! $guardian) {
-            return response()->json(['error' => 'Guardian profile not found'], 404);
-        }
-
-        $guardian->load([
-            'children.progressRecords.teacher',
-            'children.progressRecords.domains.results',
-            'children.progressRecords.domainScores',
-        ]);
-
-        return response()->json([
-            'profile' => $guardian,
-            'children' => $guardian->children,
-        ], 200);
-    }
 }

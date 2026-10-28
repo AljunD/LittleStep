@@ -106,33 +106,48 @@ class FormValidationTest extends TestCase
         ], $overrides);
     }
 
-    public function test_guardian_registered_without_a_password_gets_the_default_password(): void
+    public function test_guardian_registered_without_a_password_gets_a_random_temporary_password(): void
     {
         Notification::fake();
 
         $this->actingAs($this->teacherUser)
             ->post(route('guardians.store'), $this->guardianRegistration())
             ->assertRedirect(route('guardians.index'))
-            ->assertSessionHas('success', fn (string $message) => str_contains($message, 'default password'));
+            ->assertSessionHas('success', fn (string $message) => str_contains($message, 'temporary password'));
+
+        $temporaryPassword = session('temporary_password');
+        $this->assertMatchesRegularExpression('/^[a-hjkmnp-z2-9]{4}-[a-hjkmnp-z2-9]{4}-[a-hjkmnp-z2-9]{4}$/', $temporaryPassword);
 
         $user = User::where('email', 'new.guardian@example.com')->firstOrFail();
-        $this->assertTrue(Hash::check('Password123@', $user->password));
+        $this->assertTrue(Hash::check($temporaryPassword, $user->password));
+        $this->assertFalse(Hash::check('Password123@', $user->password));
+        $this->assertTrue($user->must_change_password);
         $this->assertSame('guardian', $user->role);
-        Notification::assertSentTo($user, CustomVerifyEmail::class);
+        // Only the teacher sees the password: it is never emailed or written to System Logs.
+        Notification::assertSentTo($user, CustomVerifyEmail::class, fn (CustomVerifyEmail $notification) => ! str_contains(
+            json_encode($notification->toMail($user)->toArray()),
+            $temporaryPassword
+        ));
+        $this->assertSame(0, Log::where('details', 'like', '%'.$temporaryPassword.'%')->count());
 
         $this->assertDatabaseHas('guardians', ['user_id' => $user->id, 'first_name' => 'María', 'last_name' => "O'Neil-Cruz"]);
         $this->assertDatabaseHas('children', ['first_name' => 'Niño']);
     }
 
-    public function test_the_default_password_is_read_from_config(): void
+    public function test_every_guardian_gets_a_different_temporary_password(): void
     {
         Notification::fake();
-        config(['littlestep.guardian_default_password' => 'Another-Default-123']);
 
         $this->actingAs($this->teacherUser)->post(route('guardians.store'), $this->guardianRegistration());
+        $first = session('temporary_password');
+        $this->actingAs($this->teacherUser)->post(route('guardians.store'), $this->guardianRegistration([
+            'email' => 'second.guardian@example.com',
+            'contact_number' => '09170000003',
+        ]));
+        $second = session('temporary_password');
 
-        $user = User::where('email', 'new.guardian@example.com')->firstOrFail();
-        $this->assertTrue(Hash::check('Another-Default-123', $user->password));
+        $this->assertNotSame($first, $second);
+        $this->assertTrue(Hash::check($second, User::where('email', 'second.guardian@example.com')->value('password')));
     }
 
     public function test_a_typed_guardian_password_is_used_and_still_validated(): void
@@ -152,19 +167,23 @@ class FormValidationTest extends TestCase
                 'password' => 'Custom-Password-42',
                 'password_confirmation' => 'Custom-Password-42',
             ]))
-            ->assertSessionHas('success', 'Guardian and child registered successfully.');
+            ->assertSessionHas('success', 'Guardian and child registered successfully.')
+            ->assertSessionMissing('temporary_password');
 
         $user = User::where('email', 'new.guardian@example.com')->firstOrFail();
         $this->assertTrue(Hash::check('Custom-Password-42', $user->password));
         $this->assertFalse(Hash::check('Password123@', $user->password));
+        $this->assertTrue($user->must_change_password, 'The teacher knows the password, so the guardian is asked to change it.');
     }
 
-    public function test_the_registration_form_explains_the_default_password(): void
+    public function test_the_registration_form_explains_the_temporary_password(): void
     {
         $this->actingAs($this->teacherUser)->get(route('guardians.create'))
             ->assertOk()
-            ->assertSee('Leave both password fields empty to use the default password')
-            ->assertSee('Password123@')
+            ->assertSee('Leave both password fields empty to create a random temporary password')
+            ->assertSee('Temporary password (shown after saving)')
+            ->assertDontSee('Password123@')
+            ->assertDontSee('default password')
             ->assertDontSee('id="guardianPassword" name="password" minlength="12" maxlength="72" autocomplete="new-password" required', false);
     }
 

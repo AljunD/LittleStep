@@ -167,7 +167,7 @@ export default function ChangePasswordScreen({ navigation }: any) {
                 <View style={[styles.notice, isDark && darkStyles.notice]}>
                   <Ionicons name="alert-circle-outline" size={18} color={isDark ? "#F5C76B" : "#B54708"} />
                   <Text style={[styles.noticeText, isDark && darkStyles.noticeText]}>
-                    You are using the default password from your child&apos;s teacher. Enter it as your
+                    You are using the temporary password from your child&apos;s teacher. Enter it as your
                     current password below.
                   </Text>
                 </View>

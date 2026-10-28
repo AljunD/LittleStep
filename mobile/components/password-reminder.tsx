@@ -34,7 +34,7 @@ export function PasswordReminder({ visible, onChangePassword, onRemindLater }: P
 
           <Text style={[styles.title, isDark && darkStyles.text]}>Change your password</Text>
           <Text style={[styles.message, isDark && darkStyles.mutedText]}>
-            You signed in with the default password your child&apos;s teacher set up for your account.
+            You signed in with the temporary password your child&apos;s teacher gave you.
             For your security, please change it to a password only you know.
           </Text>
 

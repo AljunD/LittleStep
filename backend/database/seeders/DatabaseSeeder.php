@@ -53,6 +53,10 @@ class DatabaseSeeder extends Seeder
                 'role' => 'guardian',
             ]
         );
+        if ($guardianUser->wasRecentlyCreated) {
+            // Like an account a teacher just created, so the app's change-password reminder can be tried out.
+            $guardianUser->forceFill(['must_change_password' => true])->save();
+        }
 
         $guardian = Guardian::firstOrCreate(
             ['user_id' => $guardianUser->id],

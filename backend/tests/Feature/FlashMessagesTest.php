@@ -347,6 +347,49 @@ class FlashMessagesTest extends TestCase
         $response->assertSee('Morgan')->assertDontSee('Registration Portal');
     }
 
+    private function assertTemporaryPasswordShownOnce(TestResponse $response, User $guardianUser): void
+    {
+        $this->assertSame(1, preg_match('/data-temporary-password\s+class="[^"]*">([a-z2-9-]{14})</', $response->getContent(), $match));
+        $this->assertTrue(Hash::check($match[1], $guardianUser->fresh()->password));
+
+        $this->actingAs($this->teacherUser)->get(route('guardians.index'))
+            ->assertOk()
+            ->assertDontSee('data-temporary-password', false)
+            ->assertDontSee($match[1]);
+    }
+
+    public function test_a_new_guardians_temporary_password_is_shown_once_on_the_guardians_list(): void
+    {
+        Notification::fake();
+
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->post(route('guardians.store'), [
+                'email' => 'new.guardian@example.com',
+                'first_name' => 'Morgan',
+                'last_name' => 'Guardian',
+                'sex' => 'Male',
+                'contact_number' => '09170000002',
+                'relationship_to_child' => 'Father',
+                'child_first_name' => 'Riley',
+                'child_last_name' => 'Guardian',
+                'child_sex' => 'Male',
+                'child_date_of_birth' => '2022-03-01',
+                'child_handedness' => 'right',
+            ]);
+
+        $this->assertFlashShownOnce($response, 'success', 'Guardian and child registered successfully. Give the guardian the temporary password below now. It will not be shown again, and they will be asked to change it after signing in.');
+        $this->assertTemporaryPasswordShownOnce($response, User::where('email', 'new.guardian@example.com')->firstOrFail());
+    }
+
+    public function test_a_reset_guardian_password_is_shown_once_on_the_guardians_list(): void
+    {
+        $response = $this->actingAs($this->teacherUser)->followingRedirects()
+            ->post(route('guardians.reset-password', $this->guardian->id));
+
+        $this->assertFlashShownOnce($response, 'success', 'A new password was created for Casey Guardian, who was signed out of the app.');
+        $this->assertTemporaryPasswordShownOnce($response, $this->guardian->user);
+    }
+
     public function test_guardian_update_validation_errors_keep_the_edit_form_visible(): void
     {
         $response = $this->actingAs($this->teacherUser)

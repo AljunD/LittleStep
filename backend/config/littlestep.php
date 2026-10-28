@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'guardian_default_password' => env('GUARDIAN_DEFAULT_PASSWORD', 'Password123@'),
+    // Teachers enter this code to create an account at /auth/register. Empty: open locally, closed in production.
+    'teacher_registration_code' => env('TEACHER_REGISTRATION_CODE'),
 
     'guardian_app_login_url' => env('GUARDIAN_APP_LOGIN_URL', 'littlestep://login'),
 

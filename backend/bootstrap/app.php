@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Wasmer Edge connects from a loopback address and sends the visitor's IP in X-Forwarded-For; without it every
+        // visitor shares one rate limit and System Logs show the proxy. Only that header is trusted: a forwarded host
+        // or scheme would let a request change the links in password-reset emails.
+        $middleware->trustProxies(at: ['127.0.0.0/8', '::1'], headers: Request::HEADER_X_FORWARDED_FOR);
+
         $middleware->replace(Authenticate::class, ApiAuthenticate::class);
         $middleware->appendToGroup('web', SecurityHeaders::class);
         $middleware->appendToGroup('api', SecurityHeaders::class);

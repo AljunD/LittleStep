@@ -13,6 +13,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Both jobs only read the code; the deploy authenticates to Wasmer with WASMER_TOKEN, not the GitHub token.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Backend tests (PHP 8.3)

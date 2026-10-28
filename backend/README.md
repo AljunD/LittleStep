@@ -84,7 +84,7 @@ curl -fsSL https://raw.githubusercontent.com/AljunD/LittleStep/main/backend/depl
 sudo DOMAIN=littlestep.example.com EMAIL=you@example.com bash setup-server.sh
 ```
 
-After setup, set `MAIL_*`, `GUARDIAN_DEFAULT_PASSWORD` and the `PRIVACY_*` values in `/var/www/littlestep/backend/.env`, then run `sudo -u www-data php artisan optimize`. Artisan commands on the server run as `www-data`, which owns the writable `storage/` and `bootstrap/cache/`. Open ports 80 and 443 in the provider's own firewall too (Oracle: the VCN Security List).
+After setup, set `MAIL_*`, `TEACHER_REGISTRATION_CODE` and the `PRIVACY_*` values in `/var/www/littlestep/backend/.env`, then run `sudo -u www-data php artisan optimize`. Artisan commands on the server run as `www-data`, which owns the writable `storage/` and `bootstrap/cache/`. Open ports 80 and 443 in the provider's own firewall too (Oracle: the VCN Security List).
 
 ### Wasmer Edge (free hosting, current live site)
 
@@ -93,7 +93,7 @@ The live teacher portal runs at **https://littlestep.wasmer.app** on Wasmer Edge
 - **`app.yaml`:** a MySQL database, a `/data` volume holding Laravel's `storage/` (`LARAVEL_STORAGE_PATH`), and SSH.
 - **`php-config/php.ini`:** PHP settings.
 
-Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `GUARDIAN_DEFAULT_PASSWORD`) are set with `wasmer app secrets create --app aljund/littlestep NAME VALUE`, never in files.
+Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `TEACHER_REGISTRATION_CODE`) are set with `wasmer app secrets create --app aljund/littlestep NAME VALUE`, never in files. Without `TEACHER_REGISTRATION_CODE`, the live site doesn't accept new teacher accounts.
 
 - **Automatic deploys:** `.github/workflows/deploy.yml` runs the tests on PHP 8.3 for every pull request and push. After a push or merge to `main`, it deploys only if the tests pass. It needs the repository secret `WASMER_TOKEN` (from wasmer.io → Settings → Access tokens). You can also start it by hand under Actions → Test and deploy → Run workflow.
 - **Manual deploys:** run `bash deploy/wasmer/build.sh --deploy`, which needs `wasmer login`.
@@ -208,6 +208,7 @@ Recent account activity is on the System Logs page (`/logs`), not the dashboard.
 
 - `/` (`home`) redirects to the dashboard when signed in, otherwise to the sign-in page.
 - The sign-in, registration, forgot-password and reset-password pages use the `guest` middleware, so a signed-in teacher is sent to the dashboard. Signing in redirects to the intended page or `dashboard`.
+- **Registration code.** To create an account, a teacher enters the code from `TEACHER_REGISTRATION_CODE` at the top of the registration form. Spaces around it and letter case are ignored. Without a code, registration is open on a local install and closed in production: the page says so and the POST returns 403 (`App\Support\TeacherRegistration`). Changing the code doesn't affect existing accounts, so change it whenever it may have spread too far.
 - **Sign-in errors.** A failed sign-in shows an alert card above the form, matching the mobile app. AuthController flashes `login_alert`, and `auth/login.blade.php` turns it into a title, an icon and a next step. A wrong email or password shows a red card and outlines both fields. A guardian account trying the web portal also gets a red card. An unverified email gets an amber card. Too many attempts (`throttle:5,1`) also gets an amber card: the `ThrottleRequestsException` handler in `bootstrap/app.php` redirects back to the login page instead of showing a bare 429 page. The password field has a show/hide (eye) button (`data-password-toggle`, script in `components/auth.blade.php`). The password is hidden again before the form submits.
 - Progress pages opened without their id (`progress.show`, `progress.edit`, `progress.select-domain`, `progress.create`, `progress.add-observation`) redirect to Progress Records with an error message. `progress.show/{id}` takes a progress record id only (unknown ids are a 404). The PDF report is `progress.download-pdf`.
 
@@ -282,7 +283,11 @@ To add a tab, add its route under the `settings` prefix (same `auth`, `verified`
 - **Double submits:** the teacher layout blocks double submits of POST forms, so a double-click can't create duplicates.
 - **Progress comments:** a progress comment needs a ✓/— response before it can be saved. This applies on both the create and edit forms.
 
-**Default guardian password.** On Guardians → Add Guardian the password is optional. If both password fields are left empty, the account gets the default password from `GUARDIAN_DEFAULT_PASSWORD` (`Password123@` when unset, see `config/littlestep.php`). The form shows the default, and the success banner says when it was used. Everyone who gets the default shares the same known password. When a guardian signs in to the mobile app with it, the login response sets `must_change_password`. The app then reminds them to change it in Profile → Change Password (`PUT /api/v1/guardian/password`). For real deployments, set your own value in `.env`.
+**Temporary guardian passwords.** On Guardians → Add Guardian the password is optional.
+- **Left empty:** the account gets a random temporary password such as `k7mq-p2rw-z9tx` (`App\Support\TemporaryPassword`), with no look-alike characters such as `l`/`1` or `o`/`0`. It is shown once, in the success banner on the Guardians list, so give it to the guardian then. It is never emailed or logged.
+- **Change reminder:** any password a teacher sets, typed or generated, sets `users.must_change_password`. The login response passes it on, and the mobile app asks the guardian to choose their own password in Profile → Change Password. Changing it there (`PUT /api/v1/guardian/password`) or through a forgot-password email clears the flag.
+- **Reset Password** (guardian's ⋮ menu): creates a new temporary password for a guardian who lost theirs, shown the same way. The old password stops working and the guardian is signed out of the app. It is logged as `password_reset` and limited to 6 per minute. Like editing, it is refused for a guardian whose children also belong to another teacher.
+- **Older accounts:** there is no shared default password any more. The `add_must_change_password` migration flags guardians still using the old default `Password123@`. Reset those from the ⋮ menu.
 
 **Changing a guardian's email.** Saving a new email marks the account unverified, signs the guardian out of the mobile app, and sends a verification link to the new address. This also fixes typos in the original registration email.
 
@@ -363,7 +368,8 @@ Both pages get this from `ProgressController::currentRoundProgress()`, so they a
 
 **Security.**
 - `SecurityHeaders` adds a nonce-based Content-Security-Policy, so inline `<script>`/`<style>` tags need `nonce="{{ request()->attributes->get('cspNonce') }}"`. In production it also redirects to HTTPS and sends HSTS.
-- Login, registration, and password-reset POSTs are throttled to 5 per minute.
+- Login, registration, and password-reset POSTs are throttled to 5 per minute. Adding a guardian and saving a guardian's edits can send email from the center's account, so each is limited to 10 per minute per teacher.
+- **Visitor IP:** `bootstrap/app.php` trusts `X-Forwarded-For` only from loopback addresses. Wasmer Edge's proxy connects from one, so rate limits and System Logs see each visitor's own IP instead of the proxy's. `X-Forwarded-Host` and `X-Forwarded-Proto` are not trusted, because a forwarded host would let a request change the links in password-reset emails. Behind a different proxy, add its address there.
 - Child photos are stored on the private `local` disk and served only through authenticated, ownership-checked routes.
 
 **Privacy policy.** `/privacy` (`privacy.blade.php`, route `privacy`) is public. It explains what LittleStep stores, why, who can see it, how it is protected and kept, and parents' rights under the Data Privacy Act of 2012, with a short child-friendly summary (NPC Advisory 2024-03).
@@ -377,15 +383,16 @@ All endpoints are under `/api/v1`. Everything except login requires `Authorizati
 
 | Method | Path                                      | Description                              |
 |--------|-------------------------------------------|------------------------------------------|
-| POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at, must_change_password }`. `must_change_password` is true when the guardian signed in with the default password (`GUARDIAN_DEFAULT_PASSWORD`) |
+| POST   | `/guardian/login`                         | Returns `{ token, guardian, expires_at, must_change_password }`. `must_change_password` is true while the guardian still has a password their teacher set (`users.must_change_password`) |
 | POST   | `/guardian/logout`                        | Revokes the current token                |
-| PUT    | `/guardian/password`                      | Change password. Body: `current_password`, `password`, `password_confirmation`. Same rules as the web forms (12–72 characters), and the new password must differ from the current one and from the default. Wrong current password → 422 on `current_password`. On success, signs out the guardian's other devices (this token stays valid) and logs `password_changed`. Throttled to 5 per minute |
+| PUT    | `/guardian/password`                      | Change password. Body: `current_password`, `password`, `password_confirmation`. Same rules as the web forms (12–72 characters), and the new password must differ from the current one. Wrong current password → 422 on `current_password`. On success, clears `must_change_password`, signs out the guardian's other devices (this token stays valid) and logs `password_changed`. Throttled to 5 per minute |
 | GET    | `/guardian/profile`                       | Guardian's name, account email, sex, contact number, relationship to child and address (barangay/municipality/province/region are stored joined in `address`) |
 | GET    | `/guardian/contacts`                      | Each of the guardian's children with the teacher handling them (name and contact number only; `null` until a teacher starts a progress record) |
-| GET    | `/guardian/views`                         | Guardian with children, progress records, domains and scores |
 | GET    | `/guardian/children`                      | Guardian's children                      |
 | GET    | `/guardian/children/{id}`                 | Child details: name, sex, birthday, address, handedness, schooling, parents' name/age/occupation/education, siblings and birth order, and `photo_url` (explicit fields only, no storage paths) |
 | GET    | `/guardian/children/{id}/dashboard`       | Progress summary, raw/scaled scores for all 7 domains per round, and `recent_activity` (domains ordered by when the teacher last updated them, newest first) |
 | GET    | `/guardian/children/{id}/domains/{domain}`| One domain's checklist: each item's ✓/— result and teacher comment per round, plus raw/scaled score, scaled-score `interpretation` and assessed-item count per round, and `skills_to_practice` (items marked — in the latest round, or `null`). `{domain}` is one of the 7 domain keys (`gross_motor`, `fine_motor`, `self_help`, `receptive_language`, `expressive_language`, `cognitive`, `social_emotional`); anything else returns 404 |
 | GET    | `/guardian/children/{id}/photo`           | Child photo (authenticated image)        |
 | GET    | `/guardian/children/{id}/insights`        | "Why this result?": for every round with an assessment date, the expert system's explanation (age and band, per-domain answered/raw/scaled/interpretation, sum, standard score, steps, warnings), plus `skills_to_practice` per domain. Empty `rounds` until a progress record exists |
+
+Every endpoint returns explicitly listed fields. Never return Eloquent models or their relations directly: that would also send internal columns, such as the teacher's home address, user ids and photo storage paths (`GuardianProfileApiTest` checks there is no such endpoint).

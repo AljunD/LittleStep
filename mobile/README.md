@@ -128,13 +128,13 @@ The app does **not** use expo-router. Navigation is a single React Navigation st
   - **No automatic sign-in:** the guardian always signs in with their own password.
   - **Back button:** when the app was opened straight on Login, Back goes to Welcome.
   - **After changing the scheme:** rebuild development and store builds. Expo Go doesn't need a rebuild.
-- **Default password reminder:** a teacher who leaves the password empty gives the guardian a shared default password.
-  - **When it shows:** the login response's `must_change_password` is true, so **Select Student** shows a pop-up asking the guardian to change it (`components/password-reminder.tsx`).
+- **Temporary password reminder:** guardians start with a password their teacher set, usually a random temporary one shown to the teacher once.
+  - **When it shows:** the login response's `must_change_password` is true until the guardian changes that password, so **Select Student** shows a pop-up asking them to change it (`components/password-reminder.tsx`).
   - **Its buttons:** **Change Password** opens the Change Password screen. **Remind me later** hides it until the next sign-in.
-  - **Profile hint:** while the default password is still in use, Profile → Change Password says so.
+  - **Profile hint:** while the temporary password is still in use, Profile → Change Password says so.
   - **Where the state lives:** `guardianApi.ts` (`shouldShowPasswordReminder()`, `dismissPasswordReminder()`, `isUsingDefaultPassword()`).
   - **Storage:** with Remember me, the flag sits in secure storage next to the token, so the reminder returns after an app restart. Otherwise it is kept in memory. It is cleared on sign-out, on a 401/403, and once the password is changed.
-  - **No hardcoded password:** the app never stores or compares the default password itself. The server decides.
+  - **No hardcoded password:** the app never stores or compares passwords itself. The server's `must_change_password` decides.
 - **Loading data on a screen:** use `useApiResource(loader)` (`hooks/use-api-resource.ts`).
   - It loads when the screen comes into view and provides `retry` and pull-to-refresh.
   - On a 401/403 it sends the guardian back to Login (`guardianApi` has already cleared the token). Screens that send data (like Change Password) get the same behavior from `useSessionEndedRedirect()`.
